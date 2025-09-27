@@ -23,25 +23,25 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="apps"
-        options={{
-          title: 'Apps',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'apps' : 'apps-outline'} color={color} size={24} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="options"
-        options={{
-          title: 'Options',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'settings' : 'settings-outline'} color={color} size={24} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={24} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="analytics"
+        options={{
+          title: 'Analytics',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'analytics' : 'analytics-outline'} color={color} size={24} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="progress"
         options={{
           title: 'Progress',
           tabBarIcon: ({ color, focused }) => (
@@ -50,11 +50,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="more"
+        name="settings"
         options={{
-          title: 'More',
+          title: 'Settings',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'ellipsis-horizontal' : 'ellipsis-horizontal-outline'} color={color} size={24} />
+            <Ionicons name={focused ? 'settings' : 'settings-outline'} color={color} size={24} />
           ),
         }}
       />

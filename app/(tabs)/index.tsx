@@ -2,36 +2,51 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-export default function ProgressScreen() {
+export default function HomeScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Progress</Text>
-        <Text style={styles.subtitle}>Your digital wellness journey</Text>
+        <Text style={styles.title}>Welcome Back!</Text>
+        <Text style={styles.subtitle}>Your digital wellness dashboard</Text>
       </View>
 
-      <View style={styles.streakCard}>
-        <Ionicons name="flame" size={32} color="#ef4444" />
-        <View style={styles.streakContent}>
-          <Text style={styles.streakNumber}>7</Text>
-          <Text style={styles.streakLabel}>Day Streak</Text>
-        </View>
-      </View>
-
-      <View style={styles.goalCard}>
-        <Text style={styles.cardTitle}>Daily Goal</Text>
-        <View style={styles.progressBar}>
-          <View style={styles.progressFill} />
-        </View>
-        <Text style={styles.goalText}>2h 15m / 3h goal</Text>
-      </View>
-
-      <View style={styles.weeklyCard}>
-        <Text style={styles.cardTitle}>This Week</Text>
-        <View style={styles.chartContainer}>
-          <View style={styles.chart}>
-            <Text style={styles.chartLabel}>Weekly screen time chart</Text>
+      {/* ML-Based Status Card */}
+      <View style={styles.statusCard}>
+        <View style={styles.statusHeader}>
+          <Ionicons name="leaf" size={32} color="#10b981" />
+          <View style={styles.statusContent}>
+            <Text style={styles.statusTitle}>Healthy</Text>
+            <Text style={styles.statusSubtitle}>Your usage is within healthy limits</Text>
           </View>
+        </View>
+      </View>
+
+      {/* Quick Stats */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>2h 15m</Text>
+          <Text style={styles.statLabel}>Today</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>7</Text>
+          <Text style={styles.statLabel}>Day Streak</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>85%</Text>
+          <Text style={styles.statLabel}>Goal Met</Text>
+        </View>
+      </View>
+
+      {/* Recent Activity */}
+      <View style={styles.activityCard}>
+        <Text style={styles.cardTitle}>Recent Activity</Text>
+        <View style={styles.activityItem}>
+          <Ionicons name="phone-portrait" size={20} color="#6366f1" />
+          <Text style={styles.activityText}>15 minutes saved today</Text>
+        </View>
+        <View style={styles.activityItem}>
+          <Ionicons name="checkmark-circle" size={20} color="#10b981" />
+          <Text style={styles.activityText}>Daily goal achieved</Text>
         </View>
       </View>
     </ScrollView>
@@ -58,35 +73,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#e0e7ff',
   },
-  streakCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  statusCard: {
     backgroundColor: '#ffffff',
     margin: 16,
-    padding: 20,
-    borderRadius: 16,
-    shadowColor: '#7c3aed',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  streakContent: {
-    marginLeft: 16,
-  },
-  streakNumber: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#7c3aed',
-  },
-  streakLabel: {
-    fontSize: 14,
-    color: '#64748b',
-  },
-  goalCard: {
-    backgroundColor: '#ffffff',
-    margin: 16,
-    marginTop: 0,
     padding: 20,
     borderRadius: 16,
     shadowColor: '#10b981',
@@ -95,56 +84,76 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
+  statusHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusContent: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  statusTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#10b981',
+  },
+  statusSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    marginTop: 4,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1e293b',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 4,
+  },
+  activityCard: {
+    backgroundColor: '#ffffff',
+    margin: 16,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
   cardTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#1e293b',
+    marginBottom: 16,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  progressBar: {
-    height: 12,
-    backgroundColor: '#e2e8f0',
-    borderRadius: 6,
-    marginBottom: 8,
-  },
-  progressFill: {
-    height: 12,
-    width: '75%',
-    backgroundColor: '#10b981',
-    borderRadius: 6,
-  },
-  goalText: {
+  activityText: {
     fontSize: 14,
     color: '#64748b',
-    fontWeight: '500',
-  },
-  weeklyCard: {
-    backgroundColor: '#ffffff',
-    margin: 16,
-    marginTop: 0,
-    padding: 20,
-    borderRadius: 16,
-    shadowColor: '#f59e0b',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  chartContainer: {
-    marginTop: 12,
-  },
-  chart: {
-    height: 120,
-    backgroundColor: '#fef3c7',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fbbf24',
-  },
-  chartLabel: {
-    color: '#92400e',
-    fontSize: 14,
-    fontWeight: '600',
+    marginLeft: 12,
   },
 });
