@@ -1,8 +1,49 @@
+import { usageStatsService } from '@/services/UsageStatsService';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function ProgressScreen() {
+  const [weeklyData, setWeeklyData] = useState<any>(null);
+  const [dailyData, setDailyData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasPermission, setHasPermission] = useState(false);
+
+  useEffect(() => {
+    loadProgressData();
+  }, []);
+
+  const loadProgressData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Check permission first
+      const permission = await usageStatsService.checkUsageAccessPermission();
+      setHasPermission(permission);
+      
+      // Get weekly and daily usage data
+      const weekly = await usageStatsService.getWeeklyUsageStats();
+      const daily = await usageStatsService.getDailyUsageStats();
+      
+      setWeeklyData(weekly);
+      setDailyData(daily);
+      
+    } catch (error) {
+      console.error('Error loading progress data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#10b981" />
+        <Text style={styles.loadingText}>Loading your progress...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -10,28 +51,75 @@ export default function ProgressScreen() {
         <Text style={styles.subtitle}>Track your digital wellness journey</Text>
       </View>
 
-      <View style={styles.streakCard}>
-        <Ionicons name="flame" size={32} color="#ef4444" />
-        <View style={styles.streakContent}>
-          <Text style={styles.streakNumber}>7</Text>
-          <Text style={styles.streakLabel}>Day Streak</Text>
+      {/* Streak & Stats */}
+      <View style={styles.streakContainer}>
+        <View style={styles.streakCard}>
+          <Ionicons name="flame" size={32} color="#ef4444" />
+          <View style={styles.streakContent}>
+            <Text style={styles.streakNumber}>{weeklyData?.streak || 0}</Text>
+            <Text style={styles.streakLabel}>Day Streak</Text>
+          </View>
+        </View>
+        <View style={styles.streakCard}>
+          <Ionicons name="trophy" size={32} color="#fbbf24" />
+          <View style={styles.streakContent}>
+            <Text style={styles.streakNumber}>{weeklyData?.daysWithData || 0}</Text>
+            <Text style={styles.streakLabel}>Active Days</Text>
+          </View>
         </View>
       </View>
 
+      {/* Daily Goal Progress */}
       <View style={styles.goalCard}>
-        <Text style={styles.cardTitle}>Daily Goal</Text>
-        <View style={styles.progressBar}>
-          <View style={styles.progressFill} />
-        </View>
-        <Text style={styles.goalText}>2h 15m / 3h goal</Text>
+        <Text style={styles.cardTitle}>Daily Goal Progress</Text>
+        {!hasPermission ? (
+          <View style={styles.permissionWarning}>
+            <Ionicons name="warning" size={20} color="#f59e0b" />
+            <Text style={styles.permissionText}>
+              Enable usage access to track your daily goals
+            </Text>
+          </View>
+        ) : (
+          <>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { 
+                width: `${Math.min((dailyData?.totalTime || 0) / (4 * 60 * 60 * 1000) * 100, 100)}%` 
+              }]} />
+            </View>
+            <Text style={styles.goalText}>
+              {dailyData?.totalTime ? usageStatsService.formatTime(dailyData.totalTime) : '0m'} / 4h goal
+            </Text>
+          </>
+        )}
       </View>
 
+      {/* Weekly Overview */}
       <View style={styles.weeklyCard}>
         <Text style={styles.cardTitle}>This Week</Text>
-        <View style={styles.chartContainer}>
-          <View style={styles.chart}>
-            <Text style={styles.chartLabel}>Weekly screen time chart</Text>
-          </View>
+        <View style={styles.weekContainer}>
+          {weeklyData?.dailyBreakdown?.length > 0 ? (
+            weeklyData.dailyBreakdown.map((day: any, index: number) => {
+              const maxTime = Math.max(...weeklyData.dailyBreakdown.map((d: any) => d.totalTime), 1);
+              const heightPercentage = (day.totalTime / maxTime) * 60 + 20;
+              return (
+                <View key={index} style={styles.dayColumn}>
+                  <Text style={styles.dayLabel}>{day.day}</Text>
+                  <View style={[styles.dayBar, { height: heightPercentage }]} />
+                  <Text style={styles.dayTime}>
+                    {day.totalTime > 0 ? usageStatsService.formatTime(day.totalTime) : '0m'}
+                  </Text>
+                </View>
+              );
+            })
+          ) : (
+            ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+              <View key={index} style={styles.dayColumn}>
+                <Text style={styles.dayLabel}>{day}</Text>
+                <View style={[styles.dayBar, { height: 20, backgroundColor: '#e2e8f0' }]} />
+                <Text style={styles.dayTime}>--</Text>
+              </View>
+            ))
+          )}
         </View>
       </View>
 
@@ -199,5 +287,63 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     marginTop: 2,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0fdf4',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#64748b',
+    marginTop: 16,
+  },
+  permissionWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#fef3c7',
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  permissionText: {
+    fontSize: 14,
+    color: '#92400e',
+    marginLeft: 8,
+    flex: 1,
+  },
+  streakContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  weekContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+    height: 120,
+    paddingHorizontal: 8,
+  },
+  dayColumn: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  dayLabel: {
+    fontSize: 12,
+    color: '#64748b',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  dayBar: {
+    width: 16,
+    backgroundColor: '#a855f7',
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  dayTime: {
+    fontSize: 10,
+    color: '#64748b',
+    textAlign: 'center',
   },
 });

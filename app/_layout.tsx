@@ -1,7 +1,7 @@
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import '../global.css';
 
@@ -15,19 +15,18 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [showPermissionModal, setShowPermissionModal] = useState(false);
-  const [hasPermissions, setHasPermissions] = useState(true); // Set to true to skip modal for now
+  const [hasPermissions, setHasPermissions] = useState(false); // Start with false to show permission modal
 
-  // Commented out to prevent crashes in Expo Go
-  // useEffect(() => {
-  //   // Show permission modal after a brief delay on first launch
-  //   const timer = setTimeout(() => {
-  //     if (!hasPermissions) {
-  //       setShowPermissionModal(true);
-  //     }
-  //   }, 2000);
+  useEffect(() => {
+    // Show permission modal after a brief delay on first launch
+    const timer = setTimeout(() => {
+      if (!hasPermissions) {
+        setShowPermissionModal(true);
+      }
+    }, 1000); // Show after 1 second
 
-  //   return () => clearTimeout(timer);
-  // }, [hasPermissions]);
+    return () => clearTimeout(timer);
+  }, [hasPermissions]);
 
   const handlePermissionsGranted = () => {
     setHasPermissions(true);
@@ -44,7 +43,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
-      <StatusBar style="light" />
+      <StatusBar style="auto" />
       
       <PermissionModal
         visible={showPermissionModal}

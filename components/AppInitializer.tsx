@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import DigitalWellbeingService from '@/services/DigitalWellbeingService';
+import digitalWellbeingService from '@/services/DigitalWellbeingService';
+import React, { useEffect, useState } from 'react';
+import { Dimensions, StyleSheet, View } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -27,7 +27,7 @@ export function AppInitializer({ children, onInitializationComplete }: AppInitia
       setInitializationStep('Initializing Digital Wellbeing...');
       
       // Initialize the service
-      const service = DigitalWellbeingService.getInstance();
+      const service = digitalWellbeingService;
       await service.initialize();
       
       // Check current permission status
@@ -40,7 +40,7 @@ export function AppInitializer({ children, onInitializationComplete }: AppInitia
       setInitializationStep('🔐 Requesting screen time permissions...');
       
       // Force permission request every time to ensure access
-      const granted = await service.requestPermission();
+      const granted = await service.requestUsageAccessPermission();
       
       if (granted) {
         setInitializationStep('✅ Permission granted! Processing your data...');
@@ -51,7 +51,7 @@ export function AppInitializer({ children, onInitializationComplete }: AppInitia
         await new Promise(resolve => setTimeout(resolve, 1000));
         onInitializationComplete(granted);
       } else {
-        setInitializationStep('⚠️ Using demo data without permissions');
+        setInitializationStep('⚠️ Permission required for real usage data');
         await new Promise(resolve => setTimeout(resolve, 1500));
         onInitializationComplete(false);
       }
@@ -59,7 +59,7 @@ export function AppInitializer({ children, onInitializationComplete }: AppInitia
       setIsInitializing(false);
     } catch (error) {
       console.error('App initialization error:', error);
-      setInitializationStep('⚠️ Ready to start with demo data');
+      setInitializationStep('⚠️ Ready to start - permission required for data');
       await new Promise(resolve => setTimeout(resolve, 1500));
       onInitializationComplete(false);
       setIsInitializing(false);

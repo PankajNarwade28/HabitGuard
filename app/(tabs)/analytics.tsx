@@ -1,8 +1,49 @@
+import { usageStatsService } from '@/services/UsageStatsService';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function AnalyticsScreen() {
+  const [dailyData, setDailyData] = useState<any>(null);
+  const [weeklyData, setWeeklyData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasPermission, setHasPermission] = useState(false);
+
+  useEffect(() => {
+    loadAnalyticsData();
+  }, []);
+
+  const loadAnalyticsData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Check permission first
+      const permission = await usageStatsService.checkUsageAccessPermission();
+      setHasPermission(permission);
+      
+      // Get daily and weekly usage data
+      const daily = await usageStatsService.getDailyUsageStats();
+      const weekly = await usageStatsService.getWeeklyUsageStats();
+      
+      setDailyData(daily);
+      setWeeklyData(weekly);
+      
+    } catch (error) {
+      console.error('Error loading analytics data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#f59e0b" />
+        <Text style={styles.loadingText}>Loading your analytics...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -22,56 +63,71 @@ export default function AnalyticsScreen() {
       {/* App Usage Breakdown */}
       <View style={styles.breakdownCard}>
         <Text style={styles.cardTitle}>Top Apps</Text>
-        <View style={styles.appItem}>
-          <View style={styles.appInfo}>
-            <Ionicons name="logo-instagram" size={24} color="#e91e63" />
-            <View style={styles.appDetails}>
-              <Text style={styles.appName}>Instagram</Text>
-              <Text style={styles.appTime}>2h 30m today</Text>
-            </View>
+        {!hasPermission ? (
+          <View style={styles.permissionWarning}>
+            <Ionicons name="warning" size={20} color="#f59e0b" />
+            <Text style={styles.permissionText}>
+              Enable usage access to see detailed app breakdown
+            </Text>
           </View>
-          <View style={[styles.statusBadge, styles.badgeHigh]}>
-            <Text style={styles.badgeText}>High</Text>
+        ) : dailyData?.topApps?.length > 0 ? (
+          dailyData.topApps.slice(0, 5).map((app: any, index: number) => {
+            const getBadgeStyle = (timeSpent: number) => {
+              if (timeSpent > 7200000) return { style: styles.badgeHigh, text: 'High' }; // > 2 hours
+              if (timeSpent > 3600000) return { style: styles.badgeMedium, text: 'Medium' }; // > 1 hour
+              return { style: styles.badgeLow, text: 'Healthy' };
+            };
+            const badge = getBadgeStyle(app.timeSpent);
+            
+            return (
+              <View key={index} style={styles.appItem}>
+                <View style={styles.appInfo}>
+                  <Text style={styles.appIconAnalytics}>{app.icon || '📱'}</Text>
+                  <View style={styles.appDetails}>
+                    <Text style={styles.appName}>{app.name}</Text>
+                    <Text style={styles.appTime}>{usageStatsService.formatTime(app.timeSpent)} today</Text>
+                  </View>
+                </View>
+                <View style={[styles.statusBadge, badge.style]}>
+                  <Text style={styles.badgeText}>{badge.text}</Text>
+                </View>
+              </View>
+            );
+          })
+        ) : (
+          <View style={styles.noDataContainer}>
+            <Ionicons name="analytics" size={48} color="#cbd5e1" />
+            <Text style={styles.noDataText}>No app usage data available</Text>
           </View>
-        </View>
-        
-        <View style={styles.appItem}>
-          <View style={styles.appInfo}>
-            <Ionicons name="logo-youtube" size={24} color="#ff0000" />
-            <View style={styles.appDetails}>
-              <Text style={styles.appName}>YouTube</Text>
-              <Text style={styles.appTime}>1h 45m today</Text>
-            </View>
-          </View>
-          <View style={[styles.statusBadge, styles.badgeMedium]}>
-            <Text style={styles.badgeText}>Medium</Text>
-          </View>
-        </View>
-
-        <View style={styles.appItem}>
-          <View style={styles.appInfo}>
-            <Ionicons name="chatbubbles" size={24} color="#25d366" />
-            <View style={styles.appDetails}>
-              <Text style={styles.appName}>WhatsApp</Text>
-              <Text style={styles.appTime}>45m today</Text>
-            </View>
-          </View>
-          <View style={[styles.statusBadge, styles.badgeLow]}>
-            <Text style={styles.badgeText}>Healthy</Text>
-          </View>
-        </View>
+        )}
       </View>
 
       {/* Insights */}
       <View style={styles.insightsCard}>
-        <Text style={styles.cardTitle}>Insights</Text>
+        <Text style={styles.cardTitle}>Weekly Insights</Text>
         <View style={styles.insightItem}>
-          <Ionicons name="trending-down" size={20} color="#10b981" />
-          <Text style={styles.insightText}>Screen time decreased by 15% this week</Text>
+          <Ionicons name="analytics" size={20} color="#6366f1" />
+          <Text style={styles.insightText}>
+            Total weekly time: {weeklyData?.totalTime ? usageStatsService.formatTime(weeklyData.totalTime) : 'Loading...'}
+          </Text>
         </View>
         <View style={styles.insightItem}>
-          <Ionicons name="time" size={20} color="#f59e0b" />
-          <Text style={styles.insightText}>Peak usage: 7-9 PM</Text>
+          <Ionicons name="calendar" size={20} color="#10b981" />
+          <Text style={styles.insightText}>
+            Days with data: {weeklyData?.daysWithData || 0} out of 7
+          </Text>
+        </View>
+        <View style={styles.insightItem}>
+          <Ionicons name="phone-portrait" size={20} color="#f59e0b" />
+          <Text style={styles.insightText}>
+            Most used app: {weeklyData?.topApp || 'N/A'}
+          </Text>
+        </View>
+        <View style={styles.insightItem}>
+          <Ionicons name="time" size={20} color="#0ea5e9" />
+          <Text style={styles.insightText}>
+            Daily average: {weeklyData?.averageTime ? usageStatsService.formatTime(weeklyData.averageTime) : 'N/A'}
+          </Text>
         </View>
       </View>
     </ScrollView>
@@ -210,5 +266,45 @@ const styles = StyleSheet.create({
     color: '#64748b',
     marginLeft: 12,
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f9ff',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#64748b',
+    marginTop: 16,
+  },
+  permissionWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#fef3c7',
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  permissionText: {
+    fontSize: 14,
+    color: '#92400e',
+    marginLeft: 8,
+    flex: 1,
+  },
+  noDataContainer: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  noDataText: {
+    fontSize: 16,
+    color: '#64748b',
+    marginTop: 12,
+  },
+  appIconAnalytics: {
+    fontSize: 24,
+    marginRight: 12,
+    textAlign: 'center',
+    width: 28,
   },
 });

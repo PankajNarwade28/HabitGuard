@@ -1,5 +1,7 @@
+import { usageStatsService } from '@/services/UsageStatsService';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import * as Linking from 'expo-linking';
+import React, { useEffect, useState } from 'react';
 import { Alert, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface PermissionModalProps {
@@ -15,29 +17,77 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
 }) => {
   const [accessibilityGranted, setAccessibilityGranted] = useState(false);
   const [notificationGranted, setNotificationGranted] = useState(false);
+  const [checkingPermissions, setCheckingPermissions] = useState(false);
+
+  // Check permissions when modal becomes visible
+  useEffect(() => {
+    if (visible) {
+      checkUsageAccess();
+    }
+  }, [visible]);
+
+  const checkUsageAccess = async () => {
+    try {
+      setCheckingPermissions(true);
+      const hasAccess = await usageStatsService.checkUsageAccessPermission();
+      setAccessibilityGranted(hasAccess);
+    } catch (error) {
+      console.log('Error checking usage access:', error);
+    } finally {
+      setCheckingPermissions(false);
+    }
+  };
 
   const handleAccessibilityPermission = async () => {
-    // For now, we'll simulate the permission grant
-    // In a real app, this would open device settings
-    setAccessibilityGranted(true);
     Alert.alert(
-      'Usage Access Required',
-      'Please grant usage access in your device settings to monitor screen time.',
+      'Enable Usage Access',
+      'To monitor your app usage and screen time, HabitGuard needs access to your device\'s usage statistics.\n\nSteps:\n1. Tap "Open Settings" below\n2. Find "HabitGuard" in the list\n3. Toggle "Permit usage access" ON\n4. Return to the app',
       [
         {
-          text: 'Grant Permission',
-          onPress: () => setAccessibilityGranted(true),
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Open Settings',
+          onPress: async () => {
+            try {
+              // For development build, open usage access settings
+              await usageStatsService.requestUsageAccessPermission();
+              
+              // For Expo Go, open general settings
+              await Linking.openSettings();
+              
+              // Check permission after user returns
+              setTimeout(checkUsageAccess, 1000);
+            } catch (error) {
+              console.log('Error opening settings:', error);
+              Alert.alert(
+                'Settings Error',
+                'Could not open settings automatically. Please go to Settings > Apps > Special access > Usage access and enable HabitGuard.'
+              );
+            }
+          },
         },
       ]
     );
   };
 
   const handleNotificationPermission = async () => {
-    // Simulate notification permission grant for demo
-    setNotificationGranted(true);
     Alert.alert(
-      'Notification Permission',
-      'Notifications enabled for wellness reminders.'
+      'Enable Notifications',
+      'Allow HabitGuard to send you gentle reminders and wellness tips to help maintain healthy digital habits?',
+      [
+        {
+          text: 'Not Now',
+          style: 'cancel',
+        },
+        {
+          text: 'Allow',
+          onPress: () => {
+            setNotificationGranted(true);
+          },
+        },
+      ]
     );
   };
 
@@ -59,81 +109,98 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <View style={styles.iconContainer}>
-              <Ionicons name="shield-checkmark" size={24} color="white" />
+              <Ionicons name="shield-checkmark" size={32} color="white" />
             </View>
-            <Text style={styles.headerText}>HabitGuard Permissions</Text>
+            <View style={styles.headerContent}>
+              <Text style={styles.headerText}>Welcome to HabitGuard</Text>
+              <Text style={styles.headerSubtext}>Digital Wellness Companion</Text>
+            </View>
           </View>
           
           <Text style={styles.title}>
-            Grant permissions for HabitGuard to work properly!
+            Let's set up your digital wellness monitoring
+          </Text>
+          <Text style={styles.description}>
+            We need these permissions to track your app usage and send helpful reminders.
           </Text>
         </View>
 
         {/* Permission Cards */}
         <View style={styles.permissionsContainer}>
-          {/* Accessibility Permission */}
+          {/* Usage Access Permission */}
           <View style={styles.permissionCard}>
-            <View style={styles.permissionRow}>
-              <View style={styles.permissionInfo}>
-                <Text style={styles.permissionLabel}>
-                  Accessibility Permission:
-                </Text>
-                <TouchableOpacity>
-                  <Ionicons name="information-circle-outline" size={20} color="#94a3b8" />
-                </TouchableOpacity>
-              </View>
-              <TouchableOpacity
-                onPress={handleAccessibilityPermission}
+            <View style={styles.permissionHeader}>
+              <Ionicons name="phone-portrait" size={24} color="#6366f1" />
+              <Text style={styles.permissionTitle}>Usage Access</Text>
+            </View>
+            <Text style={styles.permissionDescription}>
+              Monitor your app usage and screen time to provide personalized insights and recommendations.
+            </Text>
+            <TouchableOpacity
+              onPress={handleAccessibilityPermission}
+              style={[
+                styles.permissionButton,
+                accessibilityGranted ? styles.grantedButton : styles.enableButton
+              ]}
+            >
+              <Text
                 style={[
-                  styles.permissionButton,
-                  accessibilityGranted ? styles.grantedButton : styles.enableButton
+                  styles.buttonText,
+                  accessibilityGranted ? styles.grantedText : styles.enableText
                 ]}
               >
-                <Text
-                  style={[
-                    styles.buttonText,
-                    accessibilityGranted ? styles.grantedText : styles.enableText
-                  ]}
-                >
-                  {accessibilityGranted ? 'Granted' : 'Enable'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+                {checkingPermissions ? 'Checking...' : accessibilityGranted ? '✓ Granted' : 'Grant Access'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Notification Permission */}
           <View style={styles.permissionCard}>
-            <View style={styles.permissionRow}>
-              <View style={styles.permissionInfo}>
-                <Text style={styles.permissionLabel}>
-                  Notification Permission:
-                </Text>
-                <TouchableOpacity>
-                  <Ionicons name="information-circle-outline" size={20} color="#94a3b8" />
-                </TouchableOpacity>
-              </View>
-              <TouchableOpacity
-                onPress={handleNotificationPermission}
+            <View style={styles.permissionHeader}>
+              <Ionicons name="notifications" size={24} color="#10b981" />
+              <Text style={styles.permissionTitle}>Notifications</Text>
+            </View>
+            <Text style={styles.permissionDescription}>
+              Receive gentle reminders and wellness tips to maintain healthy digital habits.
+            </Text>
+            <TouchableOpacity
+              onPress={handleNotificationPermission}
+              style={[
+                styles.permissionButton,
+                notificationGranted ? styles.grantedButton : styles.enableButton
+              ]}
+            >
+              <Text
                 style={[
-                  styles.permissionButton,
-                  notificationGranted ? styles.grantedButton : styles.enableButton
+                  styles.buttonText,
+                  notificationGranted ? styles.grantedText : styles.enableText
                 ]}
               >
-                <Text
-                  style={[
-                    styles.buttonText,
-                    notificationGranted ? styles.grantedText : styles.enableText
-                  ]}
-                >
-                  {notificationGranted ? 'Granted' : 'Enable'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+                {notificationGranted ? '✓ Granted' : 'Allow Notifications'}
+              </Text>
+            </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Refresh Button */}
+        <View style={styles.refreshContainer}>
+          <TouchableOpacity
+            onPress={checkUsageAccess}
+            style={styles.refreshButton}
+            disabled={checkingPermissions}
+          >
+            <Ionicons name="refresh" size={16} color="#6366f1" />
+            <Text style={styles.refreshText}>
+              {checkingPermissions ? 'Checking permissions...' : 'Refresh permissions'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Continue Button */}
         <View style={styles.continueContainer}>
+          <Text style={styles.privacyNote}>
+            🔒 Your data stays private and secure on your device
+          </Text>
           <TouchableOpacity
             onPress={handleContinue}
             disabled={!accessibilityGranted || !notificationGranted}
@@ -148,7 +215,7 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
                 (accessibilityGranted && notificationGranted) ? styles.continueTextEnabled : styles.continueTextDisabled
               ]}
             >
-              Continue to App
+              {(accessibilityGranted && notificationGranted) ? 'Start My Wellness Journey' : 'Grant Permissions to Continue'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -160,12 +227,13 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#f8fafc',
   },
   header: {
     paddingHorizontal: 24,
     paddingTop: 64,
     paddingBottom: 32,
+    backgroundColor: '#6366f1',
   },
   headerRow: {
     flexDirection: 'row',
@@ -173,18 +241,26 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#7c3aed',
+    width: 56,
+    height: 56,
+    backgroundColor: '#ffffff',
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
   },
+  headerContent: {
+    flex: 1,
+  },
   headerText: {
     color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '500',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  headerSubtext: {
+    color: '#e0e7ff',
+    fontSize: 14,
+    marginTop: 2,
   },
   title: {
     color: '#ffffff',
@@ -192,14 +268,42 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
   },
+  description: {
+    color: '#e0e7ff',
+    fontSize: 16,
+    lineHeight: 24,
+  },
   permissionsContainer: {
     paddingHorizontal: 24,
-    gap: 16,
+    paddingTop: 24,
+    gap: 20,
   },
   permissionCard: {
-    backgroundColor: '#1f2937',
+    backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  permissionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  permissionTitle: {
+    color: '#1e293b',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 12,
+  },
+  permissionDescription: {
+    color: '#64748b',
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 16,
   },
   permissionRow: {
     flexDirection: 'row',
@@ -219,48 +323,74 @@ const styles = StyleSheet.create({
   },
   permissionButton: {
     paddingHorizontal: 24,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
   },
   grantedButton: {
     backgroundColor: '#10b981',
   },
   enableButton: {
-    backgroundColor: '#fbbf24',
+    backgroundColor: '#6366f1',
   },
   buttonText: {
     fontWeight: '600',
+    fontSize: 14,
   },
   grantedText: {
     color: '#ffffff',
   },
   enableText: {
-    color: '#0f172a',
+    color: '#ffffff',
   },
   continueContainer: {
     paddingHorizontal: 24,
     marginTop: 'auto',
     marginBottom: 32,
   },
+  privacyNote: {
+    color: '#64748b',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
   continueButton: {
     borderRadius: 16,
     paddingVertical: 16,
   },
   continueEnabled: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#10b981',
   },
   continueDisabled: {
-    backgroundColor: '#374151',
+    backgroundColor: '#d1d5db',
   },
   continueText: {
     textAlign: 'center',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   continueTextEnabled: {
     color: '#ffffff',
   },
   continueTextDisabled: {
-    color: '#6b7280',
+    color: '#9ca3af',
+  },
+  refreshContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f0f0ff',
+  },
+  refreshText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#6366f1',
+    fontWeight: '500',
   },
 });
