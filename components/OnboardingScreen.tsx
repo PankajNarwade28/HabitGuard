@@ -1,5 +1,6 @@
 import { permissionService } from '@/services/PermissionService';
 import { usageStatsService } from '@/services/UsageStatsService';
+import { NotificationService } from '@/services/NotificationService';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -163,23 +164,33 @@ export default function OnboardingScreen() {
   }
 
   async function completeOnboarding() {
-    // Check if usage access is granted before completing
-    const hasUsageAccess = await permissionService.checkUsageAccessPermission();
-    
-    if (!hasUsageAccess) {
-      Alert.alert(
-        'Permission Required',
-        'Usage access permission is required to use HabitGuard. Please grant the permission to continue.',
-        [
-          { text: 'Grant Permission', onPress: handleUsageAccessPermission }
-        ]
-      );
-      return;
+    try {
+      // Check if usage access is granted before completing
+      const hasUsageAccess = await permissionService.checkUsageAccessPermission();
+      
+      if (!hasUsageAccess) {
+        Alert.alert(
+          'Permission Required',
+          'Usage access permission is required to use HabitGuard. Please grant the permission to continue.',
+          [
+            { text: 'Grant Permission', onPress: handleUsageAccessPermission }
+          ]
+        );
+        return;
+      }
+      
+      await permissionService.completeOnboarding();
+      await permissionService.markAppAsLaunched();
+      
+      // Send setup complete notification
+      console.log('🔔 Sending setup complete notification...');
+      await NotificationService.sendSetupCompleteNotification();
+      console.log('✅ Setup complete notification sent!');
+      
+      router.replace('/(tabs)');
+    } catch (error) {
+      console.error('❌ Error completing onboarding:', error);
     }
-    
-    await permissionService.completeOnboarding();
-    await permissionService.markAppAsLaunched();
-    router.replace('/(tabs)');
   }
 
   function nextStep() {
