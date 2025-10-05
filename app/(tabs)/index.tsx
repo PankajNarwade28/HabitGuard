@@ -1,4 +1,5 @@
 ﻿import AppIcon from '@/components/AppIcon';
+import LoadingAnimation from '@/components/LoadingAnimation';
 import { UsageDebugPanel } from '@/components/UsageDebugPanel';
 import { usageStatsService } from '@/services/UsageStatsService';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -103,12 +104,7 @@ export default function HomeScreen() {
   };
 
   if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6366f1" />
-        <Text style={styles.loadingText}>Loading your wellness data...</Text>
-      </View>
-    );
+    return <LoadingAnimation text="Loading your wellness data..." size={32} />;
   }
 
   return (
@@ -319,17 +315,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     marginLeft: 12,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#64748b',
-    marginTop: 16,
   },
   permissionWarning: {
     flexDirection: 'row',

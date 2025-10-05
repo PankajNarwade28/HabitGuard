@@ -232,57 +232,93 @@ class PermissionService {
   }
 
   /**
-   * Open Usage Access Settings (Android) - Direct panel access
+   * Open Usage Access Settings (Android) - Opens app-specific usage access page
+   * Directly opens: Settings > Apps > Special app access > Usage access > HabitGuard
    */
   async openUsageAccessSettings(): Promise<void> {
     try {
       if (Platform.OS === 'android') {
-        console.log('📱 Opening Usage Access Settings Panel directly...');
+        console.log('📱 Opening HabitGuard-specific Usage Access Settings...');
         
-        // Try multiple Android intents for usage access settings
-        const usageAccessIntents = [
-          'android.settings.USAGE_ACCESS_SETTINGS',
-          'android.settings.SECURITY_SETTINGS',
-          'android.settings.APPLICATION_DETAILS_SETTINGS'
+        const packageName = await this.getPackageName();
+        console.log('📦 Package name:', packageName);
+        
+        // Try multiple methods in order of directness (app-specific first)
+        const methods = [
+          // Method 1: Direct app-specific intent (opens HabitGuard's toggle directly)
+          async () => {
+            console.log('🔄 Method 1: Direct app-specific usage access');
+            await Linking.sendIntent('android.settings.USAGE_ACCESS_SETTINGS', [
+              { key: 'package', value: packageName }
+            ]);
+          },
+          // Method 2: App-specific with APP_PACKAGE extra
+          async () => {
+            console.log('🔄 Method 2: App-specific with package extra');
+            await Linking.sendIntent('android.settings.ACTION_USAGE_ACCESS_SETTINGS', [
+              { key: 'android.provider.extra.APP_PACKAGE', value: packageName }
+            ]);
+          },
+          // Method 3: Package-specific URI
+          async () => {
+            console.log('🔄 Method 3: Package-specific URI');
+            const uri = `package:${packageName}`;
+            await Linking.openURL(uri);
+            // Try to auto-navigate after opening app details
+            setTimeout(async () => {
+              try {
+                await Linking.sendIntent('android.settings.USAGE_ACCESS_SETTINGS');
+              } catch (e) {
+                console.log('Auto-navigation not supported');
+              }
+            }, 300);
+          },
+          // Method 4: General usage access list (fallback)
+          async () => {
+            console.log('🔄 Method 4: General usage access list');
+            await Linking.sendIntent('android.settings.USAGE_ACCESS_SETTINGS');
+          },
+          // Method 5: Application details URI
+          async () => {
+            console.log('🔄 Method 5: Application details URI');
+            await Linking.openURL(`android.settings.APPLICATION_DETAILS_SETTINGS://package:${packageName}`);
+          },
+          // Method 6: Open app settings (Linking.openSettings)
+          async () => {
+            console.log('🔄 Method 4: App settings');
+            await Linking.openSettings();
+          },
+          // Method 5: Intent URL scheme
+          async () => {
+            console.log('🔄 Method 5: Intent URL for usage access');
+            await Linking.openURL('intent:#Intent;action=android.settings.USAGE_ACCESS_SETTINGS;end');
+          }
         ];
         
         let intentWorked = false;
         
-        for (const intent of usageAccessIntents) {
+        for (const method of methods) {
           try {
-            console.log(`🔄 Trying intent: ${intent}`);
-            
-            if (intent === 'android.settings.USAGE_ACCESS_SETTINGS') {
-              // Direct usage access settings
-              await Linking.openURL(`intent://${intent}`);
-            } else if (intent === 'android.settings.APPLICATION_DETAILS_SETTINGS') {
-              // App-specific settings (requires package name)
-              const packageName = 'habitguard.wellbeing'; // Your app package
-              await Linking.openURL(`intent://${intent}?package=${packageName}`);
-            } else {
-              // General security settings
-              await Linking.openURL(`intent://${intent}`);
-            }
-            
-            console.log(`✅ Successfully opened ${intent}`);
+            await method();
+            console.log('✅ Successfully opened settings');
             intentWorked = true;
             break;
-          } catch (intentError) {
-            console.log(`❌ Intent ${intent} failed:`, intentError);
+          } catch (error) {
+            console.log('❌ Method failed, trying next...');
           }
         }
         
         if (!intentWorked) {
-          console.log('🔄 All intents failed, trying alternative methods...');
+          console.log('🔄 All methods failed, trying final fallback...');
           
           try {
-            // Fallback to general settings
+            // Final fallback to general settings
             await Linking.openSettings();
             
             Alert.alert(
-              'Usage Access Settings',
-              'Please navigate to:\n\n1. "Apps" or "Application Manager"\n2. "Special Access" or "Advanced"\n3. "Usage Access" or "Apps with usage access"\n4. Find "HabitGuard" and enable it',
-              [{ text: 'OK' }]
+              'Enable Usage Access',
+              'In the settings screen that opened:\n\n1. Look for "Usage Access" or "Apps with usage access"\n2. Find "HabitGuard" in the list\n3. Toggle it ON\n4. Return to this app',
+              [{ text: 'Got it' }]
             );
           } catch (settingsError) {
             console.log('❌ Settings fallback failed:', settingsError);
@@ -310,6 +346,24 @@ class PermissionService {
         [{ text: 'OK' }]
       );
     }
+  }
+
+  /**
+   * Get app package name
+   */
+  private async getPackageName(): Promise<string> {
+    try {
+      // Try to get from react-native-device-info if available
+      const DeviceInfo = require('react-native-device-info');
+      if (DeviceInfo && DeviceInfo.default && DeviceInfo.default.getBundleId) {
+        return await DeviceInfo.default.getBundleId();
+      }
+    } catch (error) {
+      console.log('DeviceInfo not available, using default package name');
+    }
+    
+    // Fallback to hardcoded package name from app.json
+    return 'com.habitguard.wellbeing';
   }
 
   /**

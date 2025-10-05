@@ -1,3 +1,4 @@
+import LoadingAnimation from '@/components/LoadingAnimation';
 import { permissionService } from '@/services/PermissionService';
 import { streakService } from '@/services/StreakService';
 import { usageStatsService } from '@/services/UsageStatsService';
@@ -6,8 +7,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Animated,
-  Easing,
   Modal,
   Pressable,
   ScrollView,
@@ -16,93 +15,6 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-
-// Animated Loading Component with circular rotating icons
-function LoadingAnimation() {
-  const rotationAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    // Continuous rotation animation
-    Animated.loop(
-      Animated.timing(rotationAnim, {
-        toValue: 1,
-        duration: 8000, // 8 seconds for full rotation
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    ).start();
-  }, []);
-
-  // Calculate positions for 5 icons in a circle
-  const iconCount = 5;
-  const radius = 80; // Distance from center
-  const icons = [
-    { name: 'logo-instagram', color: '#E4405F', label: 'Instagram' },
-    { name: 'logo-whatsapp', color: '#25D366', label: 'WhatsApp' },
-    { name: 'logo-youtube', color: '#FF0000', label: 'YouTube' },
-    { name: 'logo-chrome', color: '#4285F4', label: 'Chrome' },
-    { name: 'mail', color: '#EA4335', label: 'Gmail' },
-  ];
-
-  return (
-    <View style={styles.loadingContainer}>
-      <View style={styles.loadingContent}>
-        {/* Circular Rotating Icons */}
-        <View style={styles.circularIconsContainer}>
-          {icons.map((icon, index) => {
-            // Calculate angle for each icon (evenly spaced in circle)
-            const angleOffset = (index / iconCount) * Math.PI * 2;
-            
-            // Calculate position in circle (rotating around center)
-            const translateX = rotationAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [
-                radius * Math.cos(angleOffset),
-                radius * Math.cos(angleOffset + Math.PI * 2),
-              ],
-            });
-
-            const translateY = rotationAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [
-                radius * Math.sin(angleOffset),
-                radius * Math.sin(angleOffset + Math.PI * 2),
-              ],
-            });
-
-            return (
-              <Animated.View
-                key={index}
-                style={[
-                  styles.circularIcon,
-                  {
-                    transform: [
-                      { translateX },
-                      { translateY },
-                    ],
-                  },
-                ]}
-              >
-                <View style={[styles.iconCircle, { backgroundColor: icon.color }]}>
-                  <Ionicons name={icon.name as any} size={32} color="#fff" />
-                </View>
-              </Animated.View>
-            );
-          })}
-          
-          {/* Center dot indicator */}
-          <View style={styles.centerDot} />
-        </View>
-
-        {/* Loading indicator */}
-        <View style={styles.loadingIndicatorRow}>
-          <ActivityIndicator size="small" color="#6366f1" />
-          <Text style={styles.loadingText}>Fetching your app usage data...</Text>
-        </View>
-      </View>
-    </View>
-  );
-}
 
 export default function ProgressScreen() {
   const [streakData, setStreakData] = useState<any>(null);
@@ -366,7 +278,7 @@ export default function ProgressScreen() {
   };
 
   if (isLoading) {
-    return <LoadingAnimation />;
+    return <LoadingAnimation text="Fetching your app usage data..." size={32} />;
   }
 
   return (
@@ -756,55 +668,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     marginTop: 2,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-  },
-  loadingContent: {
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  circularIconsContainer: {
-    width: 240,
-    height: 240,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    marginBottom: 48,
-  },
-  circularIcon: {
-    position: 'absolute',
-  },
-  iconCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  centerDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#6366f1',
-    position: 'absolute',
-  },
-  loadingIndicatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: '#64748b',
   },
   permissionWarning: {
     flexDirection: 'row',

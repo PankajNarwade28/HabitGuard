@@ -253,7 +253,8 @@ class UsageStatsService {
     }
     
     /**
-     * Request usage access permission - Direct panel opening
+     * Request usage access permission - Opens app-specific usage access settings
+     * This directly opens Settings > Apps > Special app access > Usage access > HabitGuard
      */
     async requestUsageAccessPermission(): Promise<void> {
         if (Platform.OS !== 'android') {
@@ -261,19 +262,103 @@ class UsageStatsService {
         }
 
         try {
-            console.log('📝 Opening Usage Access Settings Panel directly...');
+            console.log('📝 Opening HabitGuard-specific Usage Access Settings...');
             
-            if (this.UsageStats && this.UsageStats.requestUsageAccessPermission) {
-                // Use library method if available
-                await this.UsageStats.requestUsageAccessPermission();
-            } else {
-                // Fallback to direct Android intent
-                const { Linking } = require('react-native');
-                await Linking.openURL('intent://android.settings.USAGE_ACCESS_SETTINGS');
+            const { Linking } = require('react-native');
+            const packageName = await this.getPackageName();
+            
+            // Try multiple methods to open usage access settings (app-specific first)
+            const methods = [
+                // Method 1: Direct app-specific intent (HabitGuard's toggle)
+                async () => {
+                    console.log('🔄 Trying: Direct app-specific usage access');
+                    await Linking.sendIntent('android.settings.USAGE_ACCESS_SETTINGS', [
+                        { key: 'package', value: packageName }
+                    ]);
+                },
+                // Method 2: App-specific with APP_PACKAGE extra
+                async () => {
+                    console.log('🔄 Trying: App-specific with package extra');
+                    await Linking.sendIntent('android.settings.ACTION_USAGE_ACCESS_SETTINGS', [
+                        { key: 'android.provider.extra.APP_PACKAGE', value: packageName }
+                    ]);
+                },
+                // Method 3: Package-specific URI
+                async () => {
+                    console.log('🔄 Trying: Package-specific URI');
+                    const uri = `package:${packageName}`;
+                    await Linking.openURL(uri);
+                    setTimeout(async () => {
+                        try {
+                            await Linking.sendIntent('android.settings.USAGE_ACCESS_SETTINGS');
+                        } catch (e) {
+                            console.log('Auto-navigation not supported');
+                        }
+                    }, 300);
+                },
+                // Method 4: General usage access list (fallback)
+                async () => {
+                    console.log('🔄 Trying: General usage access list');
+                    await Linking.sendIntent('android.settings.USAGE_ACCESS_SETTINGS');
+                },
+                // Method 5: Application details URI
+                async () => {
+                    console.log('🔄 Trying: Application details URI');
+                    await Linking.openURL(`android.settings.APPLICATION_DETAILS_SETTINGS://package:${packageName}`);
+                },
+                // Method 4: Use library method if available
+                async () => {
+                    if (this.UsageStats && this.UsageStats.requestUsageAccessPermission) {
+                        console.log('🔄 Trying: Library method');
+                        await this.UsageStats.requestUsageAccessPermission();
+                    } else {
+                        throw new Error('Library method not available');
+                    }
+                },
+                // Method 5: App settings fallback
+                async () => {
+                    console.log('🔄 Trying: App settings');
+                    await Linking.openSettings();
+                }
+            ];
+            
+            // Try each method until one succeeds
+            let succeeded = false;
+            for (const method of methods) {
+                try {
+                    await method();
+                    console.log('✅ Successfully opened settings');
+                    succeeded = true;
+                    break;
+                } catch (error) {
+                    console.log('❌ Method failed, trying next...');
+                }
+            }
+            
+            if (!succeeded) {
+                console.warn('⚠️ All methods failed, user may need to navigate manually');
             }
         } catch (error) {
             console.error('❌ Error requesting usage access permission:', error);
         }
+    }
+    
+    /**
+     * Get app package name
+     */
+    private async getPackageName(): Promise<string> {
+        try {
+            // Try to get from react-native-device-info if available
+            const DeviceInfo = require('react-native-device-info');
+            if (DeviceInfo && DeviceInfo.default && DeviceInfo.default.getBundleId) {
+                return await DeviceInfo.default.getBundleId();
+            }
+        } catch (error) {
+            console.log('DeviceInfo not available, using default package name');
+        }
+        
+        // Fallback to hardcoded package name from app.json
+        return 'com.habitguard.wellbeing';
     }
     
     /**
@@ -1049,7 +1134,7 @@ class UsageStatsService {
             'com.flipkart.shopsy': { type: 'ionicon', name: 'bag', color: '#FF6B6B' },
             
             // Browsers
-            'com.android.chrome': { type: 'ionicon', name: 'logo-chrome', color: '#4285F4' },
+            'com.android.chrome': { type: 'ionicon', name: 'logo-chrome', color: '#f9aa17f4' },
             'com.microsoft.emmx': { type: 'ionicon', name: 'globe', color: '#0078D4' },
             
             // System

@@ -41,7 +41,7 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
   const handleAccessibilityPermission = async () => {
     Alert.alert(
       'Enable Usage Access',
-      'To monitor your app usage and screen time, HabitGuard needs access to your device\'s usage statistics.\n\nSteps:\n1. Tap "Open Settings" below\n2. Find "HabitGuard" in the list\n3. Toggle "Permit usage access" ON\n4. Return to the app',
+      'To monitor your app usage and screen time, HabitGuard needs access to your device\'s usage statistics.\n\nSteps:\n1. Tap "Open Settings" below\n2. Look for "Usage Access" or "Apps with usage access"\n3. Find "HabitGuard" in the list\n4. Toggle it ON\n5. Return to the app',
       [
         {
           text: 'Cancel',
@@ -51,14 +51,11 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
           text: 'Open Settings',
           onPress: async () => {
             try {
-              // For development build, open usage access settings
+              // Open usage access settings
               await usageStatsService.requestUsageAccessPermission();
               
-              // For Expo Go, open general settings
-              await Linking.openSettings();
-              
-              // Check permission after user returns
-              setTimeout(checkUsageAccess, 1000);
+              // Check permission after user returns (give them time)
+              setTimeout(checkUsageAccess, 2000);
             } catch (error) {
               console.log('Error opening settings:', error);
               Alert.alert(
@@ -73,27 +70,59 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
   };
 
   const handleNotificationPermission = async () => {
-    Alert.alert(
-      'Enable Notifications',
-      'Allow HabitGuard to send you gentle reminders and wellness tips to help maintain healthy digital habits?',
-      [
-        {
-          text: 'Not Now',
-          style: 'cancel',
-        },
-        {
-          text: 'Allow',
-          onPress: () => {
-            setNotificationGranted(true);
-          },
-        },
-      ]
-    );
+    try {
+      const Notifications = require('expo-notifications');
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      
+      if (existingStatus === 'granted') {
+        setNotificationGranted(true);
+        return;
+      }
+      
+      const { status } = await Notifications.requestPermissionsAsync();
+      
+      if (status === 'granted') {
+        setNotificationGranted(true);
+      } else {
+        // Don't allow skipping - show alert
+        Alert.alert(
+          'Permission Required',
+          'Notifications are required to keep you informed about your screen time goals and send helpful reminders. Please grant permission to continue.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Try Again', onPress: handleNotificationPermission }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+    }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (accessibilityGranted && notificationGranted) {
+      // Send acknowledgment notification
+      await sendSetupCompleteNotification();
       onPermissionsGranted();
+    }
+  };
+
+  const sendSetupCompleteNotification = async () => {
+    try {
+      const Notifications = require('expo-notifications');
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '🎉 HabitGuard Setup Complete!',
+          body: 'All permissions granted! We\'re now tracking your screen time to help you build better digital habits.',
+          data: { type: 'setup_complete' },
+        },
+        trigger: null, // Send immediately
+      });
+      
+      console.log('✅ Setup complete notification sent');
+    } catch (error) {
+      console.error('Failed to send setup notification:', error);
     }
   };
 

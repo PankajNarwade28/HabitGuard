@@ -92,11 +92,16 @@ export default function OnboardingScreen() {
       if (granted) {
         nextStep();
       } else {
+        // Don't allow skipping - notification permission is required
         Alert.alert(
-          'Permission Denied',
-          'You can enable notifications later in Settings.',
-          [{ text: 'Continue', onPress: nextStep }]
+          'Permission Required',
+          'Notifications are required to keep you informed about your screen time goals. Please grant permission to continue.',
+          [
+            { text: 'Cancel', style: 'cancel', onPress: () => setIsLoading(false) },
+            { text: 'Try Again', onPress: handleNotificationPermission }
+          ]
         );
+        return; // Don't proceed without permission
       }
     } catch (error) {
       console.error('Error requesting notification permission:', error);

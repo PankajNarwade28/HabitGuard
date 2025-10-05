@@ -1,8 +1,9 @@
 import AppIcon from '@/components/AppIcon';
+import LoadingAnimation from '@/components/LoadingAnimation';
 import { usageStatsService } from '@/services/UsageStatsService';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function AnalyticsScreen() {
   const [dailyData, setDailyData] = useState<any>(null);
@@ -11,16 +12,16 @@ export default function AnalyticsScreen() {
   const [hasPermission, setHasPermission] = useState(false);
   const [pressedBarIndex, setPressedBarIndex] = useState<number | null>(null);
 
-  useEffect(() => {
-    loadAnalyticsData();
-  }, []);
-
   const getUsageStatus = (timeSpent: number) => {
     const hours = timeSpent / (1000 * 60 * 60);
     if (hours < 1) return { status: 'Healthy', color: '#10b981' };
     if (hours < 2) return { status: 'Moderate', color: '#f59e0b' };
     return { status: 'High', color: '#ef4444' };
   };
+
+  useEffect(() => {
+    loadAnalyticsData();
+  }, []);
 
   const loadAnalyticsData = async () => {
     try {
@@ -45,12 +46,7 @@ export default function AnalyticsScreen() {
   };
 
   if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#f59e0b" />
-        <Text style={styles.loadingText}>Loading your analytics...</Text>
-      </View>
-    );
+    return <LoadingAnimation text="Loading your analytics..." size={32} />;
   }
 
   return (
@@ -154,32 +150,53 @@ export default function AnalyticsScreen() {
         )}
       </View>
 
-      {/* Insights */}
+      {/* Weekly Insights */}
       <View style={styles.insightsCard}>
-        <Text style={styles.cardTitle}>Weekly Insights</Text>
-        <View style={styles.insightItem}>
-          <Ionicons name="analytics" size={20} color="#6366f1" />
-          <Text style={styles.insightText}>
-            Total weekly time: {weeklyData?.totalTime ? usageStatsService.formatTime(weeklyData.totalTime) : 'Loading...'}
-          </Text>
+        <View style={styles.insightsHeader}>
+          <Ionicons name="stats-chart" size={24} color="#6366f1" />
+          <Text style={styles.insightsTitle}>Weekly Insights</Text>
         </View>
-        <View style={styles.insightItem}>
-          <Ionicons name="calendar" size={20} color="#10b981" />
-          <Text style={styles.insightText}>
-            Days with data: {weeklyData?.daysWithData || 0} out of 7
-          </Text>
-        </View>
-        <View style={styles.insightItem}>
-          <Ionicons name="phone-portrait" size={20} color="#f59e0b" />
-          <Text style={styles.insightText}>
-            Most used app: {weeklyData?.topApp || 'N/A'}
-          </Text>
-        </View>
-        <View style={styles.insightItem}>
-          <Ionicons name="time" size={20} color="#0ea5e9" />
-          <Text style={styles.insightText}>
-            Daily average: {weeklyData?.averageTime ? usageStatsService.formatTime(weeklyData.averageTime) : 'N/A'}
-          </Text>
+        
+        <View style={styles.insightsGrid}>
+          <View style={styles.insightBox}>
+            <View style={styles.insightIconWrapper}>
+              <Ionicons name="time" size={24} color="#6366f1" />
+            </View>
+            <Text style={styles.insightLabel}>Total Time</Text>
+            <Text style={styles.insightValue}>
+              {weeklyData?.weeklyTotal ? usageStatsService.formatTime(weeklyData.weeklyTotal) : '0h 0m'}
+            </Text>
+          </View>
+
+          <View style={styles.insightBox}>
+            <View style={styles.insightIconWrapper}>
+              <Ionicons name="calendar" size={24} color="#10b981" />
+            </View>
+            <Text style={styles.insightLabel}>Daily Average</Text>
+            <Text style={styles.insightValue}>
+              {weeklyData?.averageTime ? usageStatsService.formatTime(weeklyData.averageTime) : '0h 0m'}
+            </Text>
+          </View>
+
+          <View style={styles.insightBox}>
+            <View style={styles.insightIconWrapper}>
+              <Ionicons name="checkmark-circle" size={24} color="#f59e0b" />
+            </View>
+            <Text style={styles.insightLabel}>Active Days</Text>
+            <Text style={styles.insightValue}>
+              {weeklyData?.daysWithData || 0}/7
+            </Text>
+          </View>
+
+          <View style={styles.insightBox}>
+            <View style={styles.insightIconWrapper}>
+              <Ionicons name="trophy" size={24} color="#ef4444" />
+            </View>
+            <Text style={styles.insightLabel}>Most Used</Text>
+            <Text style={styles.insightValue} numberOfLines={1}>
+              {weeklyData?.topApp?.appName || 'N/A'}
+            </Text>
+          </View>
         </View>
       </View>
     </ScrollView>
@@ -319,17 +336,6 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     flex: 1,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f0f9ff',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#64748b',
-    marginTop: 16,
-  },
   permissionWarning: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -419,6 +425,63 @@ const styles = StyleSheet.create({
   tooltipText: {
     fontSize: 12,
     fontWeight: '700',
+    textAlign: 'center',
+  },
+  // Enhanced Weekly Insights Styles
+  insightsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 2,
+    borderBottomColor: '#e0f2fe',
+  },
+  insightsTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0c4a6e',
+    marginLeft: 12,
+  },
+  insightsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  insightBox: {
+    width: '48%',
+    backgroundColor: '#f0f9ff',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#bae6fd',
+  },
+  insightIconWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: '#0ea5e9',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  insightLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748b',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  insightValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0c4a6e',
     textAlign: 'center',
   },
 });

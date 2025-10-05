@@ -48,6 +48,22 @@ export class NotificationService {
     });
   }
 
+  static async sendSetupCompleteNotification() {
+    const hasPermission = await this.requestPermissions();
+    if (!hasPermission) return;
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: '🎉 HabitGuard Setup Complete!',
+        body: 'All permissions granted! We\'re now tracking your screen time to help you build better digital habits.',
+        data: { type: 'setup_complete' },
+        sound: true,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+      },
+      trigger: null, // Send immediately
+    });
+  }
+
   static async scheduleSleepReminder(bedtime: string) {
     const hasPermission = await this.requestPermissions();
     if (!hasPermission) return;
