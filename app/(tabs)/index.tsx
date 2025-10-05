@@ -151,7 +151,7 @@ export default function HomeScreen() {
           <Text style={styles.statNumber}>
             {usageData?.status === 'no_data' || usageData?.status === 'error' || usageData?.status === 'no_permission' 
               ? 'N/A' 
-              : usageData?.totalTime ? usageStatsService.formatTime(usageData.totalTime) : '--'
+              : usageData?.totalScreenTime ? usageStatsService.formatTime(usageData.totalScreenTime) : '--'
             }
           </Text>
           <Text style={styles.statLabel}>Today</Text>
@@ -160,7 +160,7 @@ export default function HomeScreen() {
           <Text style={styles.statNumber}>
             {usageData?.status === 'no_data' || usageData?.status === 'error' || usageData?.status === 'no_permission' 
               ? 'N/A' 
-              : usageData?.appCount || 0
+              : usageData?.appUsage?.length || 0
             }
           </Text>
           <Text style={styles.statLabel}>Apps Used</Text>
@@ -189,15 +189,15 @@ export default function HomeScreen() {
               </Text>
             </View>
           </View>
-        ) : usageData?.topApps?.length > 0 ? (
-          usageData.topApps.slice(0, 3).map((app: any, index: number) => (
+        ) : usageData?.appUsage?.length > 0 ? (
+          usageData.appUsage.slice(0, 3).map((app: any, index: number) => (
             <View key={index} style={styles.activityItem}>
               <View style={{marginRight: 12, width: 24, alignItems: 'center'}}>
                 <AppIcon iconData={app.icon} size={20} />
               </View>
               <View style={styles.appInfo}>
-                <Text style={styles.appName}>{app.name || app.appName || app.packageName}</Text>
-                <Text style={styles.appTime}>{usageStatsService.formatTime(app.timeSpent || app.totalTimeInForeground || 0)}</Text>
+                <Text style={styles.appName}>{app.appName || app.packageName}</Text>
+                <Text style={styles.appTime}>{usageStatsService.formatTime(app.totalTimeInForeground || 0)}</Text>
               </View>
             </View>
           ))

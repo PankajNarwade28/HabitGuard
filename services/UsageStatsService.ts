@@ -20,12 +20,17 @@ export interface DailyUsageStats {
     totalScreenTime: number; // in milliseconds
     appUsage: AppUsageData[];
     date: string;
+    hourlyBreakdown?: number[]; // Real hourly data (24 elements)
+    status?: 'success' | 'no_data' | 'error' | 'no_library' | 'fallback';
 }
 
 export interface WeeklyUsageStats {
     weeklyTotal: number;
     dailyBreakdown: DailyUsageStats[];
     topApps: AppUsageData[];
+    daysWithData?: number;
+    averageTime?: number;
+    topApp?: string;
 }
 
 export interface CSVDataRow {
@@ -42,9 +47,11 @@ export interface CSVDataRow {
 export interface MLDataPoint {
     timestamp: number;
     dailyTotal: number;
-    hourlyBreakdown: number[];
-    topApps: string[];
+    hourlyBreakdown: number[]; // Real hourly data (24 elements)
+    topApps: string[]; // Increased to 10-15 apps for better ML
     behaviorPattern: 'light' | 'moderate' | 'heavy' | 'excessive';
+    dayOfWeek: number; // 0=Monday, 6=Sunday
+    isWeekend: boolean; // For ML pattern detection
 }
 
 // --- Constants for IST (UTC+5:30) ---
@@ -135,6 +142,23 @@ class UsageStatsService {
         return new Date(year, month, day, 0, 0, 0, 0);
     }
     
+    /**
+     * Fetch raw usage events from native API (decoupled from processing)
+     */
+    private async fetchRawEvents(startTimeUTC: number, endTimeUTC: number): Promise<any[]> {
+        try {
+            if (this.UsageStats && this.UsageStats.queryEvents && typeof this.UsageStats.queryEvents === 'function') {
+                console.log('📞 Fetching raw events from Android...');
+                const events = await this.UsageStats.queryEvents(startTimeUTC, endTimeUTC);
+                console.log(`✅ Fetched ${events?.length || 0} raw events`);
+                return events || [];
+            }
+        } catch (error) {
+            console.log('⚠️ fetchRawEvents failed:', error);
+        }
+        return [];
+    }
+
     /**
      * Force real data mode - ensures library is loaded
      */
@@ -254,10 +278,17 @@ class UsageStatsService {
     
     /**
      * Get daily usage statistics - REAL DATA ONLY (IST Timezone)
+     * Returns properly structured DailyUsageStats with real hourly breakdown
      */
-    async getDailyUsageStats(date?: Date): Promise<any> {
+    async getDailyUsageStats(date?: Date): Promise<DailyUsageStats> {
         if (!this.UsageStats) {
-             return { totalTime: 0, appCount: 0, topApps: [], status: 'no_library' };
+            return { 
+                totalScreenTime: 0, 
+                appUsage: [], 
+                date: (date || this.getISTTime()).toISOString().split('T')[0],
+                hourlyBreakdown: new Array(24).fill(0),
+                status: 'no_library' 
+            };
         }
         
         const istTime = this.getISTTime();
@@ -294,6 +325,9 @@ class UsageStatsService {
             console.log(`🕐 IST Range: ${startIST.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})} to ${endIST.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})}`);
             console.log(`📍 UTC Timestamps: ${startTimeUTC} to ${endTimeUTC}`);
             console.log(`⏱️ Query Duration: ${((endTimeUTC - startTimeUTC) / 3600000).toFixed(2)} hours`);
+            console.log(`🔍 Debug - Target Date:`, targetDate);
+            console.log(`🔍 Debug - Is Today:`, isToday);
+            console.log(`🔍 Debug - Current IST Time:`, this.getISTTime().toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}));
 
             // ⚠️ CRITICAL: queryUsageStats() returns AGGREGATED data that includes yesterday's carryover
             // We need to use queryEvents() to get individual session events and calculate time only after midnight
@@ -356,20 +390,113 @@ class UsageStatsService {
                 return processedData;
             } else {
                 console.log('❌ NO REAL DATA AVAILABLE - Query returned empty.');
-                return { totalTime: 0, appCount: 0, topApps: [], status: 'no_data' };
+                return { 
+                    totalScreenTime: 0, 
+                    appUsage: [], 
+                    date: dateString,
+                    hourlyBreakdown: new Array(24).fill(0),
+                    status: 'no_data' 
+                };
             }
             
         } catch (error) {
             console.error('❌ Error getting real usage stats:', error);
-            return { totalTime: 0, appCount: 0, topApps: [], status: 'error' };
+            return { 
+                totalScreenTime: 0, 
+                appUsage: [], 
+                date: dateString,
+                hourlyBreakdown: new Array(24).fill(0),
+                status: 'error' 
+            };
         }
     }
     
     /**
+     * Calculate real hourly breakdown from usage events
+     * Returns array of 24 elements (one for each hour from midnight IST)
+     */
+    private calculateHourlyBreakdown(events: any[], startTimeUTC: number, endTimeUTC: number): number[] {
+        const hourlyBreakdown = new Array(24).fill(0);
+        
+        // Group events by package to track sessions
+        const packageSessions = new Map<string, { foregroundStart: number | null }>();
+        
+        const sortedEvents = events.sort((a: any, b: any) => (a.timeStamp || 0) - (b.timeStamp || 0));
+        
+        for (const event of sortedEvents) {
+            const packageName = event.packageName || '';
+            const eventType = event.eventType;
+            const timestamp = event.timeStamp || 0;
+            
+            if (timestamp < startTimeUTC || timestamp > endTimeUTC) continue;
+            if (this.isSystemApp(packageName)) continue;
+            
+            if (!packageSessions.has(packageName)) {
+                packageSessions.set(packageName, { foregroundStart: null });
+            }
+            
+            const session = packageSessions.get(packageName)!;
+            
+            if (eventType === 1) {
+                // MOVE_TO_FOREGROUND
+                session.foregroundStart = Math.max(timestamp, startTimeUTC);
+            } else if (eventType === 2 && session.foregroundStart !== null) {
+                // MOVE_TO_BACKGROUND - calculate session contribution to hourly buckets
+                const sessionEnd = Math.min(timestamp, endTimeUTC);
+                this.addSessionToHourlyBreakdown(hourlyBreakdown, session.foregroundStart, sessionEnd, startTimeUTC);
+                session.foregroundStart = null;
+            }
+        }
+        
+        // Close any open sessions at endTimeUTC
+        for (const [packageName, session] of packageSessions.entries()) {
+            if (session.foregroundStart !== null) {
+                this.addSessionToHourlyBreakdown(hourlyBreakdown, session.foregroundStart, endTimeUTC, startTimeUTC);
+            }
+        }
+        
+        return hourlyBreakdown;
+    }
+    
+    /**
+     * Add a session's duration to the hourly breakdown array
+     * Distributes session time across the hours it spans
+     */
+    private addSessionToHourlyBreakdown(hourlyBreakdown: number[], sessionStart: number, sessionEnd: number, dayStartUTC: number): void {
+        const sessionDuration = sessionEnd - sessionStart;
+        if (sessionDuration <= 0) return;
+        
+        // Calculate which hour buckets this session spans
+        const startHour = Math.floor((sessionStart - dayStartUTC) / (60 * 60 * 1000));
+        const endHour = Math.floor((sessionEnd - dayStartUTC) / (60 * 60 * 1000));
+        
+        if (startHour === endHour && startHour >= 0 && startHour < 24) {
+            // Session within single hour
+            hourlyBreakdown[startHour] += sessionDuration;
+        } else {
+            // Session spans multiple hours - distribute proportionally
+            for (let hour = startHour; hour <= endHour && hour < 24; hour++) {
+                if (hour < 0) continue;
+                
+                const hourStartUTC = dayStartUTC + (hour * 60 * 60 * 1000);
+                const hourEndUTC = hourStartUTC + (60 * 60 * 1000);
+                
+                const overlapStart = Math.max(sessionStart, hourStartUTC);
+                const overlapEnd = Math.min(sessionEnd, hourEndUTC);
+                const overlapDuration = overlapEnd - overlapStart;
+                
+                if (overlapDuration > 0) {
+                    hourlyBreakdown[hour] += overlapDuration;
+                }
+            }
+        }
+    }
+
+    /**
      * Process usage events to calculate today-only screen time
      * This is the ACCURATE method that excludes yesterday's carryover
      */
-    private processUsageEvents(events: any[], startTimeUTC: number, endTimeUTC: number): any {
+    private processUsageEvents(events: any[], startTimeUTC: number, endTimeUTC: number): DailyUsageStats {
         console.log('🔄 Processing usage EVENTS (today-only calculation)...');
         console.log(`📦 Raw events received: ${events.length} events from Android`);
         
@@ -391,8 +518,11 @@ class UsageStatsService {
                 continue;
             }
             
-            // Filter system apps at event level
+            // Filter system apps and Wellbeing at event level
             if (this.isSystemApp(packageName)) {
+                if (packageName === 'com.google.android.apps.wellbeing') {
+                    console.log('🚫 Wellbeing app filtered from events');
+                }
                 systemEventCount++;
                 continue;
             }
@@ -441,6 +571,12 @@ class UsageStatsService {
         console.log(`🚫 System events filtered: ${systemEventCount}`);
         console.log(`✅ Packages with usage: ${packageSessions.size}`);
         
+        if (packageSessions.size === 0) {
+            console.log(`⚠️ WARNING: No app usage found in events!`);
+            console.log(`   - This might mean no apps were used during this time period`);
+            console.log(`   - Or all events were for system apps`);
+        }
+        
         // Convert to app usage data
         const aggregatedStats = new Map<string, any>();
         let backgroundAppCount = 0;
@@ -471,20 +607,22 @@ class UsageStatsService {
         console.log('📊 Top 10 apps:', apps.slice(0, 10).map(a => `${a.name}: ${this.formatTime(a.timeSpent)}`));
         console.log(`📱 Total apps: ${apps.length}, Total time: ${this.formatTime(totalAppTime)}`);
         
+        // Calculate real hourly breakdown
+        const hourlyBreakdown = this.calculateHourlyBreakdown(events, startTimeUTC, endTimeUTC);
+        
+        const dateString = new Date(startTimeUTC + IST_OFFSET_MS).toISOString().split('T')[0];
+        
         return {
-            totalTime: totalAppTime,
-            appCount: apps.length,
-            topApps: apps.map((app: any) => ({
+            totalScreenTime: totalAppTime,
+            appUsage: apps.map((app: any) => ({
                 packageName: app.packageName,
-                name: app.name,
                 appName: app.name,
-                timeSpent: app.timeSpent,
                 totalTimeInForeground: app.timeSpent,
                 lastTimeUsed: app.lastUsed,
                 icon: app.icon
             })),
-            unlocks: 0,
-            notifications: 0,
+            date: dateString,
+            hourlyBreakdown: hourlyBreakdown,
             status: 'success'
         };
     }
@@ -502,7 +640,7 @@ class UsageStatsService {
      * - May show slightly higher times (~5-15 min) than Digital Wellbeing for apps used around midnight
      * - Use processUsageEvents() for 100% accurate today-only calculation
      */
-    private processRealUsageStats(usageStats: any[], startTimeUTC: number, endTimeUTC: number, isToday: boolean = true): any {
+    private processRealUsageStats(usageStats: any[], startTimeUTC: number, endTimeUTC: number, isToday: boolean = true): DailyUsageStats {
         console.log('🔄 Processing REAL ANDROID usage stats (AGGREGATED - may include carryover)...');
         console.log(`📦 Raw data received: ${usageStats.length} apps from Android`);
         console.log(`⏰ Valid time range: ${new Date(startTimeUTC).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})} to ${new Date(endTimeUTC).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})}`);
@@ -531,8 +669,11 @@ class UsageStatsService {
                 console.log(`   Midnight UTC: ${new Date(startTimeUTC).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})}`);
             }
             
-            // ✅ Filter 1: Exclude system apps (Incallui, Launcher3, SystemUI, etc.)
+            // ✅ Filter 1: Exclude system apps and Wellbeing (Incallui, Launcher3, SystemUI, Wellbeing, etc.)
             if (this.isSystemApp(packageName)) {
+                if (packageName === 'com.google.android.apps.wellbeing') {
+                    console.log(`🚫 Wellbeing app filtered: ${this.formatTime(timeSpent)} excluded from total`);
+                }
                 systemAppCount++;
                 return;
             }
@@ -551,10 +692,11 @@ class UsageStatsService {
                 return;
             }
             
-            // ⚠️ NOTE: We CANNOT accurately remove cross-midnight carryover from aggregated stats
-            // queryUsageStats() returns total time without individual session details
-            // Only queryEvents() can provide session-level accuracy
-            // For now, just use the reported time and apply basic time capping
+            // ⚠️ LIMITATION: queryUsageStats() returns AGGREGATED data
+            // - If app was used yesterday AND today, the reported time may include some yesterday carryover
+            // - We cannot accurately separate yesterday's time from today's time with aggregated stats
+            // - For 100% accurate today-only data, use queryEvents() which provides session-level detail
+            // - Current approach: Accept aggregated data as-is (may be slightly inflated for cross-midnight apps)
             
             let cappedTimeSpent = timeSpent;
             
@@ -597,7 +739,13 @@ class UsageStatsService {
         console.log(`🚫 System apps filtered: ${systemAppCount}`);
         console.log(`🚫 Background apps filtered (< 1 min): ${backgroundAppCount}`);
         console.log(`🚫 Yesterday carryover filtered: ${yesterdayCarryoverCount}`);
-        console.log(`✅ User apps included (today only): ${aggregatedStats.size}`);
+        console.log(`✅ User apps included (aggregated method): ${aggregatedStats.size}`);
+        
+        if (aggregatedStats.size === 0) {
+            console.log(`⚠️ WARNING: No apps passed filtering! This means:`);
+            console.log(`   - All apps were either system apps, background services, or not used today`);
+            console.log(`   - Check if queryEvents() is available for more accurate data`);
+        }
 
         // Sort by usage time (highest first)
         const apps = Array.from(aggregatedStats.values()).sort((a, b) => b.timeSpent - a.timeSpent);
@@ -608,22 +756,22 @@ class UsageStatsService {
         console.log('📊 Top 10 apps:', apps.slice(0, 10).map(a => `${a.name}: ${this.formatTime(a.timeSpent)}`));
         console.log(`📱 Total apps in result: ${apps.length}, Total time: ${this.formatTime(totalAppTime)}`);
 
+        const dateString = new Date(startTimeUTC + IST_OFFSET_MS).toISOString().split('T')[0];
+        
         // Return user apps only (not system apps)
+        // Note: hourlyBreakdown cannot be accurate with aggregated stats
         return {
-            totalTime: totalAppTime,
-            appCount: apps.length,
-            topApps: apps.map((app: any) => ({
+            totalScreenTime: totalAppTime,
+            appUsage: apps.map((app: any) => ({
                 packageName: app.packageName,
-                name: app.name,  // Use 'name' field consistently
-                appName: app.name,  // Also provide as appName for compatibility
-                timeSpent: app.timeSpent,  // Keep original milliseconds
-                totalTimeInForeground: app.timeSpent,  // Also provide as totalTimeInForeground
+                appName: app.name,
+                totalTimeInForeground: app.timeSpent,
                 lastTimeUsed: app.lastTimeUsed,
                 icon: app.icon
             })),
-            unlocks: 0, // Not available in queryUsageStats, leaving as placeholder
-            notifications: Math.floor(Math.random() * 25), // Placeholder value
-            status: 'success'
+            date: dateString,
+            hourlyBreakdown: new Array(24).fill(0), // Cannot calculate accurate hourly from aggregated data
+            status: 'fallback' // Mark as fallback to indicate lower accuracy
         };
     }
     
@@ -662,30 +810,22 @@ class UsageStatsService {
                 if (!isFuture) {
                     const dailyStats = await this.getDailyUsageStats(dateIST);
                     
-                    dailyBreakdown.push({
-                        day: dayName,
-                        totalTime: dailyStats.totalTime || 0,
-                        date: dateIST.toISOString().split('T')[0],
-                        isToday: isToday,
-                        appCount: dailyStats.appCount || 0,
-                        status: dailyStats.status
-                    });
+                    dailyBreakdown.push(dailyStats);
                     
-                    weeklyTotal += dailyStats.totalTime || 0;
+                    weeklyTotal += dailyStats.totalScreenTime || 0;
                     
                     // Aggregate top apps (simple concatenation for now, will process later)
-                    allWeeklyApps = allWeeklyApps.concat(dailyStats.topApps || []);
+                    allWeeklyApps = allWeeklyApps.concat(dailyStats.appUsage || []);
                     
-                    console.log(`  ${dayName}: ${this.formatTime(dailyStats.totalTime || 0)} (${dailyStats.appCount || 0} apps)`);
+                    console.log(`  ${dayName}: ${this.formatTime(dailyStats.totalScreenTime || 0)} (${dailyStats.appUsage.length || 0} apps)`);
                 } else {
                     // Future days in the week show 0
                     dailyBreakdown.push({
-                        day: dayName,
-                        totalTime: 0,
+                        totalScreenTime: 0,
+                        appUsage: [],
                         date: dateIST.toISOString().split('T')[0],
-                        isToday: false,
-                        appCount: 0,
-                        status: 'future'
+                        hourlyBreakdown: new Array(24).fill(0),
+                        status: 'no_data'
                     });
                 }
             }
@@ -706,12 +846,20 @@ class UsageStatsService {
                 .sort((a, b) => b.totalTimeInForeground - a.totalTimeInForeground)
                 .slice(0, 10);
             
+            // Calculate additional stats for UI
+            const daysWithData = dailyBreakdown.filter(d => d.status === 'success' || d.status === 'fallback').length;
+            const averageTime = daysWithData > 0 ? weeklyTotal / daysWithData : 0;
+            const topApp = topApps.length > 0 ? topApps[0].appName : 'N/A';
+            
             console.log(`📊 Weekly stats calculated (IST timezone): Total time: ${this.formatTime(weeklyTotal)}`);
 
             return {
                 weeklyTotal,
                 dailyBreakdown,
                 topApps: topApps,
+                daysWithData,
+                averageTime,
+                topApp,
                 timezone: 'Asia/Kolkata',
                 status: 'success'
             };
@@ -727,7 +875,7 @@ class UsageStatsService {
     async getUsageStatus(): Promise<any> {
         try {
             const dailyStats = await this.getDailyUsageStats();
-            const totalHours = (dailyStats.totalTime || 0) / (1000 * 60 * 60);
+            const totalHours = (dailyStats.totalScreenTime || 0) / (1000 * 60 * 60);
             
             if (dailyStats.status === 'no_data' || dailyStats.status === 'error' || dailyStats.status === 'no_library') {
                 return {
@@ -837,6 +985,9 @@ class UsageStatsService {
             'com.mediatek.ims',
             'com.google.android.networkstack.tethering',
             'com.android.cts.priv.ctsshim',
+            
+            // Digital Wellbeing (Exclude from tracking)
+            'com.google.android.apps.wellbeing',
         ];
         
         // Check exact matches first
@@ -1127,10 +1278,10 @@ class UsageStatsService {
             const csvRow: CSVDataRow = {
                 date: dateString,
                 hour: today.getHours(),
-                totalScreenTime: dailyStats.totalTime || 0,
-                topAppPackage: dailyStats.topApps?.[0]?.packageName || 'none',
-                topAppTime: dailyStats.topApps?.[0]?.totalTimeInForeground || 0,
-                appCount: dailyStats.appCount || 0,
+                totalScreenTime: dailyStats.totalScreenTime || 0,
+                topAppPackage: dailyStats.appUsage?.[0]?.packageName || 'none',
+                topAppTime: dailyStats.appUsage?.[0]?.totalTimeInForeground || 0,
+                appCount: dailyStats.appUsage?.length || 0,
                 dayOfWeek: (today.getDay() + 6) % 7, // 0=Mon, 6=Sun
                 isWeekend: today.getDay() === 0 || today.getDay() === 6
             };
@@ -1172,16 +1323,20 @@ class UsageStatsService {
     /**
      * Store ML data point in AsyncStorage for Python ML analysis
      */
-    private async storeMLDataPoint(dailyStats: any, date: Date): Promise<void> {
+    private async storeMLDataPoint(dailyStats: DailyUsageStats, date: Date): Promise<void> {
         try {
-            const behaviorPattern = this.classifyBehaviorPattern(dailyStats.totalTime || 0);
+            const behaviorPattern = this.classifyBehaviorPattern(dailyStats.totalScreenTime || 0);
+            const dayOfWeek = (date.getDay() + 6) % 7; // 0=Monday, 6=Sunday
+            const isWeekend = date.getDay() === 0 || date.getDay() === 6;
             
             const mlDataPoint: MLDataPoint = {
                 timestamp: date.getTime(),
-                dailyTotal: dailyStats.totalTime || 0,
-                hourlyBreakdown: await this.getHourlyBreakdown(date),
-                topApps: (dailyStats.topApps || []).slice(0, 5).map((app: any) => app.packageName),
-                behaviorPattern
+                dailyTotal: dailyStats.totalScreenTime || 0,
+                hourlyBreakdown: dailyStats.hourlyBreakdown || new Array(24).fill(0),
+                topApps: (dailyStats.appUsage || []).slice(0, 15).map((app: any) => app.packageName), // Increased to 15 for better ML
+                behaviorPattern,
+                dayOfWeek,
+                isWeekend
             };
             
             // Store in AsyncStorage for Python script access
@@ -1207,29 +1362,6 @@ class UsageStatsService {
         if (hours < 4) return 'moderate';
         if (hours < 6) return 'heavy';
         return 'excessive';
-    }
-
-    /**
-     * Get hourly breakdown for ML analysis (Simulated)
-     */
-    private async getHourlyBreakdown(date: Date): Promise<number[]> {
-        const hourlyBreakdown = new Array(24).fill(0);
-        
-        try {
-            const dailyStats = await this.getDailyUsageStats(date);
-            if (dailyStats && dailyStats.totalTime > 0) {
-                const currentHour = this.getISTTime().getHours();
-                for (let i = 0; i <= currentHour; i++) {
-                    const isPeakHour = (i >= 9 && i <= 11) || (i >= 14 && i <= 16) || (i >= 19 && i <= 22);
-                    // Generate random time but cap at a reasonable max for peak/off-peak
-                    hourlyBreakdown[i] = isPeakHour ? Math.floor(Math.random() * 300000) : Math.floor(Math.random() * 100000);
-                }
-            }
-        } catch (error) {
-            console.log('⚠️ Could not generate hourly breakdown:', error);
-        }
-        
-        return hourlyBreakdown;
     }
 
     /**

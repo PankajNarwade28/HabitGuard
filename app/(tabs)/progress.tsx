@@ -3,9 +3,11 @@ import { streakService } from '@/services/StreakService';
 import { usageStatsService } from '@/services/UsageStatsService';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   Modal,
   Pressable,
   ScrollView,
@@ -14,6 +16,93 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+
+// Animated Loading Component with circular rotating icons
+function LoadingAnimation() {
+  const rotationAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Continuous rotation animation
+    Animated.loop(
+      Animated.timing(rotationAnim, {
+        toValue: 1,
+        duration: 8000, // 8 seconds for full rotation
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, []);
+
+  // Calculate positions for 5 icons in a circle
+  const iconCount = 5;
+  const radius = 80; // Distance from center
+  const icons = [
+    { name: 'logo-instagram', color: '#E4405F', label: 'Instagram' },
+    { name: 'logo-whatsapp', color: '#25D366', label: 'WhatsApp' },
+    { name: 'logo-youtube', color: '#FF0000', label: 'YouTube' },
+    { name: 'logo-chrome', color: '#4285F4', label: 'Chrome' },
+    { name: 'mail', color: '#EA4335', label: 'Gmail' },
+  ];
+
+  return (
+    <View style={styles.loadingContainer}>
+      <View style={styles.loadingContent}>
+        {/* Circular Rotating Icons */}
+        <View style={styles.circularIconsContainer}>
+          {icons.map((icon, index) => {
+            // Calculate angle for each icon (evenly spaced in circle)
+            const angleOffset = (index / iconCount) * Math.PI * 2;
+            
+            // Calculate position in circle (rotating around center)
+            const translateX = rotationAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [
+                radius * Math.cos(angleOffset),
+                radius * Math.cos(angleOffset + Math.PI * 2),
+              ],
+            });
+
+            const translateY = rotationAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [
+                radius * Math.sin(angleOffset),
+                radius * Math.sin(angleOffset + Math.PI * 2),
+              ],
+            });
+
+            return (
+              <Animated.View
+                key={index}
+                style={[
+                  styles.circularIcon,
+                  {
+                    transform: [
+                      { translateX },
+                      { translateY },
+                    ],
+                  },
+                ]}
+              >
+                <View style={[styles.iconCircle, { backgroundColor: icon.color }]}>
+                  <Ionicons name={icon.name as any} size={32} color="#fff" />
+                </View>
+              </Animated.View>
+            );
+          })}
+          
+          {/* Center dot indicator */}
+          <View style={styles.centerDot} />
+        </View>
+
+        {/* Loading indicator */}
+        <View style={styles.loadingIndicatorRow}>
+          <ActivityIndicator size="small" color="#6366f1" />
+          <Text style={styles.loadingText}>Fetching your app usage data...</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
 
 export default function ProgressScreen() {
   const [streakData, setStreakData] = useState<any>(null);
@@ -118,27 +207,27 @@ export default function ProgressScreen() {
         setAchievements([]);
       }
       
-      // Get this week's progress (may fetch real data)
-      console.log('📋 Step 4: Getting week progress...');
+      // Get this week's progress (fetch real data for last 7 days)
+      console.log('📋 Step 4: Getting last 7 days of real usage data...');
       try {
-        const week = await Promise.race([
-          streakService.getThisWeekProgress(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Week timeout')), 8000))
+        const weekDataArray = await Promise.race([
+          getLast7DaysData(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Week timeout')), 10000))
         ]);
-        setWeekData(week as any[]);
-        console.log('✅ Week data loaded: ' + (week as any[]).length + ' days');
+        setWeekData(weekDataArray as any[]);
+        console.log('✅ Week data loaded: ' + (weekDataArray as any[]).length + ' days with real data');
       } catch (error) {
-        console.log('⚠️ Week data timeout, using empty array');
-        // Create fallback week data with today's usage
+        console.log('⚠️ Week data timeout, using fallback');
+        // Create fallback week data
         const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         const today = new Date();
         const currentDayOfWeek = (today.getDay() + 6) % 7; // Convert to Mon=0 system
         const fallbackWeek = dayNames.map((day, index) => ({
           day,
           dayName: day,
-          usageHours: index === currentDayOfWeek ? todayUsage : 0,
-          screenTimeHours: index === currentDayOfWeek ? todayUsage : 0,
-          goalMet: index === currentDayOfWeek ? todayUsage <= dailyGoal : false,
+          usageHours: 0,
+          screenTimeHours: 0,
+          goalMet: false,
           date: new Date(today.getTime() - (currentDayOfWeek - index) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
         }));
         setWeekData(fallbackWeek);
@@ -172,8 +261,8 @@ export default function ProgressScreen() {
       if (permission) {
         usageStatsService.getDailyUsageStats()
           .then(dailyUsage => {
-            if (dailyUsage && dailyUsage.totalTime) {
-              const todayUsageHours = dailyUsage.totalTime / (1000 * 60 * 60);
+            if (dailyUsage && dailyUsage.totalScreenTime) {
+              const todayUsageHours = dailyUsage.totalScreenTime / (1000 * 60 * 60);
               setTodayUsage(todayUsageHours);
               console.log('✅ Today\'s usage loaded: ' + todayUsageHours.toFixed(2) + 'h');
               // Update streak in background
@@ -210,6 +299,53 @@ export default function ProgressScreen() {
     // Note: No finally block needed since we handle cleanup in try and catch
   };
 
+  const getLast7DaysData = async () => {
+    const days: any[] = [];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const today = new Date();
+    
+    console.log('📅 Fetching last 7 days of usage data...');
+    
+    // Get data for last 7 days (6 days ago + today)
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      
+      try {
+        const stats = await usageStatsService.getDailyUsageStats(date);
+        const hours = stats?.totalScreenTime ? stats.totalScreenTime / (1000 * 60 * 60) : 0;
+        
+        const dayData = {
+          day: dayNames[date.getDay()],
+          dayName: dayNames[date.getDay()],
+          date: date.toISOString().split('T')[0],
+          usageHours: hours,
+          screenTimeHours: hours,
+          goalMet: hours <= dailyGoal && hours > 0,
+          isToday: i === 0
+        };
+        
+        days.push(dayData);
+        console.log(`  ✓ ${dayData.day} (${dayData.date}): ${hours.toFixed(2)}h`);
+      } catch (error) {
+        console.log(`  ✗ ${dayNames[date.getDay()]} (${date.toISOString().split('T')[0]}): Error fetching data`);
+        days.push({
+          day: dayNames[date.getDay()],
+          dayName: dayNames[date.getDay()],
+          date: date.toISOString().split('T')[0],
+          usageHours: 0,
+          screenTimeHours: 0,
+          goalMet: false,
+          isToday: i === 0
+        });
+      }
+    }
+    
+    console.log(`📊 Loaded ${days.length} days of data`);
+    return days;
+  };
+
   const formatTime = (hours: number) => {
     if (hours < 1) return `${Math.round(hours * 60)}m`;
     return `${hours.toFixed(1)}h`;
@@ -230,12 +366,7 @@ export default function ProgressScreen() {
   };
 
   if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#10b981" />
-        <Text style={styles.loadingText}>Loading your progress...</Text>
-      </View>
-    );
+    return <LoadingAnimation />;
   }
 
   return (
@@ -287,6 +418,15 @@ export default function ProgressScreen() {
         <Text style={styles.cardTitle}>Last 7 Days Usage</Text>
         {weekData.length > 0 ? (
           <>
+            {/* Week Average from Real Data */}
+            <View style={styles.weekAverageContainer}>
+              <Ionicons name="analytics" size={20} color="#6366f1" />
+              <Text style={styles.weekAverageText}>
+                Weekly Average: {formatTime(
+                  weekData.reduce((sum, day) => sum + (day.usageHours || day.screenTimeHours || 0), 0) / 7
+                )}
+              </Text>
+            </View>
             <Text style={styles.goalText}>
               {weeklyStats ? `${weeklyStats.goalsMet}/${weeklyStats.totalDays} days on track` : 'Loading stats...'}
             </Text>
@@ -339,12 +479,38 @@ export default function ProgressScreen() {
               })}
             </View>
             
-            {weeklyStats && (
-              <View style={styles.achievementItem}>
-                <Ionicons name="calendar" size={24} color="#10b981" />
-                <View style={styles.achievementDetails}>
-                  <Text style={styles.achievementName}>Week Average: {formatTime(weeklyStats.averageUsage)}</Text>
-                  <Text style={styles.achievementDesc}>Best day: {weeklyStats.bestDay}</Text>
+            {/* Week Statistics Calculated from Real Data */}
+            {weekData.length > 0 && (
+              <View style={styles.weekStatsContainer}>
+                <View style={styles.weekStatItem}>
+                  <Ionicons name="analytics" size={22} color="#6366f1" />
+                  <View style={styles.weekStatTextContainer}>
+                    <Text style={styles.weekStatLabel}>Week Average</Text>
+                    <Text style={styles.weekStatValue}>
+                      {formatTime(
+                        weekData.reduce((sum, day) => sum + (day.usageHours || day.screenTimeHours || 0), 0) / 7
+                      )}
+                    </Text>
+                  </View>
+                </View>
+                
+                <View style={styles.weekStatItem}>
+                  <Ionicons name="star" size={22} color="#10b981" />
+                  <View style={styles.weekStatTextContainer}>
+                    <Text style={styles.weekStatLabel}>Best Day (Lowest)</Text>
+                    <Text style={styles.weekStatValue}>
+                      {(() => {
+                        const daysWithData = weekData.filter(d => (d.usageHours || d.screenTimeHours || 0) > 0);
+                        if (daysWithData.length === 0) return 'No data';
+                        const bestDay = daysWithData.reduce((best, day) => {
+                          const dayTime = day.usageHours || day.screenTimeHours || 0;
+                          const bestTime = best.usageHours || best.screenTimeHours || 0;
+                          return dayTime < bestTime ? day : best;
+                        });
+                        return `${bestDay.day || bestDay.dayName} (${formatTime(bestDay.usageHours || bestDay.screenTimeHours || 0)})`;
+                      })()}
+                    </Text>
+                  </View>
                 </View>
               </View>
             )}
@@ -396,34 +562,53 @@ export default function ProgressScreen() {
         animationType="fade"
         onRequestClose={() => setSelectedAchievement(null)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => setSelectedAchievement(null)}
+        >
+          <Pressable 
+            style={styles.modalContent}
+            onPress={(e) => e.stopPropagation()}
+          >
             <Ionicons 
               name={selectedAchievement?.icon || 'star'} 
-              size={48} 
+              size={56} 
               color={selectedAchievement?.unlockedDate ? '#FFD700' : '#CBD5E1'} 
+              style={{ marginBottom: 16 }}
             />
-            <Text style={styles.cardTitle}>{selectedAchievement?.title}</Text>
-            <Text style={styles.goalText}>{selectedAchievement?.description}</Text>
-            
-            <Text style={styles.permissionText}>
-              Progress: {selectedAchievement?.currentValue || 0} / {selectedAchievement?.target || 0}
+            <Text style={[styles.cardTitle, { marginBottom: 8, fontSize: 20, textAlign: 'center' }]}>
+              {selectedAchievement?.title}
+            </Text>
+            <Text style={[styles.goalText, { marginBottom: 20, textAlign: 'center', fontSize: 15 }]}>
+              {selectedAchievement?.description}
             </Text>
             
+            <View style={styles.progressInfoContainer}>
+              <Text style={[styles.permissionText, { textAlign: 'center', marginBottom: 0 }]}>
+                Progress: {selectedAchievement?.currentValue || 0} / {selectedAchievement?.target || 0}
+              </Text>
+              <View style={[styles.progressBar, { marginTop: 8, width: '100%' }]}>
+                <View style={[styles.progressFill, { 
+                  width: `${Math.min((selectedAchievement?.progress || 0), 100)}%`,
+                  backgroundColor: '#10b981'
+                }]} />
+              </View>
+            </View>
+            
             {selectedAchievement?.unlockedDate && (
-              <Text style={styles.achievementDesc}>
-                Unlocked on {new Date(selectedAchievement.unlockedDate).toLocaleDateString()}
+              <Text style={[styles.achievementDesc, { marginTop: 12, textAlign: 'center' }]}>
+                🎉 Unlocked on {new Date(selectedAchievement.unlockedDate).toLocaleDateString()}
               </Text>
             )}
             
             <TouchableOpacity
-              style={styles.progressBar}
+              style={styles.modalCloseButton}
               onPress={() => setSelectedAchievement(null)}
             >
-              <Text style={styles.goalText}>Close</Text>
+              <Text style={styles.modalCloseButtonText}>Close</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </ScrollView>
   );
@@ -576,12 +761,50 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f0fdf4',
+    backgroundColor: '#f8fafc',
+  },
+  loadingContent: {
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  circularIconsContainer: {
+    width: 240,
+    height: 240,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    marginBottom: 48,
+  },
+  circularIcon: {
+    position: 'absolute',
+  },
+  iconCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  centerDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#6366f1',
+    position: 'absolute',
+  },
+  loadingIndicatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   loadingText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#64748b',
-    marginTop: 16,
   },
   permissionWarning: {
     flexDirection: 'row',
@@ -632,18 +855,23 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 24,
   },
   modalContent: {
     backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: 24,
+    padding: 32,
     alignItems: 'center',
-    maxWidth: 300,
-    width: '100%',
+    maxWidth: 340,
+    width: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
   },
   weeklyChartContainer: {
     flexDirection: 'row',
@@ -707,5 +935,71 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     textAlign: 'center',
+  },
+  weekAverageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f9ff',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    gap: 8,
+  },
+  weekAverageText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1e40af',
+  },
+  progressInfoContainer: {
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  modalCloseButton: {
+    backgroundColor: '#a855f7',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  modalCloseButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  weekStatsContainer: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    gap: 12,
+  },
+  weekStatItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#faf5ff',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    gap: 12,
+  },
+  weekStatTextContainer: {
+    flex: 1,
+  },
+  weekStatLabel: {
+    fontSize: 13,
+    color: '#64748b',
+    marginBottom: 4,
+  },
+  weekStatValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#581c87',
   },
 });

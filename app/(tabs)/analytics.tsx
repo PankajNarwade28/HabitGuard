@@ -63,15 +63,15 @@ export default function AnalyticsScreen() {
       {/* Today's Top 5 Apps - Vertical Bar Chart */}
       <View style={styles.overviewCard}>
         <Text style={styles.cardTitle}>Today's Top 5 Apps</Text>
-        {dailyData?.topApps && dailyData.topApps.length > 0 ? (
+        {dailyData?.appUsage && dailyData.appUsage.length > 0 ? (
           <View style={styles.verticalChartContainer}>
-            {dailyData.topApps.slice(0, 5).map((app: any, index: number) => {
+            {dailyData.appUsage.slice(0, 5).map((app: any, index: number) => {
               // Calculate max time for scaling bars
-              const maxTime = Math.max(...dailyData.topApps.slice(0, 5).map((a: any) => a.timeSpent));
-              const heightPercentage = (app.timeSpent / maxTime) * 100;
+              const maxTime = Math.max(...dailyData.appUsage.slice(0, 5).map((a: any) => a.totalTimeInForeground));
+              const heightPercentage = (app.totalTimeInForeground / maxTime) * 100;
               
               // Get usage status and color based on time spent
-              const usageInfo = getUsageStatus(app.timeSpent);
+              const usageInfo = getUsageStatus(app.totalTimeInForeground);
               const isPressed = pressedBarIndex === index;
               
               return (
@@ -87,7 +87,7 @@ export default function AnalyticsScreen() {
                       </Text>
                     </View>
                   )}
-                  <Text style={styles.verticalBarValue}>{usageStatsService.formatTime(app.timeSpent)}</Text>
+                  <Text style={styles.verticalBarValue}>{usageStatsService.formatTime(app.totalTimeInForeground)}</Text>
                   <View style={styles.verticalBarOuter}>
                     <View style={[styles.verticalBarInner, { 
                       height: `${heightPercentage}%`, 
@@ -96,7 +96,7 @@ export default function AnalyticsScreen() {
                   </View>
                   <View style={styles.verticalBarLabel}>
                     <AppIcon iconData={app.icon} size={20} />
-                    <Text style={styles.verticalBarText} numberOfLines={1}>{app.appName || app.name}</Text>
+                    <Text style={styles.verticalBarText} numberOfLines={1}>{app.appName}</Text>
                   </View>
                 </Pressable>
               );
@@ -112,7 +112,7 @@ export default function AnalyticsScreen() {
 
       {/* App Usage Breakdown - ALL USER APPS */}
       <View style={styles.breakdownCard}>
-        <Text style={styles.cardTitle}>All Apps Today ({dailyData?.topApps?.length || 0} apps)</Text>
+        <Text style={styles.cardTitle}>All Apps Today ({dailyData?.appUsage?.length || 0} apps)</Text>
         {!hasPermission ? (
           <View style={styles.permissionWarning}>
             <Ionicons name="warning" size={20} color="#f59e0b" />
@@ -120,14 +120,14 @@ export default function AnalyticsScreen() {
               Enable usage access to see detailed app breakdown
             </Text>
           </View>
-        ) : dailyData?.topApps?.length > 0 ? (
-          dailyData.topApps.map((app: any, index: number) => {
+        ) : dailyData?.appUsage?.length > 0 ? (
+          dailyData.appUsage.map((app: any, index: number) => {
             const getBadgeStyle = (timeSpent: number) => {
               if (timeSpent > 7200000) return { style: styles.badgeHigh, text: 'High' }; // > 2 hours
               if (timeSpent > 3600000) return { style: styles.badgeMedium, text: 'Medium' }; // > 1 hour
               return { style: styles.badgeLow, text: 'Healthy' };
             };
-            const badge = getBadgeStyle(app.timeSpent);
+            const badge = getBadgeStyle(app.totalTimeInForeground);
             
             return (
               <View key={index} style={styles.appItem}>
@@ -136,8 +136,8 @@ export default function AnalyticsScreen() {
                     <AppIcon iconData={app.icon} size={24} />
                   </View>
                   <View style={styles.appDetails}>
-                    <Text style={styles.appName}>{app.name}</Text>
-                    <Text style={styles.appTime}>{usageStatsService.formatTime(app.timeSpent)} today</Text>
+                    <Text style={styles.appName}>{app.appName}</Text>
+                    <Text style={styles.appTime}>{usageStatsService.formatTime(app.totalTimeInForeground)} today</Text>
                   </View>
                 </View>
                 <View style={[styles.statusBadge, badge.style]}>
