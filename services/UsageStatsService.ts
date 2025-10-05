@@ -94,15 +94,21 @@ class UsageStatsService {
      * Example: Oct 5, 2025 00:00:00 IST = Oct 4, 2025 18:30:00 UTC
      */
     private getISTDayStartUTC(date: Date): number {
-        // Get the date components from the input date
-        // These represent the IST calendar date we want
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        const day = date.getDate();
+        // Convert the input date to IST and extract date components
+        // Using toLocaleString with IST timezone
+        const options: Intl.DateTimeFormatOptions = { 
+            timeZone: 'Asia/Kolkata',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        };
+        
+        const istDateStr = date.toLocaleString('en-CA', options); // Returns YYYY-MM-DD format
+        const [year, month, day] = istDateStr.split('-').map(Number);
 
-        // Create a UTC timestamp for this date at midnight
-        // Date.UTC creates: Oct 5, 2025 00:00:00 UTC
-        const midnightUTC = Date.UTC(year, month, day, 0, 0, 0, 0);
+        // Create a UTC timestamp for this IST date at midnight UTC
+        // Date.UTC: month is 0-indexed, so subtract 1
+        const midnightUTC = Date.UTC(year, month - 1, day, 0, 0, 0, 0);
         
         // But we want Oct 5, 2025 00:00:00 IST (not UTC)
         // IST = UTC + 5:30, so to get IST midnight in UTC terms:
@@ -267,9 +273,9 @@ class UsageStatsService {
             // 2. Calculate UTC milliseconds for the end of the query period
             let endTimeUTC: number;
             if (isToday) {
-                // For today, end time is the current IST time, converted to UTC
-                // Current IST time - IST offset = Current UTC time
-                endTimeUTC = istTime.getTime() - IST_OFFSET_MS;
+                // For today, end time is the current UTC time (not IST adjusted)
+                // The device time is already in IST, so we just get the current timestamp
+                endTimeUTC = Date.now();
             } else {
                 // For historical dates, end time is 23:59:59.999 IST, converted to UTC
                 // Get tomorrow's IST midnight and subtract 1ms
@@ -287,24 +293,65 @@ class UsageStatsService {
             console.log(`📅 FETCHING REAL ANDROID USAGE DATA for ${dateString} (IST)`);
             console.log(`🕐 IST Range: ${startIST.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})} to ${endIST.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})}`);
             console.log(`📍 UTC Timestamps: ${startTimeUTC} to ${endTimeUTC}`);
+            console.log(`⏱️ Query Duration: ${((endTimeUTC - startTimeUTC) / 3600000).toFixed(2)} hours`);
 
-            // Strategy 1: IST day range query
+            // ⚠️ CRITICAL: queryUsageStats() returns AGGREGATED data that includes yesterday's carryover
+            // We need to use queryEvents() to get individual session events and calculate time only after midnight
+            
+            console.log('🎯 Step 1: Fetching usage events (MOVE_TO_FOREGROUND, MOVE_TO_BACKGROUND)...');
+            let usageEvents: any[] = [];
+            let eventBasedAvailable = false;
+            
+            try {
+                // Query individual events instead of aggregated stats
+                if (this.UsageStats.queryEvents && typeof this.UsageStats.queryEvents === 'function') {
+                    console.log('📞 Calling queryEvents API...');
+                    usageEvents = await this.UsageStats.queryEvents(startTimeUTC, endTimeUTC);
+                    console.log(`✅ Got ${usageEvents?.length || 0} usage events`);
+                    
+                    if (usageEvents && usageEvents.length > 0) {
+                        eventBasedAvailable = true;
+                    } else {
+                        console.log('⚠️ queryEvents returned empty, falling back to queryUsageStats');
+                    }
+                } else {
+                    console.log('⚠️ queryEvents not available on this device, falling back to queryUsageStats');
+                }
+            } catch (eventError) {
+                console.log('⚠️ queryEvents failed:', eventError);
+                console.log('🔄 Falling back to queryUsageStats with enhanced carryover filtering...');
+            }
+            
+            // Process events to calculate today-only usage
+            if (eventBasedAvailable) {
+                console.log('🎉 SUCCESS: Using event-based calculation (accurate, no carryover)!');
+                const processedData = this.processUsageEvents(usageEvents, startTimeUTC, endTimeUTC);
+                console.log('✅ Event-based data processed successfully');
+                return processedData;
+            }
+            
+            // Fallback: Use queryUsageStats (less accurate, includes carryover)
+            console.log('🔄 Fallback: Using queryUsageStats (may include carryover)...');
             const usageStats = await this.UsageStats.queryUsageStats(startTimeUTC, endTimeUTC);
             
             if (usageStats && usageStats.length > 0) {
                 console.log('🎉 SUCCESS: Got real usage data from Android!');
                 
-                // Debug: Show first 3 raw entries
+                // Debug: Show first 3 raw entries with timestamps
                 console.log('🔍 Sample raw data (first 3 apps):', 
                     usageStats.slice(0, 3).map((app: any) => ({
                         pkg: app.packageName,
                         totalTimeInForeground: app.totalTimeInForeground,
-                        totalTime: app.totalTime,
-                        lastTimeUsed: app.lastTimeUsed
+                        firstTimeStamp: app.firstTimeStamp,
+                        firstTimeStampIST: new Date(app.firstTimeStamp || 0).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}),
+                        lastTimeStamp: app.lastTimeStamp,
+                        lastTimeStampIST: new Date(app.lastTimeStamp || 0).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}),
+                        lastTimeUsed: app.lastTimeUsed,
+                        lastTimeUsedIST: new Date(app.lastTimeUsed || 0).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})
                     }))
                 );
                 
-                const processedData = this.processRealUsageStats(usageStats, startTimeUTC, endTimeUTC);
+                const processedData = this.processRealUsageStats(usageStats, startTimeUTC, endTimeUTC, isToday);
                 console.log('✅ Real usage data processed successfully');
                 return processedData;
             } else {
@@ -319,13 +366,151 @@ class UsageStatsService {
     }
     
     /**
-     * Process real usage statistics from Android - NO FILTERING, show ALL apps
+     * Process usage events to calculate today-only screen time
+     * This is the ACCURATE method that excludes yesterday's carryover
      */
-    private processRealUsageStats(usageStats: any[], startTimeUTC: number, endTimeUTC: number): any {
-        console.log('🔄 Processing REAL ANDROID usage stats...');
+    private processUsageEvents(events: any[], startTimeUTC: number, endTimeUTC: number): any {
+        console.log('🔄 Processing usage EVENTS (today-only calculation)...');
+        console.log(`📦 Raw events received: ${events.length} events from Android`);
+        
+        // Group events by package name
+        const packageSessions = new Map<string, { foregroundStart: number | null, totalTime: number, lastUsed: number }>();
+        
+        let systemEventCount = 0;
+        
+        // Process events in chronological order
+        const sortedEvents = events.sort((a: any, b: any) => (a.timeStamp || 0) - (b.timeStamp || 0));
+        
+        for (const event of sortedEvents) {
+            const packageName = event.packageName || '';
+            const eventType = event.eventType;
+            const timestamp = event.timeStamp || 0;
+            
+            // Skip events outside our time range
+            if (timestamp < startTimeUTC || timestamp > endTimeUTC) {
+                continue;
+            }
+            
+            // Filter system apps at event level
+            if (this.isSystemApp(packageName)) {
+                systemEventCount++;
+                continue;
+            }
+            
+            // Initialize package if first time seeing it
+            if (!packageSessions.has(packageName)) {
+                packageSessions.set(packageName, {
+                    foregroundStart: null,
+                    totalTime: 0,
+                    lastUsed: 0
+                });
+            }
+            
+            const session = packageSessions.get(packageName)!;
+            
+            // Event type 1 = MOVE_TO_FOREGROUND
+            // Event type 2 = MOVE_TO_BACKGROUND
+            if (eventType === 1) {
+                // App moved to foreground - start timer
+                session.foregroundStart = Math.max(timestamp, startTimeUTC); // Clamp to today's start
+                session.lastUsed = timestamp;
+            } else if (eventType === 2 && session.foregroundStart !== null) {
+                // App moved to background - calculate session time
+                const sessionEnd = Math.min(timestamp, endTimeUTC); // Clamp to now
+                const sessionDuration = sessionEnd - session.foregroundStart;
+                
+                if (sessionDuration > 0) {
+                    session.totalTime += sessionDuration;
+                }
+                
+                session.foregroundStart = null; // Reset
+                session.lastUsed = timestamp;
+            }
+        }
+        
+        // Handle apps still in foreground (close session at endTimeUTC)
+        for (const [packageName, session] of packageSessions.entries()) {
+            if (session.foregroundStart !== null) {
+                const sessionDuration = endTimeUTC - session.foregroundStart;
+                if (sessionDuration > 0) {
+                    session.totalTime += sessionDuration;
+                }
+            }
+        }
+        
+        console.log(`🚫 System events filtered: ${systemEventCount}`);
+        console.log(`✅ Packages with usage: ${packageSessions.size}`);
+        
+        // Convert to app usage data
+        const aggregatedStats = new Map<string, any>();
+        let backgroundAppCount = 0;
+        
+        for (const [packageName, session] of packageSessions.entries()) {
+            // Filter apps with < 1 min usage
+            if (session.totalTime < 60000) {
+                backgroundAppCount++;
+                continue;
+            }
+            
+            aggregatedStats.set(packageName, {
+                name: this.getReadableAppName(packageName),
+                icon: this.getAppIcon(packageName),
+                packageName: packageName,
+                timeSpent: session.totalTime,
+                lastTimeUsed: session.lastUsed,
+            });
+        }
+        
+        console.log(`🚫 Background apps filtered (< 1 min): ${backgroundAppCount}`);
+        console.log(`✅ User apps included (today only, event-based): ${aggregatedStats.size}`);
+        
+        // Sort by usage time
+        const apps = Array.from(aggregatedStats.values()).sort((a, b) => b.timeSpent - a.timeSpent);
+        const totalAppTime = apps.reduce((sum, app) => sum + app.timeSpent, 0);
+        
+        console.log('📊 Top 10 apps:', apps.slice(0, 10).map(a => `${a.name}: ${this.formatTime(a.timeSpent)}`));
+        console.log(`📱 Total apps: ${apps.length}, Total time: ${this.formatTime(totalAppTime)}`);
+        
+        return {
+            totalTime: totalAppTime,
+            appCount: apps.length,
+            topApps: apps.map((app: any) => ({
+                packageName: app.packageName,
+                name: app.name,
+                appName: app.name,
+                timeSpent: app.timeSpent,
+                totalTimeInForeground: app.timeSpent,
+                lastTimeUsed: app.lastUsed,
+                icon: app.icon
+            })),
+            unlocks: 0,
+            notifications: 0,
+            status: 'success'
+        };
+    }
+    
+    /**
+     * Process real usage statistics from Android - Filter system apps, show user apps only
+     * Enhanced filtering to match Digital Wellbeing accuracy:
+     * 1. Exclude system/background apps
+     * 2. Exclude apps with <1 min foreground time (background services)
+     * 3. Exclude apps whose lastTimeUsed is outside today's range (yesterday carryover)
+     * 4. Cap time to reasonable bounds (max 95% of day duration)
+     * 
+     * ⚠️ LIMITATION: queryUsageStats() returns AGGREGATED totals without session details
+     * - Cannot accurately remove cross-midnight carryover (would need individual session timestamps)
+     * - May show slightly higher times (~5-15 min) than Digital Wellbeing for apps used around midnight
+     * - Use processUsageEvents() for 100% accurate today-only calculation
+     */
+    private processRealUsageStats(usageStats: any[], startTimeUTC: number, endTimeUTC: number, isToday: boolean = true): any {
+        console.log('🔄 Processing REAL ANDROID usage stats (AGGREGATED - may include carryover)...');
         console.log(`📦 Raw data received: ${usageStats.length} apps from Android`);
+        console.log(`⏰ Valid time range: ${new Date(startTimeUTC).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})} to ${new Date(endTimeUTC).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})}`);
 
         const aggregatedStats = new Map<string, any>();
+        let systemAppCount = 0;
+        let backgroundAppCount = 0;
+        let yesterdayCarryoverCount = 0;
         
         usageStats.forEach((app: any) => {
             const packageName = app.packageName || app.name || 'unknown';
@@ -333,37 +518,97 @@ class UsageStatsService {
             // Get time from any available field
             const timeSpent = app.totalTimeInForeground || app.totalTime || app.usageTime || 0;
             const lastUsedUTC = app.lastTimeUsed || app.lastUsedTime || 0;
+            const firstTimeStamp = app.firstTimeStamp || 0;
+            const lastTimeStamp = app.lastTimeStamp || 0;
             
-            // Include ALL apps with ANY usage time (no filtering, no validation)
-            if (timeSpent > 0 || packageName !== 'unknown') {
-                const existing = aggregatedStats.get(packageName);
-                if (existing) {
-                    existing.timeSpent += timeSpent;
-                    existing.lastTimeUsed = Math.max(existing.lastTimeUsed || 0, lastUsedUTC);
-                } else {
-                    aggregatedStats.set(packageName, {
-                        name: this.getReadableAppName(packageName),
-                        icon: this.getAppIcon(packageName),
-                        packageName: packageName,
-                        timeSpent: timeSpent,
-                        lastTimeUsed: lastUsedUTC,
-                    });
-                }
+            // Debug Instagram specifically
+            if (packageName.includes('instagram')) {
+                console.log(`🔍 Instagram Debug:`);
+                console.log(`   Raw time from Android: ${this.formatTime(timeSpent)}`);
+                console.log(`   First timestamp: ${new Date(firstTimeStamp).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})}`);
+                console.log(`   Last timestamp: ${new Date(lastTimeStamp).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})}`);
+                console.log(`   Last used: ${new Date(lastUsedUTC).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})}`);
+                console.log(`   Midnight UTC: ${new Date(startTimeUTC).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})}`);
+            }
+            
+            // ✅ Filter 1: Exclude system apps (Incallui, Launcher3, SystemUI, etc.)
+            if (this.isSystemApp(packageName)) {
+                systemAppCount++;
+                return;
+            }
+            
+            // ✅ Filter 2: Exclude apps with less than 1 minute foreground time (background services)
+            if (timeSpent < 60000) { // Less than 60 seconds
+                backgroundAppCount++;
+                return;
+            }
+            
+            // ✅ Filter 3: Ensure lastTimeUsed is within today's range (no yesterday carryover)
+            // This is the KEY fix - removes apps that haven't been used today
+            if (lastUsedUTC < startTimeUTC || lastUsedUTC > endTimeUTC) {
+                yesterdayCarryoverCount++;
+                console.log(`🚫 Carryover filtered: ${this.getReadableAppName(packageName)} (last used: ${new Date(lastUsedUTC).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})})`);
+                return;
+            }
+            
+            // ⚠️ NOTE: We CANNOT accurately remove cross-midnight carryover from aggregated stats
+            // queryUsageStats() returns total time without individual session details
+            // Only queryEvents() can provide session-level accuracy
+            // For now, just use the reported time and apply basic time capping
+            
+            let cappedTimeSpent = timeSpent;
+            
+            // ✅ Filter 4: Cap time to prevent impossible values
+            // The maximum possible usage time is from midnight to now
+            const maxPossibleTime = (endTimeUTC - startTimeUTC) * 0.95; // 95% safety margin
+            
+            if (cappedTimeSpent > maxPossibleTime) {
+                // Time reported exceeds the possible duration of the day so far
+                console.log(`⚠️ Unrealistic time capped: ${this.getReadableAppName(packageName)} (${this.formatTime(cappedTimeSpent)} → ${this.formatTime(maxPossibleTime)})`);
+                cappedTimeSpent = maxPossibleTime;
+            }
+            
+            // Debug Instagram specifically
+            if (packageName.includes('instagram')) {
+                console.log(`📊 Instagram Debug:`);
+                console.log(`   Android reported time: ${this.formatTime(timeSpent)}`);
+                console.log(`   Final time (after capping): ${this.formatTime(cappedTimeSpent)}`);
+                console.log(`   First used: ${new Date(firstTimeStamp).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})}`);
+                console.log(`   Last used: ${new Date(lastUsedUTC).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})}`);
+            }
+            
+            // ✅ Include valid user apps
+            const existing = aggregatedStats.get(packageName);
+            if (existing) {
+                existing.timeSpent += cappedTimeSpent;
+                existing.lastTimeUsed = Math.max(existing.lastTimeUsed || 0, lastUsedUTC);
+            } else {
+                aggregatedStats.set(packageName, {
+                    name: this.getReadableAppName(packageName),
+                    icon: this.getAppIcon(packageName),
+                    packageName: packageName,
+                    timeSpent: cappedTimeSpent,
+                    originalTimeSpent: timeSpent, // Keep original for debugging
+                    lastTimeUsed: lastUsedUTC,
+                });
             }
         });
         
-        console.log(`✅ Total apps included: ${aggregatedStats.size} (NO FILTERING)`);
+        console.log(`🚫 System apps filtered: ${systemAppCount}`);
+        console.log(`🚫 Background apps filtered (< 1 min): ${backgroundAppCount}`);
+        console.log(`🚫 Yesterday carryover filtered: ${yesterdayCarryoverCount}`);
+        console.log(`✅ User apps included (today only): ${aggregatedStats.size}`);
 
         // Sort by usage time (highest first)
         const apps = Array.from(aggregatedStats.values()).sort((a, b) => b.timeSpent - a.timeSpent);
         
-        // Calculate total time from ALL apps (no exclusions)
+        // Calculate total time from user apps only
         const totalAppTime = apps.reduce((sum, app) => sum + app.timeSpent, 0);
 
         console.log('📊 Top 10 apps:', apps.slice(0, 10).map(a => `${a.name}: ${this.formatTime(a.timeSpent)}`));
         console.log(`📱 Total apps in result: ${apps.length}, Total time: ${this.formatTime(totalAppTime)}`);
 
-        // Return ALL apps (not just top 20)
+        // Return user apps only (not system apps)
         return {
             totalTime: totalAppTime,
             appCount: apps.length,
@@ -556,28 +801,82 @@ class UsageStatsService {
 
     
     /**
-     * Check if an app should be filtered out (only tracker app and true background services).
-     * SIMPLIFIED: Show ALL apps with foreground time > 0, except tracker itself
+     * Check if an app is a system utility/launcher (should be filtered out)
+     * Returns TRUE if the app should be excluded from user-facing statistics
+     * Enhanced to match Digital Wellbeing filtering
      */
-    private shouldFilterApp(packageName: string): boolean {
-        // Filter out tracker app and obvious system background services
-        const appsToFilter = [
-            'habitguard.wellbeing',
-            'com.habitguard.wellbeing',
-            // System UI/background processes that shouldn't be tracked
+    private isSystemApp(packageName: string): boolean {
+        // Exact package matches for specific system apps
+        const blockedPackages = [
+            // Launchers
+            'com.android.launcher3',
+            'com.vivo.launcher',
+            'com.miui.home',
+            'com.samsung.android.launcher',
+            'com.huawei.android.launcher',
+            'com.oppo.launcher',
+            'com.oneplus.launcher',
+            
+            // System UI & Phone
             'com.android.systemui',
-            'com.android.inputmethod',
-            'com.android.keyguard',
-            'com.google.android.gms',  // Google Play Services (pure background)
-            'com.google.android.gsf',
-            'com.android.providers',
+            'com.android.incallui',
+            'com.android.phone',
+            'com.android.telecom',
+            'com.android.server.telecom',
+            
+            // System Services
             'com.android.packageinstaller',
-            'android',  // Generic android package
+            'com.android.permissioncontroller',
+            'com.android.settings',
+            'com.android.vending',
+            
+            // Development
+            'host.exp.exponent',
+            
+            // MediaTek & Device-specific
+            'com.mediatek.ims',
+            'com.google.android.networkstack.tethering',
+            'com.android.cts.priv.ctsshim',
         ];
         
-        return appsToFilter.some(filter =>
-            packageName.toLowerCase().includes(filter.toLowerCase())
-        );
+        // Check exact matches first
+        if (blockedPackages.includes(packageName.toLowerCase())) {
+            return true;
+        }
+        
+        // Check patterns for system apps
+        const lowerPackage = packageName.toLowerCase();
+        
+        // System providers and services
+        if (lowerPackage.startsWith('com.android.providers')) return true;
+        if (lowerPackage.startsWith('com.google.android.gms')) return true;
+        if (lowerPackage.startsWith('com.google.android.gsf')) return true;
+        if (lowerPackage.startsWith('com.google.android.ext')) return true;
+        if (lowerPackage.startsWith('com.google.android.networkstack')) return true;
+        
+        // Input methods and security
+        if (lowerPackage.includes('inputmethod')) return true;
+        if (lowerPackage.includes('keyguard')) return true;
+        
+        // Telecom and IMS services
+        if (lowerPackage.includes('telecom')) return true;
+        if (lowerPackage.includes('.ims')) return true;
+        if (lowerPackage.includes('incallui')) return true;
+        
+        // Device-specific system apps
+        if (lowerPackage.startsWith('com.mediatek')) return true;
+        if (lowerPackage.startsWith('com.qualcomm')) return true;
+        
+        // Generic system identifiers
+        if (lowerPackage === 'android') return true;
+        if (lowerPackage.endsWith('.ctsshim')) return true;
+        
+        return false;
+    }
+
+    private shouldFilterApp(packageName: string): boolean {
+        // Kept for backward compatibility - redirects to isSystemApp
+        return this.isSystemApp(packageName);
     }
 
     /**

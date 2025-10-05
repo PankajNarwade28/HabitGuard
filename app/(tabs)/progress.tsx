@@ -7,6 +7,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,6 +25,7 @@ export default function ProgressScreen() {
   const [dailyGoal, setDailyGoal] = useState(4);
   const [hasPermission, setHasPermission] = useState(false);
   const [todayUsage, setTodayUsage] = useState(0);
+  const [pressedDayIndex, setPressedDayIndex] = useState<number | null>(null);
   const isLoadingRef = useRef(false); // Prevent duplicate calls - using ref to avoid re-renders
   const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Store timeout ref
 
@@ -74,35 +76,87 @@ export default function ProgressScreen() {
       ]).catch(() => false);
       setHasPermission(!!permission);
       
-      // Get user settings for daily goal
+      // Get user settings for daily goal (with timeout protection)
       console.log('📋 Step 1: Getting user settings...');
-      const userSettings = await permissionService.getUserSettings();
-      setDailyGoal(userSettings.dailyGoalHours);
-      console.log('✅ User settings loaded: ' + userSettings.dailyGoalHours + 'h goal');
+      try {
+        const userSettings = await Promise.race([
+          permissionService.getUserSettings(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Settings timeout')), 2000))
+        ]);
+        setDailyGoal((userSettings as any).dailyGoalHours || 4);
+        console.log('✅ User settings loaded: ' + ((userSettings as any).dailyGoalHours || 4) + 'h goal');
+      } catch (error) {
+        console.log('⚠️ Settings timeout, using default 4h goal');
+        setDailyGoal(4);
+      }
       
       // Get streak data (cached, fast)
       console.log('📋 Step 2: Getting streak data...');
-      const streak = await streakService.getStreakData();
-      setStreakData(streak);
-      console.log('✅ Streak data loaded: ' + (streak?.currentStreak || 0) + ' days');
+      try {
+        const streak = await Promise.race([
+          streakService.getStreakData(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Streak timeout')), 2000))
+        ]);
+        setStreakData(streak);
+        console.log('✅ Streak data loaded: ' + ((streak as any)?.currentStreak || 0) + ' days');
+      } catch (error) {
+        console.log('⚠️ Streak timeout, using default data');
+        setStreakData({ currentStreak: 0, bestStreak: 0 });
+      }
       
       // Get achievements (cached, fast) - before week data for speed
       console.log('📋 Step 3: Getting achievements...');
-      const achievementsList = await streakService.getAchievements();
-      setAchievements(achievementsList);
-      console.log('✅ Achievements loaded: ' + achievementsList.length + ' total');
+      try {
+        const achievementsList = await Promise.race([
+          streakService.getAchievements(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Achievements timeout')), 2000))
+        ]);
+        setAchievements(achievementsList as any[]);
+        console.log('✅ Achievements loaded: ' + (achievementsList as any[]).length + ' total');
+      } catch (error) {
+        console.log('⚠️ Achievements timeout, using empty list');
+        setAchievements([]);
+      }
       
       // Get this week's progress (may fetch real data)
       console.log('📋 Step 4: Getting week progress...');
-      const week = await streakService.getThisWeekProgress();
-      setWeekData(week);
-      console.log('✅ Week data loaded: ' + week.length + ' days');
+      try {
+        const week = await Promise.race([
+          streakService.getThisWeekProgress(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Week timeout')), 8000))
+        ]);
+        setWeekData(week as any[]);
+        console.log('✅ Week data loaded: ' + (week as any[]).length + ' days');
+      } catch (error) {
+        console.log('⚠️ Week data timeout, using empty array');
+        // Create fallback week data with today's usage
+        const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const today = new Date();
+        const currentDayOfWeek = (today.getDay() + 6) % 7; // Convert to Mon=0 system
+        const fallbackWeek = dayNames.map((day, index) => ({
+          day,
+          dayName: day,
+          usageHours: index === currentDayOfWeek ? todayUsage : 0,
+          screenTimeHours: index === currentDayOfWeek ? todayUsage : 0,
+          goalMet: index === currentDayOfWeek ? todayUsage <= dailyGoal : false,
+          date: new Date(today.getTime() - (currentDayOfWeek - index) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        }));
+        setWeekData(fallbackWeek);
+      }
       
       // Get weekly stats (uses cached week data)
       console.log('📋 Step 5: Calculating weekly stats...');
-      const stats = await streakService.getWeeklyStats();
-      setWeeklyStats(stats);
-      console.log('✅ Weekly stats loaded: ' + stats.goalsMet + '/' + stats.totalDays + ' goals met');
+      try {
+        const stats = await Promise.race([
+          streakService.getWeeklyStats(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Stats timeout')), 2000))
+        ]);
+        setWeeklyStats(stats);
+        console.log('✅ Weekly stats loaded: ' + ((stats as any).goalsMet || 0) + '/' + ((stats as any).totalDays || 0) + ' goals met');
+      } catch (error) {
+        console.log('⚠️ Stats timeout, using default values');
+        setWeeklyStats({ goalsMet: 0, totalDays: 7, averageUsage: 0, bestDay: 'N/A' });
+      }
       
       // Clear loading state BEFORE fetching today's usage (which can be slow)
       // This allows the UI to show immediately with cached data
@@ -228,23 +282,79 @@ export default function ProgressScreen() {
         )}
       </View>
 
-      {/* This Week Overview */}
+      {/* This Week Overview with Chart */}
       <View style={styles.weeklyCard}>
-        <Text style={styles.cardTitle}>This Week Progress</Text>
-        <Text style={styles.goalText}>
-          {weekData.length > 0 && weeklyStats ? 
-            `${weeklyStats.goalsMet}/${weeklyStats.totalDays} days on track` : 
-            'Loading week data...'
-          }
-        </Text>
-        
-        {weeklyStats && (
-          <View style={styles.achievementItem}>
-            <Ionicons name="calendar" size={24} color="#10b981" />
-            <View style={styles.achievementDetails}>
-              <Text style={styles.achievementName}>Week Average: {formatTime(weeklyStats.averageUsage)}</Text>
-              <Text style={styles.achievementDesc}>Best day: {weeklyStats.bestDay}</Text>
+        <Text style={styles.cardTitle}>Last 7 Days Usage</Text>
+        {weekData.length > 0 ? (
+          <>
+            <Text style={styles.goalText}>
+              {weeklyStats ? `${weeklyStats.goalsMet}/${weeklyStats.totalDays} days on track` : 'Loading stats...'}
+            </Text>
+            
+            {/* Weekly Bar Chart with Usage-Based Colors */}
+            <View style={styles.weeklyChartContainer}>
+              {weekData.map((day: any, index: number) => {
+                const maxTime = Math.max(...weekData.map(d => d.usageHours || d.screenTimeHours || 0), 1);
+                const dayHours = day.usageHours || day.screenTimeHours || 0;
+                const heightPercentage = (dayHours / maxTime) * 100;
+                
+                // Get usage status and color based on hours
+                let usageStatus, usageColor;
+                if (dayHours < 2) {
+                  usageStatus = 'Healthy';
+                  usageColor = '#10b981'; // Green
+                } else if (dayHours < 4) {
+                  usageStatus = 'Moderate';
+                  usageColor = '#f59e0b'; // Amber
+                } else {
+                  usageStatus = 'High';
+                  usageColor = '#ef4444'; // Red
+                }
+                
+                const isPressed = pressedDayIndex === index;
+                
+                return (
+                  <Pressable 
+                    key={index} 
+                    style={styles.weeklyBarColumn}
+                    onPress={() => setPressedDayIndex(isPressed ? null : index)}
+                  >
+                    {isPressed && (
+                      <View style={styles.weeklyTooltip}>
+                        <Text style={[styles.weeklyTooltipText, { color: usageColor }]}>
+                          {usageStatus}
+                        </Text>
+                      </View>
+                    )}
+                    <Text style={styles.weeklyBarValue}>{formatTime(dayHours)}</Text>
+                    <View style={styles.weeklyBarOuter}>
+                      <View style={[styles.weeklyBarInner, { 
+                        height: `${Math.max(heightPercentage, 5)}%`, 
+                        backgroundColor: usageColor 
+                      }]} />
+                    </View>
+                    <Text style={styles.weeklyBarLabel}>{day.day || day.dayName}</Text>
+                  </Pressable>
+                );
+              })}
             </View>
+            
+            {weeklyStats && (
+              <View style={styles.achievementItem}>
+                <Ionicons name="calendar" size={24} color="#10b981" />
+                <View style={styles.achievementDetails}>
+                  <Text style={styles.achievementName}>Week Average: {formatTime(weeklyStats.averageUsage)}</Text>
+                  <Text style={styles.achievementDesc}>Best day: {weeklyStats.bestDay}</Text>
+                </View>
+              </View>
+            )}
+          </>
+        ) : (
+          <View style={styles.permissionWarning}>
+            <Ionicons name="information-circle" size={20} color="#0ea5e9" />
+            <Text style={styles.permissionText}>
+              Loading weekly data... Please wait or pull to refresh
+            </Text>
           </View>
         )}
       </View>
@@ -534,5 +644,68 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     maxWidth: 300,
     width: '100%',
+  },
+  weeklyChartContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+    height: 160,
+    marginVertical: 20,
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 12,
+    marginHorizontal: 4,
+  },
+  weeklyBarColumn: {
+    alignItems: 'center',
+    flex: 1,
+    maxWidth: 45,
+  },
+  weeklyBarValue: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748b',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  weeklyBarOuter: {
+    width: 32,
+    height: 100,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 6,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  weeklyBarInner: {
+    width: '100%',
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 6,
+    minHeight: 4,
+  },
+  weeklyBarLabel: {
+    fontSize: 11,
+    color: '#64748b',
+    fontWeight: '500',
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  weeklyTooltip: {
+    position: 'absolute',
+    top: -30,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 10,
+  },
+  weeklyTooltipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
   },
 });

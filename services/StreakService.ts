@@ -36,6 +36,13 @@ class StreakService {
     WEEKLY_PROGRESS: 'habitguard_weekly_progress'
   };
 
+  // Cache for week progress data (5 minutes cache)
+  private weekProgressCache: { data: WeekData[] | null; timestamp: number } = {
+    data: null,
+    timestamp: 0
+  };
+  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
   /**
    * Get current streak data
    */
@@ -143,6 +150,15 @@ class StreakService {
    */
   async getThisWeekProgress(): Promise<WeekData[]> {
     try {
+      // Check cache first
+      const now = Date.now();
+      if (this.weekProgressCache.data && (now - this.weekProgressCache.timestamp) < this.CACHE_DURATION) {
+        console.log('📦 Using cached week progress data');
+        return this.weekProgressCache.data;
+      }
+
+      console.log('🔄 Fetching fresh week progress data...');
+      
       const userSettings = await permissionService.getUserSettings();
       const today = new Date();
       const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -153,17 +169,18 @@ class StreakService {
       const monday = new Date(today);
       monday.setDate(today.getDate() - daysSinceMonday);
       
-      console.log('📅 Getting weekly progress data...');
-      
-      // Try to get real usage stats
+      // Try to get real usage stats with timeout
       let weeklyUsageData: any = null;
       
       try {
         const { usageStatsService: uss } = await import('./UsageStatsService');
-        weeklyUsageData = await uss.getWeeklyUsageStats();
-        console.log('✅ Got weekly usage stats:', weeklyUsageData);
+        weeklyUsageData = await Promise.race([
+          uss.getWeeklyUsageStats(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Weekly stats timeout')), 4000))
+        ]);
+        console.log('✅ Got weekly usage stats');
       } catch (error) {
-        console.log('⚠️ Could not load usage stats:', error);
+        console.log('⚠️ Could not load usage stats, using stored/default data');
       }
       
       const weekData: WeekData[] = [];
@@ -190,16 +207,12 @@ class StreakService {
         if (weeklyUsageData && weeklyUsageData.dailyBreakdown) {
           // Match by date string
           const realDayData = weeklyUsageData.dailyBreakdown.find((d: any) => {
-            // Try multiple date formats
             const dayDate = d.date || d.dateString || '';
             return dayDate === dateString || dayDate.startsWith(dateString);
           });
           
           if (realDayData) {
             screenTimeHours = (realDayData.totalTime || 0) / (1000 * 60 * 60);
-            console.log(`  ${dayNames[i]}: ${screenTimeHours.toFixed(2)}h from real data`);
-          } else {
-            console.log(`  ${dayNames[i]}: No data found for ${dateString}`);
           }
         }
         
@@ -213,10 +226,23 @@ class StreakService {
         });
       }
       
-      console.log('✅ Weekly progress calculated:', weekData.map(d => `${d.dayName}: ${d.screenTimeHours.toFixed(2)}h`));
+      // Update cache
+      this.weekProgressCache = {
+        data: weekData,
+        timestamp: now
+      };
+      
+      console.log('✅ Weekly progress calculated and cached');
       return weekData;
     } catch (error) {
       console.error('Error getting week progress:', error);
+      
+      // Return cached data if available, even if expired
+      if (this.weekProgressCache.data) {
+        console.log('⚠️ Returning stale cache due to error');
+        return this.weekProgressCache.data;
+      }
+      
       return [];
     }
   }

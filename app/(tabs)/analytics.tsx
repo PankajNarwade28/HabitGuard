@@ -2,17 +2,25 @@ import AppIcon from '@/components/AppIcon';
 import { usageStatsService } from '@/services/UsageStatsService';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function AnalyticsScreen() {
   const [dailyData, setDailyData] = useState<any>(null);
   const [weeklyData, setWeeklyData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasPermission, setHasPermission] = useState(false);
+  const [pressedBarIndex, setPressedBarIndex] = useState<number | null>(null);
 
   useEffect(() => {
     loadAnalyticsData();
   }, []);
+
+  const getUsageStatus = (timeSpent: number) => {
+    const hours = timeSpent / (1000 * 60 * 60);
+    if (hours < 1) return { status: 'Healthy', color: '#10b981' };
+    if (hours < 2) return { status: 'Moderate', color: '#f59e0b' };
+    return { status: 'High', color: '#ef4444' };
+  };
 
   const loadAnalyticsData = async () => {
     try {
@@ -52,18 +60,59 @@ export default function AnalyticsScreen() {
         <Text style={styles.subtitle}>Detailed usage insights</Text>
       </View>
 
-      {/* Weekly Overview */}
+      {/* Today's Top 5 Apps - Vertical Bar Chart */}
       <View style={styles.overviewCard}>
-        <Text style={styles.cardTitle}>Weekly Overview</Text>
-        <View style={styles.chartPlaceholder}>
-          <Ionicons name="bar-chart" size={32} color="#6366f1" />
-          <Text style={styles.chartLabel}>Weekly usage chart</Text>
-        </View>
+        <Text style={styles.cardTitle}>Today's Top 5 Apps</Text>
+        {dailyData?.topApps && dailyData.topApps.length > 0 ? (
+          <View style={styles.verticalChartContainer}>
+            {dailyData.topApps.slice(0, 5).map((app: any, index: number) => {
+              // Calculate max time for scaling bars
+              const maxTime = Math.max(...dailyData.topApps.slice(0, 5).map((a: any) => a.timeSpent));
+              const heightPercentage = (app.timeSpent / maxTime) * 100;
+              
+              // Get usage status and color based on time spent
+              const usageInfo = getUsageStatus(app.timeSpent);
+              const isPressed = pressedBarIndex === index;
+              
+              return (
+                <Pressable 
+                  key={index} 
+                  style={styles.verticalBarColumn}
+                  onPress={() => setPressedBarIndex(isPressed ? null : index)}
+                >
+                  {isPressed && (
+                    <View style={styles.tooltipContainer}>
+                      <Text style={[styles.tooltipText, { color: usageInfo.color }]}>
+                        {usageInfo.status}
+                      </Text>
+                    </View>
+                  )}
+                  <Text style={styles.verticalBarValue}>{usageStatsService.formatTime(app.timeSpent)}</Text>
+                  <View style={styles.verticalBarOuter}>
+                    <View style={[styles.verticalBarInner, { 
+                      height: `${heightPercentage}%`, 
+                      backgroundColor: usageInfo.color 
+                    }]} />
+                  </View>
+                  <View style={styles.verticalBarLabel}>
+                    <AppIcon iconData={app.icon} size={20} />
+                    <Text style={styles.verticalBarText} numberOfLines={1}>{app.appName || app.name}</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : (
+          <View style={styles.chartPlaceholder}>
+            <Ionicons name="bar-chart" size={32} color="#6366f1" />
+            <Text style={styles.chartLabel}>No data for today yet</Text>
+          </View>
+        )}
       </View>
 
-      {/* App Usage Breakdown */}
+      {/* App Usage Breakdown - ALL USER APPS */}
       <View style={styles.breakdownCard}>
-        <Text style={styles.cardTitle}>Top Apps</Text>
+        <Text style={styles.cardTitle}>All Apps Today ({dailyData?.topApps?.length || 0} apps)</Text>
         {!hasPermission ? (
           <View style={styles.permissionWarning}>
             <Ionicons name="warning" size={20} color="#f59e0b" />
@@ -72,7 +121,7 @@ export default function AnalyticsScreen() {
             </Text>
           </View>
         ) : dailyData?.topApps?.length > 0 ? (
-          dailyData.topApps.slice(0, 5).map((app: any, index: number) => {
+          dailyData.topApps.map((app: any, index: number) => {
             const getBadgeStyle = (timeSpent: number) => {
               if (timeSpent > 7200000) return { style: styles.badgeHigh, text: 'High' }; // > 2 hours
               if (timeSpent > 3600000) return { style: styles.badgeMedium, text: 'Medium' }; // > 1 hour
@@ -303,5 +352,73 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#64748b',
     marginTop: 12,
+  },
+  // Vertical Bar Chart styles for today's top 5 apps
+  verticalChartContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+    height: 220,
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 12,
+    marginHorizontal: 4,
+  },
+  verticalBarColumn: {
+    alignItems: 'center',
+    flex: 1,
+    maxWidth: 60,
+  },
+  verticalBarValue: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748b',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  verticalBarOuter: {
+    width: 40,
+    height: 150,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 8,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  verticalBarInner: {
+    width: '100%',
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    minHeight: 8,
+  },
+  verticalBarLabel: {
+    marginTop: 8,
+    alignItems: 'center',
+    width: '100%',
+  },
+  verticalBarText: {
+    fontSize: 10,
+    color: '#1e293b',
+    fontWeight: '500',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  tooltipContainer: {
+    position: 'absolute',
+    top: -30,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 10,
+  },
+  tooltipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
   },
 });
