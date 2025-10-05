@@ -1,4 +1,5 @@
-﻿import { UsageDebugPanel } from '@/components/UsageDebugPanel';
+﻿import AppIcon from '@/components/AppIcon';
+import { UsageDebugPanel } from '@/components/UsageDebugPanel';
 import { usageStatsService } from '@/services/UsageStatsService';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -191,10 +192,12 @@ export default function HomeScreen() {
         ) : usageData?.topApps?.length > 0 ? (
           usageData.topApps.slice(0, 3).map((app: any, index: number) => (
             <View key={index} style={styles.activityItem}>
-              <Text style={styles.appIcon}>{app.icon || '📱'}</Text>
+              <View style={{marginRight: 12, width: 24, alignItems: 'center'}}>
+                <AppIcon iconData={app.icon} size={20} />
+              </View>
               <View style={styles.appInfo}>
-                <Text style={styles.appName}>{app.name}</Text>
-                <Text style={styles.appTime}>{usageStatsService.formatTime(app.timeSpent)}</Text>
+                <Text style={styles.appName}>{app.name || app.appName || app.packageName}</Text>
+                <Text style={styles.appTime}>{usageStatsService.formatTime(app.timeSpent || app.totalTimeInForeground || 0)}</Text>
               </View>
             </View>
           ))
@@ -340,12 +343,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#92400e',
     marginLeft: 6,
-  },
-  appIcon: {
-    fontSize: 20,
-    marginRight: 12,
-    textAlign: 'center',
-    width: 24,
   },
   appInfo: {
     marginLeft: 12,

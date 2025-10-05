@@ -1,3 +1,4 @@
+import AppIcon from '@/components/AppIcon';
 import { usageStatsService } from '@/services/UsageStatsService';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import React, { useEffect, useState } from 'react';
@@ -82,7 +83,9 @@ export default function AnalyticsScreen() {
             return (
               <View key={index} style={styles.appItem}>
                 <View style={styles.appInfo}>
-                  <Text style={styles.appIconAnalytics}>{app.icon || '📱'}</Text>
+                  <View style={{marginRight: 12, width: 28, alignItems: 'center'}}>
+                    <AppIcon iconData={app.icon} size={24} />
+                  </View>
                   <View style={styles.appDetails}>
                     <Text style={styles.appName}>{app.name}</Text>
                     <Text style={styles.appTime}>{usageStatsService.formatTime(app.timeSpent)} today</Text>
@@ -300,11 +303,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#64748b',
     marginTop: 12,
-  },
-  appIconAnalytics: {
-    fontSize: 24,
-    marginRight: 12,
-    textAlign: 'center',
-    width: 28,
   },
 });

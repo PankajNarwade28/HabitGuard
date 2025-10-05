@@ -5,8 +5,9 @@ import React, { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import '../global.css';
 
-import { PermissionModal } from '@/components/PermissionModal';
+import OnboardingScreen from '@/components/OnboardingScreen';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { permissionService } from '@/services/PermissionService';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -14,28 +15,51 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [showPermissionModal, setShowPermissionModal] = useState(false);
-  const [hasPermissions, setHasPermissions] = useState(false); // Start with false to show permission modal
+  const [isLoading, setIsLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    // Show permission modal after a brief delay on first launch
-    const timer = setTimeout(() => {
-      if (!hasPermissions) {
-        setShowPermissionModal(true);
+    checkAppState();
+  }, []);
+
+  const checkAppState = async () => {
+    try {
+      const permissionStatus = await permissionService.getPermissionStatus();
+      
+      // Always check for pending permissions on app start
+      const notificationPermission = await permissionService.checkNotificationPermission();
+      const usageAccessPermission = await permissionService.checkUsageAccessPermission();
+      
+      // Show onboarding if:
+      // 1. First launch or onboarding not completed
+      // 2. Any critical permissions are missing
+      if (permissionStatus.isFirstLaunch || 
+          !permissionStatus.hasCompletedOnboarding ||
+          !notificationPermission ||
+          !usageAccessPermission) {
+        setShowOnboarding(true);
       }
-    }, 1000); // Show after 1 second
-
-    return () => clearTimeout(timer);
-  }, [hasPermissions]);
-
-  const handlePermissionsGranted = () => {
-    setHasPermissions(true);
-    setShowPermissionModal(false);
+    } catch (error) {
+      console.error('Error checking app state:', error);
+      // If error, show onboarding to be safe
+      setShowOnboarding(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleCloseModal = () => {
-    setShowPermissionModal(false);
-  };
+  if (isLoading) {
+    return null; // Or a loading screen
+  }
+
+  if (showOnboarding) {
+    return (
+      <ThemeProvider value={DarkTheme}>
+        <OnboardingScreen />
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider value={DarkTheme}>
@@ -44,12 +68,6 @@ export default function RootLayout() {
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />
-      
-      <PermissionModal
-        visible={showPermissionModal}
-        onPermissionsGranted={handlePermissionsGranted}
-        onClose={handleCloseModal}
-      />
     </ThemeProvider>
   );
 }
