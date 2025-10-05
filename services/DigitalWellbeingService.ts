@@ -196,13 +196,17 @@ class DigitalWellbeingService {
       // Get real daily stats from Android
       const dailyResult = await usageStatsService.getDailyUsageStats();
       
-      if (!dailyResult.success || !dailyResult.hasData) {
+      // Check if we have valid data (status should be 'success' or 'fallback')
+      const hasValidData = dailyResult.status === 'success' || dailyResult.status === 'fallback';
+      const hasAppData = dailyResult.appUsage && dailyResult.appUsage.length > 0;
+      
+      if (!hasValidData || !hasAppData) {
         console.log('⚠️ No real daily usage data available');
         this.processedData = {
           success: false,
           hasData: false,
           status: dailyResult.status || 'no_data',
-          message: dailyResult.message || 'No real usage data available from Android',
+          message: 'No real usage data available from Android',
           data: null
         };
         return;
@@ -234,23 +238,25 @@ class DigitalWellbeingService {
     try {
       console.log('🔄 Processing real Android usage data...');
 
-      const dailyData = dailyResult.data;
-      const weeklyData = weeklyResult.hasData ? weeklyResult.data : [];
+      // dailyResult is DailyUsageStats, not wrapped in .data
+      const dailyData = dailyResult;
+      const weeklyData = weeklyResult.dailyBreakdown || [];
 
       // Process app usage data
       const processedApps: ProcessedAppData[] = dailyData.appUsage.map((app: any, index: number) => {
-        const usageMinutes = Math.round(app.usageTime);
+        const usageTimeMs = app.totalTimeInForeground || 0;
+        const usageMinutes = Math.round(usageTimeMs / 60000); // Convert ms to minutes
         const usageHours = Math.floor(usageMinutes / 60);
         const remainingMinutes = usageMinutes % 60;
 
         return {
           name: app.appName || app.packageName || `App ${index + 1}`,
-          category: app.category || 'Other',
+          category: 'Other', // Category not available in DailyUsageStats
           usageHours,
           usageMinutes: remainingMinutes,
-          launches: app.launches || 0,
-          color: app.color || this.getAppColor(index),
-          percentage: this.calculateAppPercentage(app.usageTime, dailyData.todayUsage)
+          launches: 0, // Launches not available in DailyUsageStats
+          color: app.icon?.color || this.getAppColor(index),
+          percentage: this.calculateAppPercentage(usageMinutes, Math.round(dailyData.totalScreenTime / 60000))
         };
       });
 
@@ -271,11 +277,11 @@ class DigitalWellbeingService {
         status: 'real_data_loaded',
         message: 'Real Android usage data loaded successfully',
         data: {
-          todayUsage: dailyData.todayUsage || 0,
-          todayPickups: dailyData.todayPickups || 0,
-          todayNotifications: dailyData.todayNotifications || 0,
-          firstPickupTime: dailyData.firstPickupTime || 'No data',
-          screenOnTime: dailyData.screenOnTime || 0,
+          todayUsage: Math.round((dailyData.totalScreenTime || 0) / 3600000), // Convert ms to hours
+          todayPickups: 0, // Not available in DailyUsageStats
+          todayNotifications: 0, // Not available in DailyUsageStats
+          firstPickupTime: 'No data', // Not available in DailyUsageStats
+          screenOnTime: Math.round((dailyData.totalScreenTime || 0) / 3600000), // Convert ms to hours
           appUsage: processedApps,
           weeklyData: processedWeekly,
           insights
@@ -301,15 +307,18 @@ class DigitalWellbeingService {
     appUsage: ProcessedAppData[],
     weeklyData: ProcessedWeeklyData[]
   ): ProcessedInsights {
+    // Calculate today's usage in hours
+    const todayUsageHours = Math.round((dailyData.totalScreenTime || 0) / 3600000);
+    
     // Calculate average from weekly data
     const weeklyAverage = weeklyData.length > 0 
       ? weeklyData.reduce((sum, day) => sum + day.usage, 0) / weeklyData.length
-      : dailyData.todayUsage;
+      : todayUsageHours;
 
     const todayVsAverage = {
-      difference: Math.round(((dailyData.todayUsage - weeklyAverage) / weeklyAverage) * 100),
-      isHigher: dailyData.todayUsage > weeklyAverage,
-      text: dailyData.todayUsage > weeklyAverage ? 'above' : 'below'
+      difference: Math.round(((todayUsageHours - weeklyAverage) / weeklyAverage) * 100),
+      isHigher: todayUsageHours > weeklyAverage,
+      text: todayUsageHours > weeklyAverage ? 'above' : 'below'
     };
 
     // Get top app
@@ -317,11 +326,11 @@ class DigitalWellbeingService {
 
     // Determine screen time category
     let screenTimeCategory: 'Low' | 'Moderate' | 'High' | 'Very High';
-    if (dailyData.todayUsage < 2) {
+    if (todayUsageHours < 2) {
       screenTimeCategory = 'Low';
-    } else if (dailyData.todayUsage < 4) {
+    } else if (todayUsageHours < 4) {
       screenTimeCategory = 'Moderate';
-    } else if (dailyData.todayUsage < 6) {
+    } else if (todayUsageHours < 6) {
       screenTimeCategory = 'High';
     } else {
       screenTimeCategory = 'Very High';
@@ -401,9 +410,9 @@ class DigitalWellbeingService {
     return colors[index % colors.length];
   }
 
-  private calculateAppPercentage(appTime: number, totalTime: number): number {
-    if (totalTime === 0) return 0;
-    return Math.round((appTime / (totalTime * 60)) * 100); // Convert hours to minutes for calculation
+  private calculateAppPercentage(appTimeMinutes: number, totalTimeMinutes: number): number {
+    if (totalTimeMinutes === 0) return 0;
+    return Math.round((appTimeMinutes / totalTimeMinutes) * 100);
   }
 
   private getDayName(dateString: string): string {

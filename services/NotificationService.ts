@@ -49,19 +49,30 @@ export class NotificationService {
   }
 
   static async sendSetupCompleteNotification() {
-    const hasPermission = await this.requestPermissions();
-    if (!hasPermission) return;
-
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: '🎉 HabitGuard Setup Complete!',
-        body: 'All permissions granted! We\'re now tracking your screen time to help you build better digital habits.',
-        data: { type: 'setup_complete' },
-        sound: true,
-        priority: Notifications.AndroidNotificationPriority.HIGH,
-      },
-      trigger: null, // Send immediately
-    });
+    try {
+      console.log('🔔 Preparing setup complete notification...');
+      
+      // Check if permission is already granted (don't request again)
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('⚠️ Notification permission not granted. Cannot send notification.');
+        return;
+      }
+      
+      console.log('📤 Scheduling setup complete notification...');
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '🎉 HabitGuard Setup Complete!',
+          body: 'All permissions granted! We\'re now tracking your screen time to help you build better digital habits.',
+          data: { type: 'setup_complete' },
+        },
+        trigger: null, // Send immediately
+      });
+      
+      console.log('✅ Setup complete notification scheduled successfully!');
+    } catch (error) {
+      console.error('❌ Error sending setup complete notification:', error);
+    }
   }
 
   static async scheduleSleepReminder(bedtime: string) {
@@ -90,10 +101,11 @@ export class NotificationService {
         data: { type: 'sleep_reminder', bedtime },
       },
       trigger: {
+        type: 'daily' as const,
         hour: reminderHours,
         minute: reminderMinutes,
         repeats: true,
-      },
+      } as any, // Type assertion needed for expo-notifications calendar trigger
     });
   }
 
@@ -142,12 +154,11 @@ export class NotificationService {
         data: { type: 'weekly_report', data: screenTimeData },
       },
       trigger: {
-        type: 'calendar',
-        weekday: 1, // Monday
+        weekday: 2, // Monday (1-based, so 2 for Monday)
         hour: 9,
         minute: 0,
         repeats: true,
-      },
+      } as any, // Type assertion needed for expo-notifications calendar trigger
     });
   }
 
