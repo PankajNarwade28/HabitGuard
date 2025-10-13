@@ -1,13 +1,15 @@
 ﻿import AppIcon from '@/components/AppIcon';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import { UsageDebugPanel } from '@/components/UsageDebugPanel';
+import { useUser } from '@/contexts/UserContext';
 import { usageStatsService } from '@/services/UsageStatsService';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppState, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
+  const { user } = useUser();
   const [usageData, setUsageData] = useState<any>(null);
   const [usageStatus, setUsageStatus] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -110,7 +112,7 @@ export default function HomeScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Welcome Back!</Text>
+        <Text style={styles.title}>Welcome Back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}!</Text>
         <Text style={styles.subtitle}>Your digital wellness dashboard</Text>
       </View>
 

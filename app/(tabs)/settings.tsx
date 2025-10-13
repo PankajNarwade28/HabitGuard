@@ -1,8 +1,51 @@
-﻿import React from 'react';
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+﻿import { useUser } from '@/contexts/UserContext';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function SettingsScreen() {
+  const { user, logout, refreshUserData } = useUser();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Refresh user data when screen is focused
+    refreshUserData();
+  }, []);
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            await logout();
+            setLoading(false);
+            // Router will automatically redirect to login via _layout.tsx
+          },
+        },
+      ]
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#16a34a" />
+        <Text style={{ color: '#14532d', marginTop: 10 }}>Logging out...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -17,10 +60,19 @@ export default function SettingsScreen() {
             <Ionicons name="person" size={32} color="#ffffff" />
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>John Doe</Text>
-            <Text style={styles.profileEmail}>john.doe@example.com</Text>
+            <Text style={styles.profileName}>{user?.name || 'User'}</Text>
+            <Text style={styles.profileEmail}>{user?.email || 'No email'}</Text>
+            {user?.age && (
+              <Text style={styles.profileDetail}>Age: {user.age}</Text>
+            )}
+            {user?.education && (
+              <Text style={styles.profileDetail}>{user.education}</Text>
+            )}
+            {user?.mobile_no && (
+              <Text style={styles.profileDetail}>📱 {user.mobile_no}</Text>
+            )}
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => Alert.alert('Coming Soon', 'Profile editing will be available soon!')}>
             <Ionicons name="pencil" size={20} color="#64748b" />
           </TouchableOpacity>
         </View>
@@ -75,7 +127,7 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-forward" size={20} color="#64748b" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={styles.settingItem} onPress={handleLogout}>
           <View style={styles.settingLeft}>
             <Ionicons name="log-out" size={20} color="#ef4444" />
             <Text style={[styles.settingText, { color: '#ef4444' }]}>Sign Out</Text>
@@ -162,6 +214,11 @@ const styles = StyleSheet.create({
   },
   profileEmail: {
     fontSize: 14,
+    color: '#64748b',
+    marginTop: 2,
+  },
+  profileDetail: {
+    fontSize: 12,
     color: '#64748b',
     marginTop: 2,
   },

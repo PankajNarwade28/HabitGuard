@@ -49,19 +49,57 @@ export class NotificationService {
   }
 
   static async sendSetupCompleteNotification() {
-    const hasPermission = await this.requestPermissions();
-    if (!hasPermission) return;
+    try {
+      console.log('🔔 Preparing setup complete notification...');
+      
+      // Check if permission is already granted (don't request again)
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('⚠️ Notification permission not granted. Cannot send notification.');
+        return;
+      }
+      
+      console.log('📤 Scheduling setup complete notification...');
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '🎉 HabitGuard Setup Complete!',
+          body: 'All permissions granted! We\'re now tracking your screen time to help you build better digital habits.',
+          data: { type: 'setup_complete' },
+        },
+        trigger: null, // Send immediately
+      });
+      
+      console.log('✅ Setup complete notification scheduled successfully!');
+    } catch (error) {
+      console.error('❌ Error sending setup complete notification:', error);
+    }
+  }
 
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: '🎉 HabitGuard Setup Complete!',
-        body: 'All permissions granted! We\'re now tracking your screen time to help you build better digital habits.',
-        data: { type: 'setup_complete' },
-        sound: true,
-        priority: Notifications.AndroidNotificationPriority.HIGH,
-      },
-      trigger: null, // Send immediately
-    });
+  static async sendLoginReminderNotification() {
+    try {
+      console.log('🔔 Preparing login reminder notification...');
+      
+      // Check if permission is already granted
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('⚠️ Notification permission not granted. Cannot send notification.');
+        return;
+      }
+      
+      console.log('📤 Scheduling login reminder notification...');
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '🔐 Login to HabitGuard',
+          body: 'Login to unlock personalized insights, sync your data, and track your progress!',
+          data: { type: 'login_reminder' },
+        },
+        trigger: null, // Send immediately
+      });
+      
+      console.log('✅ Login reminder notification sent successfully!');
+    } catch (error) {
+      console.error('❌ Error sending login reminder notification:', error);
+    }
   }
 
   static async scheduleSleepReminder(bedtime: string) {
@@ -90,10 +128,11 @@ export class NotificationService {
         data: { type: 'sleep_reminder', bedtime },
       },
       trigger: {
+        type: 'daily' as const,
         hour: reminderHours,
         minute: reminderMinutes,
         repeats: true,
-      },
+      } as any, // Type assertion needed for expo-notifications calendar trigger
     });
   }
 
@@ -142,12 +181,11 @@ export class NotificationService {
         data: { type: 'weekly_report', data: screenTimeData },
       },
       trigger: {
-        type: 'calendar',
-        weekday: 1, // Monday
+        weekday: 2, // Monday (1-based, so 2 for Monday)
         hour: 9,
         minute: 0,
         repeats: true,
-      },
+      } as any, // Type assertion needed for expo-notifications calendar trigger
     });
   }
 

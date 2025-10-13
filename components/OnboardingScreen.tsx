@@ -1,17 +1,18 @@
+import { authService } from '@/services/AuthService';
 import { permissionService } from '@/services/PermissionService';
 import { usageStatsService } from '@/services/UsageStatsService';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Dimensions,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -75,10 +76,17 @@ export default function OnboardingScreen() {
     } else if (!usageAccessPermission) {
       setCurrentStep(2); // Start from usage access permission step
     } else {
-      // All permissions granted, check if we should complete onboarding
+      // All permissions granted, check if we should redirect
       const status = await permissionService.getPermissionStatus();
       if (status.hasCompletedOnboarding) {
-        router.replace('/(tabs)');
+        // Check authentication status
+        const isAuthenticated = await authService.isAuthenticated();
+        
+        if (isAuthenticated) {
+          router.replace('/(tabs)');
+        } else {
+          router.replace('/login' as any);
+        }
       }
     }
   }
@@ -177,9 +185,20 @@ export default function OnboardingScreen() {
       return;
     }
     
+    // Mark onboarding as complete
     await permissionService.completeOnboarding();
     await permissionService.markAppAsLaunched();
-    router.replace('/(tabs)');
+    
+    // After permissions are granted, check if user is authenticated
+    const isAuthenticated = await authService.isAuthenticated();
+    
+    if (isAuthenticated) {
+      // User is authenticated, go to main app
+      router.replace('/(tabs)');
+    } else {
+      // User is not authenticated, go to login
+      router.replace('/login' as any);
+    }
   }
 
   function nextStep() {
