@@ -1,4 +1,4 @@
-import { useUser } from '@/contexts/UserContext';
+import { authService } from '@/services/AuthService';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -17,7 +17,6 @@ import {
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -51,19 +50,26 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      await login(email.trim(), password);
+      const response = await authService.login({
+        email: email.trim(),
+        password,
+      });
 
-      Alert.alert('Success', 'Login successful! 🎉', [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Navigate to main app
-            router.replace('/(tabs)');
+      if (response.success) {
+        Alert.alert('Success', 'Login successful!', [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Navigate to main app
+              router.replace('/(tabs)');
+            },
           },
-        },
-      ]);
+        ]);
+      } else {
+        Alert.alert('Login Failed', response.message || 'Invalid credentials');
+      }
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Invalid credentials');
+      Alert.alert('Error', error.message || 'Failed to login');
     } finally {
       setLoading(false);
     }

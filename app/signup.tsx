@@ -1,4 +1,4 @@
-import { useUser } from '@/contexts/UserContext';
+import { authService } from '@/services/AuthService';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -17,7 +17,6 @@ import {
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { signup } = useUser();
   const [formData, setFormData] = useState({
     name: '',
     age: '',
@@ -89,7 +88,7 @@ export default function SignupScreen() {
 
     setLoading(true);
     try {
-      await signup({
+      const response = await authService.signup({
         name: formData.name.trim(),
         age: formData.age ? Number(formData.age) : undefined,
         education: formData.education.trim() || undefined,
@@ -98,17 +97,21 @@ export default function SignupScreen() {
         password: formData.password,
       });
 
-      Alert.alert('Success', 'Account created successfully! 🎉', [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Navigate to main app
-            router.replace('/(tabs)');
+      if (response.success) {
+        Alert.alert('Success', 'Account created successfully!', [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Navigate to main app
+              router.replace('/(tabs)');
+            },
           },
-        },
-      ]);
+        ]);
+      } else {
+        Alert.alert('Signup Failed', response.message || 'Failed to create account');
+      }
     } catch (error: any) {
-      Alert.alert('Signup Failed', error.message || 'Failed to create account');
+      Alert.alert('Error', error.message || 'Failed to signup');
     } finally {
       setLoading(false);
     }
