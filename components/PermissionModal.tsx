@@ -109,7 +109,15 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
 
   const sendSetupCompleteNotification = async () => {
     try {
+      console.log('🔔 Sending setup complete notification from modal...');
       const Notifications = require('expo-notifications');
+      
+      // Check permission first
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('⚠️ Notification permission not granted, skipping notification');
+        return;
+      }
       
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -120,9 +128,9 @@ export const PermissionModal: React.FC<PermissionModalProps> = ({
         trigger: null, // Send immediately
       });
       
-      console.log('✅ Setup complete notification sent');
+      console.log('✅ Setup complete notification sent from modal!');
     } catch (error) {
-      console.error('Failed to send setup notification:', error);
+      console.error('❌ Failed to send setup notification:', error);
     }
   };
 

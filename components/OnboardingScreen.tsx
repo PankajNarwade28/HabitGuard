@@ -1,4 +1,5 @@
 import { authService } from '@/services/AuthService';
+import { NotificationService } from '@/services/NotificationService';
 import { permissionService } from '@/services/PermissionService';
 import { usageStatsService } from '@/services/UsageStatsService';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -171,33 +172,32 @@ export default function OnboardingScreen() {
   }
 
   async function completeOnboarding() {
-    // Check if usage access is granted before completing
-    const hasUsageAccess = await permissionService.checkUsageAccessPermission();
-    
-    if (!hasUsageAccess) {
-      Alert.alert(
-        'Permission Required',
-        'Usage access permission is required to use HabitGuard. Please grant the permission to continue.',
-        [
-          { text: 'Grant Permission', onPress: handleUsageAccessPermission }
-        ]
-      );
-      return;
-    }
-    
-    // Mark onboarding as complete
-    await permissionService.completeOnboarding();
-    await permissionService.markAppAsLaunched();
-    
-    // After permissions are granted, check if user is authenticated
-    const isAuthenticated = await authService.isAuthenticated();
-    
-    if (isAuthenticated) {
-      // User is authenticated, go to main app
+    try {
+      // Check if usage access is granted before completing
+      const hasUsageAccess = await permissionService.checkUsageAccessPermission();
+      
+      if (!hasUsageAccess) {
+        Alert.alert(
+          'Permission Required',
+          'Usage access permission is required to use HabitGuard. Please grant the permission to continue.',
+          [
+            { text: 'Grant Permission', onPress: handleUsageAccessPermission }
+          ]
+        );
+        return;
+      }
+      
+      await permissionService.completeOnboarding();
+      await permissionService.markAppAsLaunched();
+      
+      // Send setup complete notification
+      console.log('🔔 Sending setup complete notification...');
+      await NotificationService.sendSetupCompleteNotification();
+      console.log('✅ Setup complete notification sent!');
+      
       router.replace('/(tabs)');
-    } else {
-      // User is not authenticated, go to login
-      router.replace('/login' as any);
+    } catch (error) {
+      console.error('❌ Error completing onboarding:', error);
     }
   }
 
