@@ -1,4 +1,5 @@
 import { authService } from '@/services/AuthService';
+import { NotificationService } from '@/services/NotificationService';
 import { useRouter } from 'expo-router';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
@@ -57,6 +58,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if (response.success && response.data) {
         setUser(response.data);
         setIsAuthenticated(true);
+        
+        // Send login success notification
+        await NotificationService.sendLoginSuccessNotification(response.data.name);
       } else {
         throw new Error(response.message || 'Login failed');
       }
@@ -72,6 +76,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if (response.success && response.data) {
         setUser(response.data);
         setIsAuthenticated(true);
+        
+        // Send signup success notification
+        await NotificationService.sendSignupSuccessNotification(response.data.name);
       } else {
         throw new Error(response.message || 'Signup failed');
       }
@@ -86,6 +93,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
       await authService.logout();
       setUser(null);
       setIsAuthenticated(false);
+      
+      // Send logout notification
+      await NotificationService.sendLogoutNotification();
       
       // Force a hard reset by reloading the app state
       // This will trigger _layout.tsx to re-check auth and show login screen

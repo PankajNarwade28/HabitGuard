@@ -1,9 +1,14 @@
 ﻿import AuthMonitor from '@/components/AuthMonitor';
+import { WatchtimeNotificationModal } from '@/components/WatchtimeNotificationModal';
+import { useWatchtimeMonitor } from '@/hooks/useWatchtimeMonitor';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 
 export default function TabLayout() {
+  // Start watchtime monitoring
+  useWatchtimeMonitor();
+
   return (
     <>
       <Tabs
@@ -63,6 +68,7 @@ export default function TabLayout() {
       />
       </Tabs>
       <AuthMonitor />
+      <WatchtimeNotificationModal />
     </>
   );
 }

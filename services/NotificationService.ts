@@ -102,6 +102,302 @@ export class NotificationService {
     }
   }
 
+  static async sendLoginSuccessNotification(userName?: string) {
+    try {
+      console.log('🔔 Preparing login success notification...');
+      
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('⚠️ Notification permission not granted. Cannot send notification.');
+        return;
+      }
+      
+      const welcomeMessage = userName 
+        ? `Welcome back, ${userName}! Your data is now synced.` 
+        : 'Welcome back! Your data is now synced.';
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '✅ Login Successful',
+          body: welcomeMessage,
+          data: { type: 'login_success' },
+        },
+        trigger: null, // Send immediately
+      });
+      
+      console.log('✅ Login success notification sent successfully!');
+    } catch (error) {
+      console.error('❌ Error sending login success notification:', error);
+    }
+  }
+
+  static async sendSignupSuccessNotification(userName?: string) {
+    try {
+      console.log('🔔 Preparing signup success notification...');
+      
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('⚠️ Notification permission not granted. Cannot send notification.');
+        return;
+      }
+      
+      const welcomeMessage = userName 
+        ? `Welcome to HabitGuard, ${userName}! Your account has been created successfully.` 
+        : 'Welcome to HabitGuard! Your account has been created successfully.';
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '🎉 Account Created',
+          body: welcomeMessage,
+          data: { type: 'signup_success' },
+        },
+        trigger: null, // Send immediately
+      });
+      
+      console.log('✅ Signup success notification sent successfully!');
+    } catch (error) {
+      console.error('❌ Error sending signup success notification:', error);
+    }
+  }
+
+  static async sendLogoutNotification() {
+    try {
+      console.log('🔔 Preparing logout notification...');
+      
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('⚠️ Notification permission not granted. Cannot send notification.');
+        return;
+      }
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '👋 Logged Out',
+          body: 'You have been logged out successfully. Your local data remains safe.',
+          data: { type: 'logout' },
+        },
+        trigger: null, // Send immediately
+      });
+      
+      console.log('✅ Logout notification sent successfully!');
+    } catch (error) {
+      console.error('❌ Error sending logout notification:', error);
+    }
+  }
+
+  static async sendDailyWatchtimeNotification(
+    totalMinutes: number,
+    dailyGoalMinutes: number = 180, // 3 hours default
+    isDismissable: boolean = true
+  ) {
+    try {
+      console.log('🔔 Preparing daily watchtime notification...');
+      
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('⚠️ Notification permission not granted. Cannot send notification.');
+        return;
+      }
+
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = Math.round(totalMinutes % 60);
+      const timeString = hours > 0 
+        ? `${hours}h ${minutes}m` 
+        : `${minutes}m`;
+
+      const goalHours = Math.floor(dailyGoalMinutes / 60);
+      const goalMinutes = Math.round(dailyGoalMinutes % 60);
+      const goalString = goalHours > 0 
+        ? `${goalHours}h ${goalMinutes}m` 
+        : `${goalMinutes}m`;
+
+      // Determine status and message
+      let title = '';
+      let body = '';
+      let emoji = '';
+      
+      const percentageOfGoal = (totalMinutes / dailyGoalMinutes) * 100;
+
+      if (percentageOfGoal <= 50) {
+        // Excellent - under 50% of goal
+        emoji = '🌟';
+        title = `${emoji} Excellent Digital Wellness!`;
+        body = `Today's screen time: ${timeString}\nYou're doing amazing! Only ${percentageOfGoal.toFixed(0)}% of your ${goalString} daily goal.`;
+      } else if (percentageOfGoal <= 80) {
+        // Good - 50-80% of goal
+        emoji = '✅';
+        title = `${emoji} Great Job!`;
+        body = `Today's screen time: ${timeString}\nYou're on track! ${percentageOfGoal.toFixed(0)}% of your ${goalString} goal used.`;
+      } else if (percentageOfGoal <= 100) {
+        // Approaching limit - 80-100% of goal
+        emoji = '⚠️';
+        title = `${emoji} Approaching Your Limit`;
+        body = `Today's screen time: ${timeString}\nYou've used ${percentageOfGoal.toFixed(0)}% of your ${goalString} goal. Consider taking a break!`;
+      } else if (percentageOfGoal <= 120) {
+        // Over limit - 100-120% of goal
+        emoji = '⏰';
+        title = `${emoji} Goal Exceeded`;
+        body = `Today's screen time: ${timeString}\nYou've exceeded your ${goalString} goal by ${(percentageOfGoal - 100).toFixed(0)}%. Time to unwind!`;
+      } else {
+        // Way over limit - >120% of goal
+        emoji = '🚨';
+        title = `${emoji} High Screen Time Alert`;
+        body = `Today's screen time: ${timeString}\nYou've used ${percentageOfGoal.toFixed(0)}% of your ${goalString} goal. Take a longer break for your wellbeing!`;
+      }
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data: { 
+            type: 'daily_watchtime',
+            totalMinutes,
+            dailyGoalMinutes,
+            percentageOfGoal,
+            isDismissable,
+          },
+          sticky: !isDismissable, // Non-dismissable if specified
+          priority: percentageOfGoal > 100 ? 'high' : 'default',
+        },
+        trigger: null, // Send immediately
+      });
+      
+      console.log('✅ Daily watchtime notification sent successfully!');
+    } catch (error) {
+      console.error('❌ Error sending daily watchtime notification:', error);
+    }
+  }
+
+  static async sendDataSyncNotification(success: boolean, message?: string) {
+    try {
+      console.log('🔔 Preparing data sync notification...');
+      
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('⚠️ Notification permission not granted. Cannot send notification.');
+        return;
+      }
+
+      const title = success ? '☁️ Data Synced' : '⚠️ Sync Failed';
+      const body = message || (success 
+        ? 'Your usage data has been synced to the cloud successfully.' 
+        : 'Failed to sync your data. Please check your internet connection.');
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data: { type: 'data_sync', success },
+        },
+        trigger: null, // Send immediately
+      });
+      
+      console.log('✅ Data sync notification sent successfully!');
+    } catch (error) {
+      console.error('❌ Error sending data sync notification:', error);
+    }
+  }
+
+  static async sendMilestoneNotification(milestone: string, description: string) {
+    try {
+      console.log('🔔 Preparing milestone notification...');
+      
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('⚠️ Notification permission not granted. Cannot send notification.');
+        return;
+      }
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: `🏆 ${milestone}`,
+          body: description,
+          data: { type: 'milestone', milestone },
+        },
+        trigger: null, // Send immediately
+      });
+      
+      console.log('✅ Milestone notification sent successfully!');
+    } catch (error) {
+      console.error('❌ Error sending milestone notification:', error);
+    }
+  }
+
+  static async scheduleDailyWatchtimeSummary(hour: number = 20, minute: number = 0) {
+    try {
+      console.log('🔔 Scheduling daily watchtime summary notification...');
+      
+      const hasPermission = await this.requestPermissions();
+      if (!hasPermission) {
+        console.log('⚠️ Notification permission not granted.');
+        return;
+      }
+
+      // Cancel any existing daily summary notifications
+      await this.cancelNotificationsByType('daily_watchtime_scheduled');
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '📊 Daily Summary Ready',
+          body: 'Tap to see your screen time report for today and insights!',
+          data: { type: 'daily_watchtime_scheduled' },
+        },
+        trigger: {
+          hour,
+          minute,
+          repeats: true,
+        } as any,
+      });
+      
+      console.log(`✅ Daily watchtime summary scheduled for ${hour}:${minute.toString().padStart(2, '0')}`);
+    } catch (error) {
+      console.error('❌ Error scheduling daily watchtime summary:', error);
+    }
+  }
+
+  static async sendStreakNotification(streakDays: number, streakType: 'screen_time' | 'app_limit' | 'goal_met') {
+    try {
+      console.log('🔔 Preparing streak notification...');
+      
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('⚠️ Notification permission not granted. Cannot send notification.');
+        return;
+      }
+
+      let title = '';
+      let body = '';
+      
+      switch (streakType) {
+        case 'screen_time':
+          title = `🔥 ${streakDays} Day Streak!`;
+          body = `Amazing! You've maintained healthy screen time for ${streakDays} days in a row. Keep it up!`;
+          break;
+        case 'app_limit':
+          title = `🎯 ${streakDays} Day App Limit Streak!`;
+          body = `Incredible! You've stayed within app limits for ${streakDays} consecutive days!`;
+          break;
+        case 'goal_met':
+          title = `⭐ ${streakDays} Day Goal Streak!`;
+          body = `Outstanding! You've met your daily goals for ${streakDays} days straight!`;
+          break;
+      }
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data: { type: 'streak', streakDays, streakType },
+        },
+        trigger: null,
+      });
+      
+      console.log('✅ Streak notification sent successfully!');
+    } catch (error) {
+      console.error('❌ Error sending streak notification:', error);
+    }
+  }
+
   static async scheduleSleepReminder(bedtime: string) {
     const hasPermission = await this.requestPermissions();
     if (!hasPermission) return;

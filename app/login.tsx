@@ -1,22 +1,23 @@
-import { authService } from '@/services/AuthService';
+import { useUser } from '@/contexts/UserContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { login } = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -50,26 +51,19 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const response = await authService.login({
-        email: email.trim(),
-        password,
-      });
+      await login(email.trim(), password);
 
-      if (response.success) {
-        Alert.alert('Success', 'Login successful!', [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Navigate to main app
-              router.replace('/(tabs)');
-            },
+      Alert.alert('Success', 'Login successful! 🎉', [
+        {
+          text: 'OK',
+          onPress: () => {
+            // Navigate to main app
+            router.replace('/(tabs)');
           },
-        ]);
-      } else {
-        Alert.alert('Login Failed', response.message || 'Invalid credentials');
-      }
+        },
+      ]);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to login');
+      Alert.alert('Login Failed', error.message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
