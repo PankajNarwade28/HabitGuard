@@ -1,5 +1,8 @@
 # HabitGuard ML Integration
 
+
+// todo student section and student portal
+
 This directory contains the Machine Learning components for analyzing mobile usage patterns and providing personalized recommendations.
 
 ## Features
