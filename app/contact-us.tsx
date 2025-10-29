@@ -60,62 +60,62 @@ export default function ContactUsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-green-50">
+    <View style={{flex: 1, backgroundColor: "#f0fdf4"}}>
       {/* Header */}
-      <View className="bg-green-600 pt-12 pb-6 px-4">
-        <View className="flex-row items-center mb-4">
-          <TouchableOpacity onPress={() => router.back()} className="mr-4">
+      <View style={{backgroundColor: "#16a34a", paddingTop: 48, paddingBottom: 24, paddingHorizontal: 16}}>
+        <View style={{flexDirection: "row", alignItems: "center", marginBottom: 16}}>
+          <TouchableOpacity onPress={() => router.back()} style={{marginRight: 16}}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold text-white">Contact Us</Text>
+          <Text style={{fontSize: 24, fontWeight: "bold", color: "#ffffff"}}>Contact Us</Text>
         </View>
-        <Text className="text-green-100 text-base">We're here to help you!</Text>
+        <Text style={{fontSize: 16, color: "#dcfce7"}}>We're here to help you!</Text>
       </View>
 
-      <ScrollView className="flex-1 px-4 py-6">
+      <ScrollView style={{flex: 1, paddingHorizontal: 16, paddingVertical: 24}}>
         {/* Main Contact Card */}
-        <View className="bg-white rounded-lg p-6 mb-4 shadow">
-          <View className="items-center mb-4">
-            <View className="bg-green-100 rounded-full p-4 mb-4">
+        <View style={{backgroundColor: "#ffffff", borderRadius: 16, padding: 24, marginBottom: 16, shadowColor: "#16a34a", shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4}}>
+          <View style={{alignItems: "center", marginBottom: 16}}>
+            <View style={{backgroundColor: "#dcfce7", borderRadius: 999, padding: 16, marginBottom: 16}}>
               <Ionicons name="mail" size={40} color="#16a34a" />
             </View>
-            <Text className="text-xl font-bold text-gray-800 mb-2">Get in Touch</Text>
-            <Text className="text-base text-gray-600 text-center leading-6">
+            <Text style={{fontSize: 20, fontWeight: "bold", color: "#1e293b", marginBottom: 8}}>Get in Touch</Text>
+            <Text style={{fontSize: 16, color: "#64748b", textAlign: "center", lineHeight: 24}}>
               Have questions, feedback, or need support? We'd love to hear from you!
             </Text>
           </View>
 
           <TouchableOpacity
-            className="bg-green-600 rounded-lg py-4 flex-row items-center justify-center"
+            style={{backgroundColor: "#16a34a", borderRadius: 16, paddingVertical: 16, flexDirection: "row", alignItems: "center", justifyContent: "center"}}
             onPress={() => sendEmail('support')}
           >
             <Ionicons name="send" size={20} color="white" />
-            <Text className="text-white font-semibold text-base ml-2">
+            <Text style={{color: "#ffffff", fontWeight: "600", fontSize: 16, marginLeft: 8}}>
               Email Support Team
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Contact Options */}
-        <View className="bg-white rounded-lg p-4 mb-4 shadow">
-          <Text className="text-lg font-bold text-gray-800 mb-4">Contact Options</Text>
+        <View style={{backgroundColor: "#ffffff", borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: "#16a34a", shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4}}>
+          <Text style={{fontSize: 18, fontWeight: "bold", color: "#1e293b", marginBottom: 16}}>Contact Options</Text>
 
           {/* General Support */}
           <TouchableOpacity
-            className="flex-row items-start p-4 bg-gray-50 rounded-lg mb-3"
+            style={{flexDirection: "row", alignItems: "flex-start", padding: 16, backgroundColor: "#f9fafb", borderRadius: 16, marginBottom: 12}}
             onPress={() => sendEmail('support')}
           >
-            <View className="bg-green-100 rounded-full p-3 mr-4">
+            <View style={{backgroundColor: "#dcfce7", borderRadius: 999, padding: 12, marginRight: 16}}>
               <Ionicons name="help-circle" size={24} color="#16a34a" />
             </View>
-            <View className="flex-1">
-              <Text className="text-base font-semibold text-gray-800 mb-1">
+            <View style={{flex: 1}}>
+              <Text style={{fontSize: 16, fontWeight: "600", color: "#1e293b", marginBottom: 4}}>
                 General Support
               </Text>
-              <Text className="text-sm text-gray-600 mb-2 leading-5">
+              <Text style={{fontSize: 14, color: "#64748b", marginBottom: 8, lineHeight: 20}}>
                 Questions, technical issues, or need help?
               </Text>
-              <Text className="text-sm text-green-600 font-medium">
+              <Text style={{fontSize: 14, color: "#16a34a", fontWeight: "500"}}>
                 {COMPANY_EMAIL}
               </Text>
             </View>
@@ -124,20 +124,20 @@ export default function ContactUsScreen() {
 
           {/* Feedback */}
           <TouchableOpacity
-            className="flex-row items-start p-4 bg-gray-50 rounded-lg mb-3"
+            style={{flexDirection: "row", alignItems: "flex-start", padding: 16, backgroundColor: "#f9fafb", borderRadius: 16, marginBottom: 12}}
             onPress={() => sendEmail('feedback')}
           >
-            <View className="bg-green-100 rounded-full p-3 mr-4">
+            <View style={{backgroundColor: "#dcfce7", borderRadius: 999, padding: 12, marginRight: 16}}>
               <Ionicons name="chatbox-ellipses" size={24} color="#10B981" />
             </View>
-            <View className="flex-1">
-              <Text className="text-base font-semibold text-gray-800 mb-1">
+            <View style={{flex: 1}}>
+              <Text style={{fontSize: 16, fontWeight: "600", color: "#1e293b", marginBottom: 4}}>
                 Feedback & Suggestions
               </Text>
-              <Text className="text-sm text-gray-600 mb-2 leading-5">
+              <Text style={{fontSize: 14, color: "#64748b", marginBottom: 8, lineHeight: 20}}>
                 Share your ideas to improve HabitGuard
               </Text>
-              <Text className="text-sm text-green-600 font-medium">
+              <Text style={{fontSize: 14, color: "#16a34a", fontWeight: "500"}}>
                 {FEEDBACK_EMAIL}
               </Text>
             </View>
@@ -146,20 +146,20 @@ export default function ContactUsScreen() {
 
           {/* Business Inquiries */}
           <TouchableOpacity
-            className="flex-row items-start p-4 bg-gray-50 rounded-lg"
+            style={{flexDirection: "row", alignItems: "flex-start", padding: 16, backgroundColor: "#f9fafb", borderRadius: 16}}
             onPress={() => sendEmail('business')}
           >
-            <View className="bg-purple-100 rounded-full p-3 mr-4">
+            <View style={{backgroundColor: "#f3e8ff", borderRadius: 999, padding: 12, marginRight: 16}}>
               <Ionicons name="briefcase" size={24} color="#8B5CF6" />
             </View>
-            <View className="flex-1">
-              <Text className="text-base font-semibold text-gray-800 mb-1">
+            <View style={{flex: 1}}>
+              <Text style={{fontSize: 16, fontWeight: "600", color: "#1e293b", marginBottom: 4}}>
                 Business Inquiries
               </Text>
-              <Text className="text-sm text-gray-600 mb-2 leading-5">
+              <Text style={{fontSize: 14, color: "#64748b", marginBottom: 8, lineHeight: 20}}>
                 Partnerships, enterprise, or media inquiries
               </Text>
-              <Text className="text-sm text-purple-600 font-medium">
+              <Text style={{fontSize: 14, color: "#8B5CF6", fontWeight: "500"}}>
                 {BUSINESS_EMAIL}
               </Text>
             </View>
@@ -168,127 +168,127 @@ export default function ContactUsScreen() {
         </View>
 
         {/* Response Time */}
-        <View className="bg-green-50 rounded-lg p-4 mb-4 border border-green-200">
-          <View className="flex-row items-center mb-2">
+        <View style={{backgroundColor: "#dcfce7", borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: "#86efac"}}>
+          <View style={{flexDirection: "row", alignItems: "center", marginBottom: 8}}>
             <Ionicons name="time" size={20} color="#16a34a" />
-            <Text className="text-base font-semibold text-green-800 ml-2">
+            <Text style={{fontSize: 16, fontWeight: "600", color: "#166534", marginLeft: 8}}>
               Response Time
             </Text>
           </View>
-          <Text className="text-sm text-gray-700 leading-5">
+          <Text style={{fontSize: 14, color: "#475569", lineHeight: 20}}>
             We typically respond within 24-48 hours during business days. For urgent issues, please mention "URGENT" in your subject line.
           </Text>
         </View>
 
         {/* FAQ */}
-        <View className="bg-white rounded-lg p-4 mb-4 shadow">
-          <View className="flex-row items-center mb-3">
+        <View style={{backgroundColor: "#ffffff", borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: "#16a34a", shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4}}>
+          <View style={{flexDirection: "row", alignItems: "center", marginBottom: 12}}>
             <Ionicons name="bulb" size={24} color="#F59E0B" />
-            <Text className="text-lg font-bold text-gray-800 ml-2">
+            <Text style={{fontSize: 18, fontWeight: "bold", color: "#1e293b", marginLeft: 8}}>
               Quick Help
             </Text>
           </View>
-          <Text className="text-sm text-gray-600 mb-3 leading-5">
+          <Text style={{fontSize: 14, color: "#64748b", marginBottom: 12, lineHeight: 20}}>
             Before contacting us, check if your question is answered in our FAQ section.
           </Text>
           <TouchableOpacity
-            className="bg-gray-100 rounded-lg py-3 flex-row items-center justify-center"
+            style={{backgroundColor: "#f3f4f6", borderRadius: 16, paddingVertical: 12, flexDirection: "row", alignItems: "center", justifyContent: "center"}}
             onPress={() => router.push('/help-faq')}
           >
             <Ionicons name="help-circle-outline" size={20} color="#16a34a" />
-            <Text className="text-green-600 font-semibold text-base ml-2">
+            <Text style={{color: "#16a34a", fontWeight: "600", fontSize: 16, marginLeft: 8}}>
               View FAQ
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Common Issues */}
-        <View className="bg-white rounded-lg p-4 mb-4 shadow">
-          <Text className="text-lg font-bold text-gray-800 mb-3">
+        <View style={{backgroundColor: "#ffffff", borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: "#16a34a", shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4}}>
+          <Text style={{fontSize: 18, fontWeight: "bold", color: "#1e293b", marginBottom: 12}}>
             🔧 Common Issues
           </Text>
           
-          <View className="mb-3">
-            <Text className="text-base font-semibold text-gray-800 mb-1">
+          <View style={{marginBottom: 12}}>
+            <Text style={{fontSize: 16, fontWeight: "600", color: "#1e293b", marginBottom: 4}}>
               • App not tracking usage?
             </Text>
-            <Text className="text-sm text-gray-600 ml-4 leading-5">
+            <Text style={{fontSize: 14, color: "#64748b", marginLeft: 16, lineHeight: 20}}>
               Make sure Usage Access permission is enabled in Settings
             </Text>
           </View>
 
-          <View className="mb-3">
-            <Text className="text-base font-semibold text-gray-800 mb-1">
+          <View style={{marginBottom: 12}}>
+            <Text style={{fontSize: 16, fontWeight: "600", color: "#1e293b", marginBottom: 4}}>
               • Login issues?
             </Text>
-            <Text className="text-sm text-gray-600 ml-4 leading-5">
+            <Text style={{fontSize: 14, color: "#64748b", marginLeft: 16, lineHeight: 20}}>
               Try the demo account: demo@habitguard.com / demo123
             </Text>
           </View>
 
-          <View className="mb-3">
-            <Text className="text-base font-semibold text-gray-800 mb-1">
+          <View style={{marginBottom: 12}}>
+            <Text style={{fontSize: 16, fontWeight: "600", color: "#1e293b", marginBottom: 4}}>
               • No notifications?
             </Text>
-            <Text className="text-sm text-gray-600 ml-4 leading-5">
+            <Text style={{fontSize: 14, color: "#64748b", marginLeft: 16, lineHeight: 20}}>
               Check notification permissions in Settings {'>'} Apps {'>'} HabitGuard
             </Text>
           </View>
 
           <View>
-            <Text className="text-base font-semibold text-gray-800 mb-1">
+            <Text style={{fontSize: 16, fontWeight: "600", color: "#1e293b", marginBottom: 4}}>
               • Data not showing?
             </Text>
-            <Text className="text-sm text-gray-600 ml-4 leading-5">
+            <Text style={{fontSize: 14, color: "#64748b", marginLeft: 16, lineHeight: 20}}>
               Force close and reopen the app, then grant permissions if prompted
             </Text>
           </View>
         </View>
 
         {/* Social Media (Optional - for future) */}
-        <View className="bg-white rounded-lg p-4 mb-6 shadow">
-          <Text className="text-lg font-bold text-gray-800 mb-3">
+        <View style={{backgroundColor: "#ffffff", borderRadius: 16, padding: 16, marginBottom: 24, shadowColor: "#16a34a", shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4}}>
+          <Text style={{fontSize: 18, fontWeight: "bold", color: "#1e293b", marginBottom: 12}}>
             🌐 Connect With Us
           </Text>
-          <Text className="text-sm text-gray-600 mb-4 leading-5">
+          <Text style={{fontSize: 14, color: "#64748b", marginBottom: 16, lineHeight: 20}}>
             Follow us on social media for updates, tips, and news
           </Text>
           
-          <View className="flex-row justify-around">
-            <TouchableOpacity className="items-center">
-              <View className="bg-blue-100 rounded-full p-3 mb-2">
+          <View style={{flexDirection: "row", justifyContent: "space-around"}}>
+            <TouchableOpacity style={{alignItems: "center"}}>
+              <View style={{backgroundColor: "#dbeafe", borderRadius: 999, padding: 12, marginBottom: 8}}>
                 <Ionicons name="logo-twitter" size={24} color="#1DA1F2" />
               </View>
-              <Text className="text-xs text-gray-600">Twitter</Text>
+              <Text style={{fontSize: 12, color: "#64748b"}}>Twitter</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="items-center">
-              <View className="bg-blue-100 rounded-full p-3 mb-2">
+            <TouchableOpacity style={{alignItems: "center"}}>
+              <View style={{backgroundColor: "#dbeafe", borderRadius: 999, padding: 12, marginBottom: 8}}>
                 <Ionicons name="logo-facebook" size={24} color="#4267B2" />
               </View>
-              <Text className="text-xs text-gray-600">Facebook</Text>
+              <Text style={{fontSize: 12, color: "#64748b"}}>Facebook</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="items-center">
-              <View className="bg-pink-100 rounded-full p-3 mb-2">
+            <TouchableOpacity style={{alignItems: "center"}}>
+              <View style={{backgroundColor: "#fce7f3", borderRadius: 999, padding: 12, marginBottom: 8}}>
                 <Ionicons name="logo-instagram" size={24} color="#E4405F" />
               </View>
-              <Text className="text-xs text-gray-600">Instagram</Text>
+              <Text style={{fontSize: 12, color: "#64748b"}}>Instagram</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="items-center">
-              <View className="bg-red-100 rounded-full p-3 mb-2">
+            <TouchableOpacity style={{alignItems: "center"}}>
+              <View style={{backgroundColor: "#fee2e2", borderRadius: 999, padding: 12, marginBottom: 8}}>
                 <Ionicons name="logo-youtube" size={24} color="#FF0000" />
               </View>
-              <Text className="text-xs text-gray-600">YouTube</Text>
+              <Text style={{fontSize: 12, color: "#64748b"}}>YouTube</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Office Hours */}
-        <View className="bg-gray-100 rounded-lg p-4 mb-6">
-          <Text className="text-sm text-gray-600 text-center leading-5">
-            <Text className="font-semibold">Support Hours:{'\n'}</Text>
+        <View style={{backgroundColor: "#f3f4f6", borderRadius: 16, padding: 16, marginBottom: 24}}>
+          <Text style={{fontSize: 14, color: "#64748b", textAlign: "center", lineHeight: 20}}>
+            <Text style={{fontWeight: "600"}}>Support Hours:{'\n'}</Text>
             Monday - Friday: 9:00 AM - 6:00 PM (IST){'\n'}
             Saturday: 10:00 AM - 4:00 PM (IST){'\n'}
             Sunday: Closed
@@ -298,3 +298,4 @@ export default function ContactUsScreen() {
     </View>
   );
 }
+

@@ -1,9 +1,12 @@
+import { API_CONFIG, logApiConfig } from '@/config/api.config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// API Configuration
-// For testing on real device/emulator, use your computer's IP address
-// To find your IP: run 'ipconfig' (Windows) or 'ifconfig' (Mac/Linux)
-const API_BASE_URL = 'http://10.177.101.177:3000/api';
+// API Configuration - now centralized in config/api.config.ts
+// To change the API URL, update it in app.config.js
+const API_BASE_URL = API_CONFIG.BASE_URL;
+
+// Log API configuration on service initialization
+logApiConfig();
 
 // Storage keys
 const TOKEN_KEY = 'auth_token';

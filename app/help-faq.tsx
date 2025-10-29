@@ -136,34 +136,38 @@ export default function HelpFAQScreen() {
   };
 
   return (
-    <View className="flex-1 bg-green-50">
+    <View style={{flex: 1, backgroundColor: "#f0fdf4"}}>
       {/* Header */}
-      <View className="bg-green-600 pt-12 pb-6 px-4">
-        <View className="flex-row items-center mb-4">
-          <TouchableOpacity onPress={() => router.back()} className="mr-4">
+      <View style={{backgroundColor: "#16a34a", paddingTop: 48, paddingBottom: 24, paddingHorizontal: 16}}>
+        <View style={{flexDirection: "row", alignItems: "center", marginBottom: 16}}>
+          <TouchableOpacity onPress={() => router.back()} style={{marginRight: 16}}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold text-white">Help & FAQ</Text>
+          <Text style={{fontSize: 24, fontWeight: "bold", color: "#ffffff"}}>Help & FAQ</Text>
         </View>
-        <Text className="text-green-100 text-base">Find answers to common questions</Text>
+        <Text style={{fontSize: 16, color: "#dcfce7"}}>Find answers to common questions</Text>
       </View>
 
       {/* Category Filter */}
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
-        className="bg-white border-b border-gray-200"
+        style={{backgroundColor: "#ffffff", borderBottomWidth: 1, borderBottomColor: "#e2e8f0"}}
         contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12 }}
       >
         {categories.map((category) => (
           <TouchableOpacity
             key={category.id}
             onPress={() => setSelectedCategory(category.id)}
-            className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${
-              selectedCategory === category.id 
-                ? 'bg-green-600' 
-                : 'bg-gray-100'
-            }`}
+            style={{
+              flexDirection: "row", 
+              alignItems: "center", 
+              paddingHorizontal: 16, 
+              paddingVertical: 8, 
+              borderRadius: 999, 
+              marginRight: 8,
+              backgroundColor: selectedCategory === category.id ? '#16a34a' : '#f3f4f6'
+            }}
           >
             <Ionicons 
               name={category.icon as any} 
@@ -171,11 +175,11 @@ export default function HelpFAQScreen() {
               color={selectedCategory === category.id ? 'white' : '#4B5563'} 
             />
             <Text 
-              className={`ml-2 font-medium ${
-                selectedCategory === category.id 
-                  ? 'text-white' 
-                  : 'text-gray-700'
-              }`}
+              style={{
+                marginLeft: 8, 
+                fontWeight: "500",
+                color: selectedCategory === category.id ? '#ffffff' : '#475569'
+              }}
             >
               {category.label}
             </Text>
@@ -184,15 +188,15 @@ export default function HelpFAQScreen() {
       </ScrollView>
 
       {/* FAQ List */}
-      <ScrollView className="flex-1 px-4 py-4">
+      <ScrollView style={{flex: 1, paddingHorizontal: 16, paddingVertical: 16}}>
         {filteredFAQs.map((faq, index) => (
           <TouchableOpacity
             key={index}
             onPress={() => toggleExpand(index)}
-            className="bg-white rounded-lg mb-3 shadow"
+            style={{backgroundColor: "#ffffff", borderRadius: 16, marginBottom: 12, shadowColor: "#16a34a", shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4}}
           >
-            <View className="flex-row items-center justify-between p-4">
-              <Text className="text-base font-semibold text-gray-800 flex-1 pr-4">
+            <View style={{flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16}}>
+              <Text style={{fontSize: 16, fontWeight: "600", color: "#1e293b", flex: 1, paddingRight: 16}}>
                 {faq.question}
               </Text>
               <Ionicons 
@@ -203,8 +207,8 @@ export default function HelpFAQScreen() {
             </View>
             
             {expandedIndex === index && (
-              <View className="px-4 pb-4 border-t border-gray-100">
-                <Text className="text-base text-gray-700 leading-6 mt-3">
+              <View style={{paddingHorizontal: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: "#f1f5f9"}}>
+                <Text style={{fontSize: 15, color: "#475569", lineHeight: 24, marginTop: 12}}>
                   {faq.answer}
                 </Text>
               </View>
@@ -213,72 +217,72 @@ export default function HelpFAQScreen() {
         ))}
 
         {filteredFAQs.length === 0 && (
-          <View className="bg-white rounded-lg p-8 items-center">
+          <View style={{backgroundColor: "#ffffff", borderRadius: 16, padding: 32, alignItems: "center"}}>
             <Ionicons name="search-outline" size={48} color="#9CA3AF" />
-            <Text className="text-gray-500 text-base mt-4">
+            <Text style={{color: "#64748b", fontSize: 16, marginTop: 16}}>
               No questions found in this category
             </Text>
           </View>
         )}
 
         {/* Still Need Help */}
-        <View className="bg-green-50 rounded-lg p-6 mt-4 mb-6 border border-green-200">
-          <View className="flex-row items-center mb-3">
+        <View style={{backgroundColor: "#dcfce7", borderRadius: 16, padding: 24, marginTop: 16, marginBottom: 24, borderWidth: 1, borderColor: "#86efac"}}>
+          <View style={{flexDirection: "row", alignItems: "center", marginBottom: 12}}>
             <Ionicons name="help-circle" size={28} color="#16a34a" />
-            <Text className="text-lg font-bold text-green-800 ml-2">
+            <Text style={{fontSize: 18, fontWeight: "bold", color: "#166534", marginLeft: 8}}>
               Still Need Help?
             </Text>
           </View>
-          <Text className="text-base text-gray-700 mb-4 leading-6">
+          <Text style={{fontSize: 15, color: "#475569", marginBottom: 16, lineHeight: 24}}>
             Can't find the answer you're looking for? Our support team is here to help!
           </Text>
           <TouchableOpacity 
-            className="bg-green-600 rounded-lg py-3 px-4 flex-row items-center justify-center"
+            style={{backgroundColor: "#16a34a", borderRadius: 16, paddingVertical: 12, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", justifyContent: "center"}}
             onPress={() => router.push('/contact-us' as any)}
           >
             <Ionicons name="mail" size={20} color="white" />
-            <Text className="text-white font-semibold text-base ml-2">
+            <Text style={{color: "#ffffff", fontWeight: "600", fontSize: 16, marginLeft: 8}}>
               Contact Support
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Quick Links */}
-        <View className="bg-white rounded-lg p-4 mb-6 shadow">
-          <Text className="text-lg font-bold text-gray-800 mb-3">📚 Quick Links</Text>
+        <View style={{backgroundColor: "#ffffff", borderRadius: 16, padding: 16, marginBottom: 24, shadowColor: "#16a34a", shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4}}>
+          <Text style={{fontSize: 18, fontWeight: "bold", color: "#1e293b", marginBottom: 12}}>📚 Quick Links</Text>
           
           <TouchableOpacity 
-            className="flex-row items-center justify-between py-3 border-b border-gray-100"
+            style={{flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#f1f5f9"}}
             onPress={() => router.push('/privacy-policy' as any)}
           >
-            <View className="flex-row items-center">
+            <View style={{flexDirection: "row", alignItems: "center"}}>
               <Ionicons name="shield-checkmark" size={20} color="#16a34a" />
-              <Text className="text-base text-gray-700 ml-3">Privacy Policy</Text>
+              <Text style={{fontSize: 16, color: "#475569", marginLeft: 12}}>Privacy Policy</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
           </TouchableOpacity>
 
           <TouchableOpacity 
-            className="flex-row items-center justify-between py-3 border-b border-gray-100"
+            style={{flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#f1f5f9"}}
             onPress={() => {
               // Terms of service page not yet created
               Alert.alert('Coming Soon', 'Terms of Service page will be available soon');
             }}
           >
-            <View className="flex-row items-center">
+            <View style={{flexDirection: "row", alignItems: "center"}}>
               <Ionicons name="document-text" size={20} color="#16a34a" />
-              <Text className="text-base text-gray-700 ml-3">Terms of Service</Text>
+              <Text style={{fontSize: 16, color: "#475569", marginLeft: 12}}>Terms of Service</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
           </TouchableOpacity>
 
           <TouchableOpacity 
-            className="flex-row items-center justify-between py-3"
+            style={{flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12}}
             onPress={() => router.push('/contact-us' as any)}
           >
-            <View className="flex-row items-center">
+            <View style={{flexDirection: "row", alignItems: "center"}}>
               <Ionicons name="chatbubbles" size={20} color="#16a34a" />
-              <Text className="text-base text-gray-700 ml-3">Contact Us</Text>
+              <Text style={{fontSize: 16, color: "#475569", marginLeft: 12}}>Contact Us</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
           </TouchableOpacity>
@@ -287,3 +291,4 @@ export default function HelpFAQScreen() {
     </View>
   );
 }
+

@@ -1,3 +1,4 @@
+import { API_CONFIG } from '@/config/api.config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
 import { Paths } from 'expo-file-system';
@@ -15,8 +16,9 @@ try {
   console.warn('⚠️ expo-print or expo-sharing not available. PDF features will be disabled. Please rebuild the app with: npx expo run:android');
 }
 
-// API Configuration - Update this with your backend server IP
-const API_BASE_URL = 'http://10.177.101.177:3000/api';
+// API Configuration - now centralized in config/api.config.ts
+// To change the API URL, update it in app.config.js
+const API_BASE_URL = API_CONFIG.BASE_URL;
 
 export interface WeeklyReportData {
   reportId?: number;
