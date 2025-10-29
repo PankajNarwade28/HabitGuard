@@ -1,7 +1,22 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system';
+import { Paths } from 'expo-file-system';
+import { Alert, Linking } from 'react-native';
 import { authService } from './AuthService';
 
-const API_BASE_URL = 'http://192.168.0.101:3000/api';
+// Conditional imports for native modules
+let Print: any = null;
+let Sharing: any = null;
+
+try {
+  Print = require('expo-print');
+  Sharing = require('expo-sharing');
+} catch (error) {
+  console.warn('⚠️ expo-print or expo-sharing not available. PDF features will be disabled. Please rebuild the app with: npx expo run:android');
+}
+
+// API Configuration - Update this with your backend server IP
+const API_BASE_URL = 'http://10.177.101.177:3000/api';
 
 export interface WeeklyReportData {
   reportId?: number;
@@ -393,7 +408,503 @@ class WeeklyReportService {
     const { startDate, endDate } = this.getLastWeekDates();
     return await this.generateReport(startDate, endDate);
   }
+
+  /**
+   * Generate HTML content for PDF
+   */
+  private generateReportHTML(report: WeeklyReportData): string {
+    const dateRange = this.formatDateRange(report.weekStartDate, report.weekEndDate);
+    const productivityColor = this.getProductivityScoreColor(report.productivityScore);
+    const productivityLabel = this.getProductivityScoreLabel(report.productivityScore);
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HabitGuard Weekly Report</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      color: #1f2937;
+      padding: 20px;
+      background: #ffffff;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 3px solid #7c3aed;
+    }
+    .header h1 {
+      font-size: 28px;
+      color: #7c3aed;
+      margin-bottom: 10px;
+    }
+    .header .subtitle {
+      font-size: 16px;
+      color: #6b7280;
+    }
+    .section {
+      margin-bottom: 25px;
+      padding: 15px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #f9fafb;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #374151;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #d1d5db;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .stat-card {
+      padding: 12px;
+      background: white;
+      border-radius: 6px;
+      border-left: 4px solid #7c3aed;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 20px;
+      font-weight: bold;
+      color: #111827;
+    }
+    .app-list {
+      list-style: none;
+    }
+    .app-item {
+      padding: 10px;
+      margin-bottom: 8px;
+      background: white;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .app-name {
+      font-weight: 600;
+      color: #374151;
+    }
+    .app-time {
+      color: #7c3aed;
+      font-weight: bold;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #7c3aed;
+    }
+    .goal-item {
+      padding: 12px;
+      margin-bottom: 10px;
+      background: white;
+      border-radius: 6px;
+    }
+    .goal-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .goal-type {
+      font-weight: 600;
+      color: #374151;
+    }
+    .goal-status {
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .goal-status.completed {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .goal-status.in-progress {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .goal-status.failed {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .productivity-score {
+      text-align: center;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+    }
+    .score-circle {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 15px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: bold;
+      color: white;
+      background: ${productivityColor};
+    }
+    .score-label {
+      font-size: 18px;
+      font-weight: 600;
+      color: ${productivityColor};
+    }
+    .insights {
+      padding: 15px;
+      background: white;
+      border-radius: 6px;
+      line-height: 1.6;
+      color: #374151;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      color: #9ca3af;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📊 HabitGuard Weekly Report</h1>
+    <div class="subtitle">${report.reportTitle || 'Weekly Usage Report'}</div>
+    <div class="subtitle">${dateRange}</div>
+  </div>
+
+  <!-- Summary Section -->
+  <div class="section">
+    <div class="section-title">📈 Week Summary</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Screen Time</div>
+        <div class="stat-value">${this.formatScreenTime(report.summary.totalScreenTime)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Daily Average</div>
+        <div class="stat-value">${this.formatScreenTime(report.summary.dailyAverage)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Unlocks</div>
+        <div class="stat-value">${report.summary.totalUnlocks.toLocaleString()}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Days</div>
+        <div class="stat-value">${report.summary.activeDays}/7</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Productivity Score -->
+  <div class="section">
+    <div class="section-title">🎯 Productivity Score</div>
+    <div class="productivity-score">
+      <div class="score-circle">${report.productivityScore}</div>
+      <div class="score-label">${productivityLabel}</div>
+    </div>
+  </div>
+
+  <!-- Most Used Apps -->
+  <div class="section">
+    <div class="section-title">📱 Most Used Apps</div>
+    <ul class="app-list">
+      ${report.mostUsedApps.slice(0, 5).map((app, index) => `
+        <li class="app-item">
+          <span class="app-name">${index + 1}. ${app.appName}</span>
+          <span class="app-time">${this.formatScreenTime(app.totalTime)}</span>
+        </li>
+      `).join('')}
+    </ul>
+  </div>
+
+  <!-- Goal Achievement -->
+  ${report.goalAchievement && report.goalAchievement.length > 0 ? `
+  <div class="section">
+    <div class="section-title">🎯 Goal Achievement</div>
+    ${report.goalAchievement.map(goal => `
+      <div class="goal-item">
+        <div class="goal-header">
+          <span class="goal-type">${goal.type}</span>
+          <span class="goal-status ${goal.status.toLowerCase().replace(' ', '-')}">${goal.status}</span>
+        </div>
+        <div>Target: ${goal.target} | Current: ${goal.current}</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${goal.progress}%"></div>
+        </div>
+      </div>
+    `).join('')}
+  </div>
+  ` : ''}
+
+  <!-- Streak Data -->
+  <div class="section">
+    <div class="section-title">🔥 Streak & Consistency</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Days Tracked</div>
+        <div class="stat-value">${report.streakData.totalDays}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Goals Met</div>
+        <div class="stat-value">${report.streakData.goalsMet}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Current Streak</div>
+        <div class="stat-value">${report.streakData.currentStreak || 0} days</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Success Rate</div>
+        <div class="stat-value">${report.streakData.successRate.toFixed(1)}%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insights -->
+  <div class="section">
+    <div class="section-title">💡 Insights & Recommendations</div>
+    <div class="insights">
+      ${report.insights || 'Great job tracking your screen time! Keep up the good work and stay consistent with your goals.'}
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Generated by HabitGuard on ${new Date().toLocaleDateString()}</p>
+    <p>Keep building better digital habits! 🚀</p>
+  </div>
+</body>
+</html>
+    `;
+  }
+
+  /**
+   * Generate and save PDF report
+   */
+  async generatePDF(report: WeeklyReportData): Promise<string | null> {
+    try {
+      if (!Print) {
+        Alert.alert(
+          'Feature Unavailable', 
+          'PDF generation requires a native rebuild. Please run: npx expo run:android',
+          [{ text: 'OK' }]
+        );
+        return null;
+      }
+
+      console.log('📄 Generating PDF report...');
+
+      const html = this.generateReportHTML(report);
+
+      const { uri } = await Print.printToFileAsync({
+        html,
+        base64: false,
+      });
+
+      console.log('✅ PDF generated at:', uri);
+      return uri;
+    } catch (error) {
+      console.error('❌ PDF generation error:', error);
+      Alert.alert('Error', 'Failed to generate PDF. Please try again.');
+      return null;
+    }
+  }
+
+  /**
+   * Save PDF to device
+   */
+  async savePDF(report: WeeklyReportData): Promise<boolean> {
+    try {
+      const pdfUri = await this.generatePDF(report);
+      if (!pdfUri) {
+        return false;
+      }
+
+      const fileName = `HabitGuard_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+      const destinationUri = `${Paths.document.uri}/${fileName}`;
+
+      await FileSystem.moveAsync({
+        from: pdfUri,
+        to: destinationUri,
+      });
+
+      console.log('✅ PDF saved to:', destinationUri);
+      Alert.alert(
+        'Success!',
+        `Report saved as ${fileName}`,
+        [
+          {
+            text: 'OK',
+            onPress: () => console.log('PDF saved confirmation')
+          }
+        ]
+      );
+
+      return true;
+    } catch (error) {
+      console.error('❌ Save PDF error:', error);
+      Alert.alert('Error', 'Failed to save PDF. Please try again.');
+      return false;
+    }
+  }
+
+  /**
+   * Share PDF via system share sheet
+   */
+  async sharePDF(report: WeeklyReportData): Promise<boolean> {
+    try {
+      if (!Sharing) {
+        Alert.alert(
+          'Feature Unavailable', 
+          'PDF sharing requires a native rebuild. Please run: npx expo run:android',
+          [{ text: 'OK' }]
+        );
+        return false;
+      }
+
+      const pdfUri = await this.generatePDF(report);
+      if (!pdfUri) {
+        return false;
+      }
+
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('Error', 'Sharing is not available on this device');
+        return false;
+      }
+
+      await Sharing.shareAsync(pdfUri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Share Weekly Report',
+        UTI: 'com.adobe.pdf',
+      });
+
+      console.log('✅ PDF shared successfully');
+      return true;
+    } catch (error) {
+      console.error('❌ Share PDF error:', error);
+      Alert.alert('Error', 'Failed to share PDF. Please try again.');
+      return false;
+    }
+  }
+
+  /**
+   * Send PDF via email
+   */
+  async sendPDFByEmail(report: WeeklyReportData, emailAddress?: string): Promise<boolean> {
+    try {
+      const pdfUri = await this.generatePDF(report);
+      if (!pdfUri) {
+        return false;
+      }
+
+      const subject = encodeURIComponent(`HabitGuard Weekly Report - ${this.formatDateRange(report.weekStartDate, report.weekEndDate)}`);
+      const body = encodeURIComponent(
+        `Hi,\n\nPlease find attached my HabitGuard weekly report.\n\n` +
+        `Summary:\n` +
+        `• Total Screen Time: ${this.formatScreenTime(report.summary.totalScreenTime)}\n` +
+        `• Daily Average: ${this.formatScreenTime(report.summary.dailyAverage)}\n` +
+        `• Productivity Score: ${report.productivityScore}/100\n\n` +
+        `Keep building better digital habits!\n\n` +
+        `Best regards,\n` +
+        `HabitGuard`
+      );
+
+      const to = emailAddress || '';
+      const mailtoUrl = `mailto:${to}?subject=${subject}&body=${body}`;
+
+      const canOpen = await Linking.canOpenURL(mailtoUrl);
+      if (canOpen) {
+        await Linking.openURL(mailtoUrl);
+        
+        // Also share the PDF so user can attach it
+        const isAvailable = await Sharing.isAvailableAsync();
+        if (isAvailable) {
+          setTimeout(async () => {
+            await Sharing.shareAsync(pdfUri, {
+              mimeType: 'application/pdf',
+              dialogTitle: 'Attach PDF to Email',
+            });
+          }, 500);
+        }
+
+        return true;
+      } else {
+        Alert.alert(
+          'Email Not Available',
+          'Please set up an email client on your device or use the share option to send via other apps.',
+          [
+            {
+              text: 'Share Instead',
+              onPress: () => this.sharePDF(report)
+            },
+            { text: 'Cancel' }
+          ]
+        );
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Send email error:', error);
+      Alert.alert('Error', 'Failed to open email client. Use the share option instead.');
+      return false;
+    }
+  }
+
+  /**
+   * Print report (for devices that support printing)
+   */
+  async printReport(report: WeeklyReportData): Promise<boolean> {
+    try {
+      if (!Print) {
+        Alert.alert(
+          'Feature Unavailable', 
+          'Printing requires a native rebuild. Please run: npx expo run:android',
+          [{ text: 'OK' }]
+        );
+        return false;
+      }
+
+      const html = this.generateReportHTML(report);
+      
+      await Print.printAsync({
+        html,
+      });
+
+      console.log('✅ Print dialog opened');
+      return true;
+    } catch (error) {
+      console.error('❌ Print error:', error);
+      Alert.alert('Error', 'Printing is not available on this device.');
+      return false;
+    }
+  }
 }
 
 export const weeklyReportService = new WeeklyReportService();
-

@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // API Configuration
 // For testing on real device/emulator, use your computer's IP address
 // To find your IP: run 'ipconfig' (Windows) or 'ifconfig' (Mac/Linux)
-const API_BASE_URL = 'http://192.168.0.101:3000/api';
+const API_BASE_URL = 'http://10.177.101.177:3000/api';
 
 // Storage keys
 const TOKEN_KEY = 'auth_token';
@@ -39,13 +39,37 @@ interface AuthResponse {
 
 class AuthService {
   /**
+   * Fetch with timeout
+   */
+  private async fetchWithTimeout(url: string, options: RequestInit, timeout = 10000): Promise<Response> {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(id);
+      return response;
+    } catch (error: any) {
+      clearTimeout(id);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - Server not responding');
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Register a new user
    */
   async signup(userData: SignupData): Promise<AuthResponse> {
     try {
       console.log('🔄 Attempting signup to:', `${API_BASE_URL}/auth/signup`);
+      console.log('⏱️  Timeout: 10 seconds');
       
-      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+      const response = await this.fetchWithTimeout(`${API_BASE_URL}/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,8 +102,10 @@ class AuthService {
   async login(credentials: LoginData): Promise<AuthResponse> {
     try {
       console.log('🔄 Attempting login to:', `${API_BASE_URL}/auth/login`);
+      console.log('⏱️  Timeout: 10 seconds');
+      console.log('📧 Email:', credentials.email);
       
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await this.fetchWithTimeout(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,8 +127,21 @@ class AuthService {
     } catch (error) {
       console.error('❌ Login error:', error);
       console.error('🔍 API URL:', API_BASE_URL);
-      console.error('💡 Make sure backend server is running at:', API_BASE_URL.replace('/api', ''));
-      throw new Error('Failed to connect to server. Please ensure:\n1. Backend server is running (npm start in backend folder)\n2. You are using the correct API URL\n3. Check network connection');
+      console.error('💡 Server should be at:', API_BASE_URL.replace('/api', ''));
+      
+      let errorMessage = 'Failed to connect to server.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          errorMessage = 'Server not responding. Please check:\n1. Backend server is running\n2. IP address is correct: 10.177.101.177\n3. Both devices on same WiFi';
+        } else if (error.message.includes('Network request failed')) {
+          errorMessage = 'Network error. Please check:\n1. Backend server is running on port 3000\n2. Your IP: 10.177.101.177\n3. Windows Firewall allows port 3000';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
   }
 

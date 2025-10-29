@@ -106,8 +106,9 @@ export class NotificationService {
     try {
       console.log('🔔 Preparing login success notification...');
       
-      const { status } = await Notifications.getPermissionsAsync();
-      if (status !== 'granted') {
+      // Request permissions first if not granted
+      const hasPermission = await this.requestPermissions();
+      if (!hasPermission) {
         console.log('⚠️ Notification permission not granted. Cannot send notification.');
         return;
       }
@@ -135,8 +136,9 @@ export class NotificationService {
     try {
       console.log('🔔 Preparing signup success notification...');
       
-      const { status } = await Notifications.getPermissionsAsync();
-      if (status !== 'granted') {
+      // Request permissions first if not granted
+      const hasPermission = await this.requestPermissions();
+      if (!hasPermission) {
         console.log('⚠️ Notification permission not granted. Cannot send notification.');
         return;
       }
@@ -395,6 +397,81 @@ export class NotificationService {
       console.log('✅ Streak notification sent successfully!');
     } catch (error) {
       console.error('❌ Error sending streak notification:', error);
+    }
+  }
+
+  static async sendWatchtimeStatusChangeNotification(
+    oldStatus: string,
+    newStatus: string,
+    totalMinutes: number,
+    goalMinutes: number
+  ) {
+    try {
+      console.log(`🔔 Watchtime status changed: ${oldStatus} → ${newStatus}`);
+      
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('⚠️ Notification permission not granted. Cannot send notification.');
+        return;
+      }
+
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = Math.round(totalMinutes % 60);
+      const timeString = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+      
+      const percentageOfGoal = (totalMinutes / goalMinutes) * 100;
+
+      let title = '';
+      let body = '';
+      let emoji = '';
+
+      // Define status messages based on new status
+      switch (newStatus) {
+        case 'excellent':
+          emoji = '🌟';
+          title = `${emoji} Still Excellent!`;
+          body = `Screen time: ${timeString} (${percentageOfGoal.toFixed(0)}%). Keep up the great work!`;
+          break;
+        case 'good':
+          emoji = '✅';
+          title = `${emoji} Status: Good`;
+          body = `Screen time: ${timeString} (${percentageOfGoal.toFixed(0)}%). You're on track!`;
+          break;
+        case 'moderate':
+          emoji = '⚠️';
+          title = `${emoji} Approaching Your Limit`;
+          body = `Screen time: ${timeString} (${percentageOfGoal.toFixed(0)}%). Consider taking a break soon!`;
+          break;
+        case 'high':
+          emoji = '⏰';
+          title = `${emoji} Goal Exceeded`;
+          body = `Screen time: ${timeString} (${percentageOfGoal.toFixed(0)}%). Time to unwind!`;
+          break;
+        case 'critical':
+          emoji = '🚨';
+          title = `${emoji} High Screen Time Alert`;
+          body = `Screen time: ${timeString} (${percentageOfGoal.toFixed(0)}%). Take a break for your wellbeing!`;
+          break;
+      }
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data: { 
+            type: 'watchtime_status_change',
+            oldStatus,
+            newStatus,
+            totalMinutes,
+            percentageOfGoal,
+          },
+        },
+        trigger: null,
+      });
+      
+      console.log(`✅ Watchtime status change notification sent: ${oldStatus} → ${newStatus}`);
+    } catch (error) {
+      console.error('❌ Error sending watchtime status change notification:', error);
     }
   }
 

@@ -1,4 +1,5 @@
 ﻿import { useUser } from '@/contexts/UserContext';
+import { weeklyReportService } from '@/services/WeeklyReportService';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -32,6 +33,114 @@ export default function SettingsScreen() {
             setLoading(false);
             // Router will automatically redirect to login via _layout.tsx
           },
+        },
+      ]
+    );
+  };
+
+  const handleGenerateReport = async () => {
+    try {
+      setLoading(true);
+      Alert.alert(
+        'Generate Weekly Report',
+        'Choose an action for your weekly report',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'View Report',
+            onPress: async () => {
+              const report = await weeklyReportService.generateCurrentWeekReport();
+              if (report) {
+                Alert.alert('Success', 'Report generated successfully!');
+                // Navigate to a report view screen if you have one
+              } else {
+                Alert.alert('Error', 'Failed to generate report. Please try again.');
+              }
+            },
+          },
+          {
+            text: 'Save as PDF',
+            onPress: async () => {
+              const report = await weeklyReportService.generateCurrentWeekReport();
+              if (report) {
+                const success = await weeklyReportService.savePDF(report);
+                if (!success) {
+                  Alert.alert('Error', 'Failed to save PDF');
+                }
+              } else {
+                Alert.alert('Error', 'Failed to generate report');
+              }
+            },
+          },
+          {
+            text: 'Share/Email',
+            onPress: async () => {
+              const report = await weeklyReportService.generateCurrentWeekReport();
+              if (report) {
+                Alert.alert(
+                  'Share Report',
+                  'How would you like to share?',
+                  [
+                    {
+                      text: 'Cancel',
+                      style: 'cancel',
+                    },
+                    {
+                      text: 'Email',
+                      onPress: () => weeklyReportService.sendPDFByEmail(report),
+                    },
+                    {
+                      text: 'Share',
+                      onPress: () => weeklyReportService.sharePDF(report),
+                    },
+                  ]
+                );
+              } else {
+                Alert.alert('Error', 'Failed to generate report');
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Report generation error:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNotifications = () => {
+    Alert.alert(
+      'Notifications',
+      'Manage your notification preferences',
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            // You can add a dedicated notifications settings page here
+            Alert.alert('Coming Soon', 'Detailed notification settings will be available soon!');
+          }
+        }
+      ]
+    );
+  };
+
+  const handleBackupSync = () => {
+    Alert.alert(
+      'Backup & Sync',
+      'Your data is automatically backed up locally. Cloud sync coming soon!',
+      [
+        {
+          text: 'Export Data',
+          onPress: () => Alert.alert('Coming Soon', 'Data export feature will be available soon!'),
+        },
+        {
+          text: 'OK',
+          style: 'cancel',
         },
       ]
     );
@@ -82,7 +191,7 @@ export default function SettingsScreen() {
       <View style={styles.settingsCard}>
         <Text style={styles.cardTitle}>App Settings</Text>
         
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={styles.settingItem} onPress={handleNotifications}>
           <View style={styles.settingLeft}>
             <Ionicons name="notifications" size={20} color="#6366f1" />
             <Text style={styles.settingText}>Notifications</Text>
@@ -90,18 +199,24 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-forward" size={20} color="#64748b" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/goals')}
+        >
           <View style={styles.settingLeft}>
-            <Ionicons name="time" size={20} color="#10b981" />
+            <Ionicons name="trophy" size={20} color="#10b981" />
             <Text style={styles.settingText}>Daily Goals</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#64748b" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/privacy-policy' as any)}
+        >
           <View style={styles.settingLeft}>
             <Ionicons name="shield-checkmark" size={20} color="#f59e0b" />
-            <Text style={styles.settingText}>Privacy</Text>
+            <Text style={styles.settingText}>Privacy Policy</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#64748b" />
         </TouchableOpacity>
@@ -111,7 +226,7 @@ export default function SettingsScreen() {
       <View style={styles.settingsCard}>
         <Text style={styles.cardTitle}>Account</Text>
         
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={styles.settingItem} onPress={handleGenerateReport}>
           <View style={styles.settingLeft}>
             <Ionicons name="document-text" size={20} color="#8b5cf6" />
             <Text style={styles.settingText}>Generate Weekly Report</Text>
@@ -119,7 +234,7 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-forward" size={20} color="#64748b" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={styles.settingItem} onPress={handleBackupSync}>
           <View style={styles.settingLeft}>
             <Ionicons name="cloud-upload" size={20} color="#06b6d4" />
             <Text style={styles.settingText}>Backup & Sync</Text>
@@ -140,7 +255,10 @@ export default function SettingsScreen() {
       <View style={styles.settingsCard}>
         <Text style={styles.cardTitle}>Support</Text>
         
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/help-faq' as any)}
+        >
           <View style={styles.settingLeft}>
             <Ionicons name="help-circle" size={20} color="#64748b" />
             <Text style={styles.settingText}>Help & FAQ</Text>
@@ -148,7 +266,10 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-forward" size={20} color="#64748b" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/contact-us' as any)}
+        >
           <View style={styles.settingLeft}>
             <Ionicons name="mail" size={20} color="#64748b" />
             <Text style={styles.settingText}>Contact Us</Text>

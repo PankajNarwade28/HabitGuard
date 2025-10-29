@@ -1,0 +1,441 @@
+import type { DailyGoal } from '@/services/DailyGoalsService';
+import { dailyGoalsService } from '@/services/DailyGoalsService';
+import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
+import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
+type GoalType = 'screen_time' | 'app_usage' | 'break_time' | 'productive_time';
+
+export default function GoalsScreen() {
+  const [goals, setGoals] = useState<DailyGoal[]>([]);
+  const [goalsProgress, setGoalsProgress] = useState({ totalGoals: 0, completedGoals: 0, percentage: 0, streakDays: 0 });
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<DailyGoal | null>(null);
+  const [newGoalType, setNewGoalType] = useState<GoalType>('screen_time');
+  const [newGoalTitle, setNewGoalTitle] = useState('');
+  const [newGoalTarget, setNewGoalTarget] = useState('');
+
+  useEffect(() => {
+    loadGoals();
+  }, []);
+
+  const loadGoals = async () => {
+    const loadedGoals = await dailyGoalsService.getGoals();
+    setGoals(loadedGoals);
+    const progress = await dailyGoalsService.getGoalsProgress();
+    setGoalsProgress(progress);
+  };
+
+  const handleAddGoal = async () => {
+    if (!newGoalTitle.trim() || !newGoalTarget.trim()) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    const targetValue = parseFloat(newGoalTarget);
+    if (isNaN(targetValue) || targetValue <= 0) {
+      Alert.alert('Error', 'Please enter a valid target value');
+      return;
+    }
+
+    const goalIcons: Record<GoalType, string> = {
+      screen_time: 'phone-portrait',
+      app_usage: 'apps',
+      break_time: 'cafe',
+      productive_time: 'trending-up',
+    };
+
+    const goalColors: Record<GoalType, string> = {
+      screen_time: '#EF4444',
+      app_usage: '#F59E0B',
+      break_time: '#10B981',
+      productive_time: '#3B82F6',
+    };
+
+    const goalUnits: Record<GoalType, string> = {
+      screen_time: 'minutes',
+      app_usage: 'minutes',
+      break_time: 'breaks',
+      productive_time: 'minutes',
+    };
+
+    await dailyGoalsService.addGoal({
+      type: newGoalType,
+      title: newGoalTitle,
+      targetValue: targetValue,
+      currentValue: 0,
+      unit: goalUnits[newGoalType],
+      icon: goalIcons[newGoalType],
+      color: goalColors[newGoalType],
+      isActive: true,
+    });
+
+    setIsAddModalVisible(false);
+    setNewGoalTitle('');
+    setNewGoalTarget('');
+    loadGoals();
+  };
+
+  const handleEditGoal = async () => {
+    if (!selectedGoal || !newGoalTarget.trim()) {
+      Alert.alert('Error', 'Please enter a valid target value');
+      return;
+    }
+
+    const targetValue = parseFloat(newGoalTarget);
+    if (isNaN(targetValue) || targetValue <= 0) {
+      Alert.alert('Error', 'Please enter a valid target value');
+      return;
+    }
+
+    await dailyGoalsService.updateGoal(selectedGoal.id, {
+      targetValue: targetValue,
+    });
+
+    setIsEditModalVisible(false);
+    setSelectedGoal(null);
+    setNewGoalTarget('');
+    loadGoals();
+  };
+
+  const handleDeleteGoal = async (goalId: string) => {
+    Alert.alert(
+      'Delete Goal',
+      'Are you sure you want to delete this goal?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await dailyGoalsService.deleteGoal(goalId);
+            loadGoals();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleToggleGoal = async (goalId: string) => {
+    await dailyGoalsService.toggleGoal(goalId);
+    loadGoals();
+  };
+
+  const openEditModal = (goal: DailyGoal) => {
+    setSelectedGoal(goal);
+    setNewGoalTarget(goal.targetValue.toString());
+    setIsEditModalVisible(true);
+  };
+
+  const getProgressPercentage = (current: number, target: number) => {
+    return Math.min((current / target) * 100, 100);
+  };
+
+  const goalTypes = [
+    { type: 'screen_time' as GoalType, label: 'Screen Time', icon: 'phone-portrait' },
+    { type: 'app_usage' as GoalType, label: 'App Usage', icon: 'apps' },
+    { type: 'break_time' as GoalType, label: 'Break Time', icon: 'cafe' },
+    { type: 'productive_time' as GoalType, label: 'Productive Time', icon: 'trending-up' },
+  ];
+
+  return (
+    <ScrollView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Daily Goals</Text>
+        <Text style={styles.subtitle}>Track your progress and build better habits</Text>
+      </View>
+
+      <ScrollView className="flex-1 px-4 py-4">
+        {/* Progress Summary */}
+        <View className="bg-white rounded-lg p-4 mb-4 shadow">
+          <View className="flex-row items-center justify-between mb-4">
+            <Text className="text-lg font-bold text-gray-800">Today's Progress</Text>
+            <View className="bg-purple-100 px-3 py-1 rounded-full">
+              <Text className="text-purple-700 font-semibold">
+                {goalsProgress.completedGoals}/{goalsProgress.totalGoals}
+              </Text>
+            </View>
+          </View>
+
+          {/* Progress Bar */}
+          <View className="bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
+            <View
+              className="bg-gradient-to-r from-purple-600 to-purple-400 h-full rounded-full"
+              style={{ width: `${goalsProgress.percentage}%` }}
+            />
+          </View>
+
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center">
+              <Ionicons name="trophy" size={20} color="#7c3aed" />
+              <Text className="text-gray-700 ml-2">
+                {goalsProgress.percentage.toFixed(0)}% Complete
+              </Text>
+            </View>
+            <View className="flex-row items-center">
+              <Ionicons name="flame" size={20} color="#EF4444" />
+              <Text className="text-gray-700 ml-2">
+                {goalsProgress.streakDays} Day Streak
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Goals List */}
+        <View className="mb-4">
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="text-lg font-bold text-gray-800">Your Goals</Text>
+            <TouchableOpacity
+              onPress={() => setIsAddModalVisible(true)}
+              className="bg-purple-600 px-4 py-2 rounded-lg flex-row items-center"
+            >
+              <Ionicons name="add" size={20} color="white" />
+              <Text className="text-white font-semibold ml-1">Add Goal</Text>
+            </TouchableOpacity>
+          </View>
+
+          {goals.length === 0 ? (
+            <View className="bg-white rounded-lg p-8 items-center">
+              <Ionicons name="trophy-outline" size={48} color="#9CA3AF" />
+              <Text className="text-gray-500 text-base mt-4 text-center">
+                No goals yet. Add your first goal to get started!
+              </Text>
+            </View>
+          ) : (
+            goals.map((goal) => {
+              const progress = getProgressPercentage(goal.currentValue, goal.targetValue);
+              const isCompleted = goal.currentValue >= goal.targetValue;
+
+              return (
+                <View
+                  key={goal.id}
+                  className={`bg-white rounded-lg p-4 mb-3 shadow ${!goal.isActive ? 'opacity-50' : ''}`}
+                >
+                  <View className="flex-row items-center justify-between mb-3">
+                    <View className="flex-row items-center flex-1">
+                      <View
+                        className="w-12 h-12 rounded-full items-center justify-center mr-3"
+                        style={{ backgroundColor: `${goal.color}20` }}
+                      >
+                        <Ionicons name={goal.icon as any} size={24} color={goal.color} />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-base font-semibold text-gray-800">
+                          {goal.title}
+                        </Text>
+                        <Text className="text-sm text-gray-500">
+                          {goal.currentValue} / {goal.targetValue} {goal.unit}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View className="flex-row items-center">
+                      <TouchableOpacity
+                        onPress={() => handleToggleGoal(goal.id)}
+                        className="p-2"
+                      >
+                        <Ionicons
+                          name={goal.isActive ? 'pause-circle' : 'play-circle'}
+                          size={24}
+                          color="#7c3aed"
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => openEditModal(goal)}
+                        className="p-2"
+                      >
+                        <Ionicons name="create-outline" size={24} color="#3B82F6" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleDeleteGoal(goal.id)}
+                        className="p-2"
+                      >
+                        <Ionicons name="trash-outline" size={24} color="#EF4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* Progress Bar */}
+                  <View className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <View
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${progress}%`,
+                        backgroundColor: goal.color,
+                      }}
+                    />
+                  </View>
+
+                  {isCompleted && goal.isActive && (
+                    <View className="flex-row items-center mt-2">
+                      <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                      <Text className="text-green-600 text-sm ml-1 font-medium">
+                        Goal Completed! 🎉
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })
+          )}
+        </View>
+
+        {/* Tips */}
+        <View className="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
+          <View className="flex-row items-center mb-2">
+            <Ionicons name="bulb" size={20} color="#3B82F6" />
+            <Text className="text-base font-semibold text-blue-800 ml-2">Pro Tips</Text>
+          </View>
+          <Text className="text-sm text-gray-700 leading-5">
+            • Set realistic goals that you can achieve consistently{'\n'}
+            • Build streaks by completing goals daily{'\n'}
+            • Pause goals temporarily if you need a break{'\n'}
+            • Review and adjust your targets weekly
+          </Text>
+        </View>
+      </ScrollView>
+
+      {/* Add Goal Modal */}
+      <Modal
+        visible={isAddModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsAddModalVisible(false)}
+      >
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white rounded-t-3xl p-6">
+            <View className="flex-row items-center justify-between mb-6">
+              <Text className="text-xl font-bold text-gray-800">Add New Goal</Text>
+              <TouchableOpacity onPress={() => setIsAddModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+
+            <Text className="text-sm font-semibold text-gray-700 mb-2">Goal Type</Text>
+            <View className="flex-row flex-wrap mb-4">
+              {goalTypes.map((type) => (
+                <TouchableOpacity
+                  key={type.type}
+                  onPress={() => setNewGoalType(type.type)}
+                  className={`px-4 py-2 rounded-lg mr-2 mb-2 flex-row items-center ${
+                    newGoalType === type.type ? 'bg-purple-600' : 'bg-gray-100'
+                  }`}
+                >
+                  <Ionicons
+                    name={type.icon as any}
+                    size={16}
+                    color={newGoalType === type.type ? 'white' : '#6B7280'}
+                  />
+                  <Text
+                    className={`ml-2 ${
+                      newGoalType === type.type ? 'text-white font-semibold' : 'text-gray-700'
+                    }`}
+                  >
+                    {type.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text className="text-sm font-semibold text-gray-700 mb-2">Goal Title</Text>
+            <TextInput
+              className="bg-gray-100 rounded-lg px-4 py-3 mb-4 text-base"
+              placeholder="e.g., Limit Social Media"
+              value={newGoalTitle}
+              onChangeText={setNewGoalTitle}
+            />
+
+            <Text className="text-sm font-semibold text-gray-700 mb-2">Target Value</Text>
+            <TextInput
+              className="bg-gray-100 rounded-lg px-4 py-3 mb-6 text-base"
+              placeholder="e.g., 60 (minutes) or 5 (breaks)"
+              keyboardType="numeric"
+              value={newGoalTarget}
+              onChangeText={setNewGoalTarget}
+            />
+
+            <TouchableOpacity
+              onPress={handleAddGoal}
+              className="bg-purple-600 rounded-lg py-4"
+            >
+              <Text className="text-white text-center font-semibold text-base">
+                Add Goal
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Goal Modal */}
+      <Modal
+        visible={isEditModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsEditModalVisible(false)}
+      >
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white rounded-t-3xl p-6">
+            <View className="flex-row items-center justify-between mb-6">
+              <Text className="text-xl font-bold text-gray-800">Edit Goal</Text>
+              <TouchableOpacity onPress={() => setIsEditModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+
+            {selectedGoal && (
+              <>
+                <Text className="text-lg font-semibold text-gray-800 mb-4">
+                  {selectedGoal.title}
+                </Text>
+
+                <Text className="text-sm font-semibold text-gray-700 mb-2">
+                  Target Value ({selectedGoal.unit})
+                </Text>
+                <TextInput
+                  className="bg-gray-100 rounded-lg px-4 py-3 mb-6 text-base"
+                  placeholder={`Current: ${selectedGoal.targetValue}`}
+                  keyboardType="numeric"
+                  value={newGoalTarget}
+                  onChangeText={setNewGoalTarget}
+                />
+
+                <TouchableOpacity
+                  onPress={handleEditGoal}
+                  className="bg-purple-600 rounded-lg py-4"
+                >
+                  <Text className="text-white text-center font-semibold text-base">
+                    Save Changes
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  header: {
+    padding: 20,
+    paddingTop: 60,
+    backgroundColor: '#6366f1',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#e0e7ff',
+  },
+});

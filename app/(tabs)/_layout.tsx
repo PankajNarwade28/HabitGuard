@@ -1,5 +1,6 @@
 ﻿import AuthMonitor from '@/components/AuthMonitor';
 import { WatchtimeNotificationModal } from '@/components/WatchtimeNotificationModal';
+import { WatchtimeStatusMonitor } from '@/components/WatchtimeStatusMonitor';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import React from 'react';
@@ -45,6 +46,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="goals"
+        options={{
+          title: 'Goals',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'trophy' : 'trophy-outline'} color={color} size={24} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="progress"
         options={{
           title: 'Progress',
@@ -65,6 +75,7 @@ export default function TabLayout() {
       </Tabs>
       <AuthMonitor />
       <WatchtimeNotificationModal />
+      <WatchtimeStatusMonitor />
     </>
   );
 }

@@ -22,6 +22,19 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Demo account info endpoint
+app.get('/api/demo', (req, res) => {
+  res.json({
+    success: true,
+    demoAccount: {
+      email: 'demo@habitguard.com',
+      password: 'demo123',
+      name: 'Demo User',
+      note: 'Use these credentials if database is not configured'
+    }
+  });
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
@@ -57,14 +70,18 @@ app.listen(PORT, '0.0.0.0', () => {
 
   console.log('🚀 HabitGuard Backend Server Started');
   console.log(`📡 Local: http://localhost:${PORT}`);
-  console.log(`� Network: http://${localIP}:${PORT}`);
+  console.log(`🌐 Network: http://${localIP}:${PORT}`);
   console.log(`💻 API: http://${localIP}:${PORT}/api`);
   console.log('\n📋 Available routes:');
   console.log('  POST /api/auth/signup - Register new user');
   console.log('  POST /api/auth/login - User login');
   console.log('  GET  /api/auth/profile - Get user profile (requires auth)');
   console.log('  GET  /api/health - Health check');
+  console.log('  GET  /api/demo - Demo account info');
   console.log(`\n💡 Use http://${localIP}:${PORT}/api in your React Native app`);
+  console.log('\n🎓 Demo Account (use if database not configured):');
+  console.log('   📧 Email: demo@habitguard.com');
+  console.log('   🔑 Password: demo123');
 });
 
 module.exports = app;

@@ -1,12 +1,24 @@
 # HabitGuard ML Analysis Requirements
 # Install with: pip install -r requirements.txt
 
+# Core Data Science Libraries
 pandas>=1.5.0
 numpy>=1.21.0
 scikit-learn>=1.1.0
 matplotlib>=3.5.0
 
+# Deep Learning (Neural Network) - NEW
+tensorflow>=2.15.0
+# Or use tensorflow-cpu for CPU-only (smaller download):
+# tensorflow-cpu>=2.15.0
+
+# Report Generation - NEW
+reportlab>=4.0.0
+
 # Optional for enhanced analysis
 seaborn>=0.11.0
 jupyter>=1.0.0
 plotly>=5.0.0
+
+# Additional Utilities
+python-dateutil>=2.8.0
