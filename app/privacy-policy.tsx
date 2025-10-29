@@ -8,12 +8,12 @@ export default function PrivacyPolicyScreen() {
   return (
     <View style={{flex: 1, backgroundColor: '#f0fdf4'}}>
       {/* Header */}
-      <View style={{backgroundColor: '#16a34a', paddingTop: 48, paddingBottom: 24, paddingHorizontal: 16}}>
+      <View style={{backgroundColor: '#16a34a', paddingTop: 48, paddingBottom: 16, paddingHorizontal: 16}}>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <TouchableOpacity onPress={() => router.back()} style={{marginRight: 16}}>
             <Ionicons name="arrow-back" size={24} color="#ffffff" />
           </TouchableOpacity>
-          <Text style={{fontSize: 24, fontWeight: 'bold', color: '#ffffff'}}>Privacy Policy</Text>
+          <Text style={{fontSize: 22, fontWeight: 'bold', color: '#ffffff'}}>Privacy Policy</Text>
         </View>
       </View>
 

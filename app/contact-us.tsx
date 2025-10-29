@@ -62,14 +62,14 @@ export default function ContactUsScreen() {
   return (
     <View style={{flex: 1, backgroundColor: "#f0fdf4"}}>
       {/* Header */}
-      <View style={{backgroundColor: "#16a34a", paddingTop: 48, paddingBottom: 24, paddingHorizontal: 16}}>
-        <View style={{flexDirection: "row", alignItems: "center", marginBottom: 16}}>
+      <View style={{backgroundColor: "#16a34a", paddingTop: 48, paddingBottom: 16, paddingHorizontal: 16}}>
+        <View style={{flexDirection: "row", alignItems: "center", marginBottom: 8}}>
           <TouchableOpacity onPress={() => router.back()} style={{marginRight: 16}}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={{fontSize: 24, fontWeight: "bold", color: "#ffffff"}}>Contact Us</Text>
+          <Text style={{fontSize: 22, fontWeight: "bold", color: "#ffffff"}}>Contact Us</Text>
         </View>
-        <Text style={{fontSize: 16, color: "#dcfce7"}}>We're here to help you!</Text>
+        <Text style={{fontSize: 14, color: "#dcfce7", marginLeft: 40}}>We're here to help you!</Text>
       </View>
 
       <ScrollView style={{flex: 1, paddingHorizontal: 16, paddingVertical: 24}}>

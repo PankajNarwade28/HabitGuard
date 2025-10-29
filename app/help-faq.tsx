@@ -138,22 +138,22 @@ export default function HelpFAQScreen() {
   return (
     <View style={{flex: 1, backgroundColor: "#f0fdf4"}}>
       {/* Header */}
-      <View style={{backgroundColor: "#16a34a", paddingTop: 48, paddingBottom: 24, paddingHorizontal: 16}}>
-        <View style={{flexDirection: "row", alignItems: "center", marginBottom: 16}}>
+      <View style={{backgroundColor: "#16a34a", paddingTop: 48, paddingBottom: 16, paddingHorizontal: 16}}>
+        <View style={{flexDirection: "row", alignItems: "center", marginBottom: 8}}>
           <TouchableOpacity onPress={() => router.back()} style={{marginRight: 16}}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={{fontSize: 24, fontWeight: "bold", color: "#ffffff"}}>Help & FAQ</Text>
+          <Text style={{fontSize: 22, fontWeight: "bold", color: "#ffffff"}}>Help & FAQ</Text>
         </View>
-        <Text style={{fontSize: 16, color: "#dcfce7"}}>Find answers to common questions</Text>
+        <Text style={{fontSize: 14, color: "#dcfce7", marginLeft: 40}}>Find answers to common questions</Text>
       </View>
 
       {/* Category Filter */}
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
-        style={{backgroundColor: "#ffffff", borderBottomWidth: 1, borderBottomColor: "#e2e8f0"}}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12 }}
+        style={{backgroundColor: "#ffffff", borderBottomWidth: 1, borderBottomColor: "#e2e8f0", maxHeight: 60}}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, alignItems: 'center' }}
       >
         {categories.map((category) => (
           <TouchableOpacity
@@ -162,21 +162,23 @@ export default function HelpFAQScreen() {
             style={{
               flexDirection: "row", 
               alignItems: "center", 
-              paddingHorizontal: 16, 
-              paddingVertical: 8, 
-              borderRadius: 999, 
+              paddingHorizontal: 12, 
+              paddingVertical: 6, 
+              borderRadius: 20, 
               marginRight: 8,
-              backgroundColor: selectedCategory === category.id ? '#16a34a' : '#f3f4f6'
+              backgroundColor: selectedCategory === category.id ? '#16a34a' : '#f3f4f6',
+              height: 36
             }}
           >
             <Ionicons 
               name={category.icon as any} 
-              size={16} 
+              size={18} 
               color={selectedCategory === category.id ? 'white' : '#4B5563'} 
             />
             <Text 
               style={{
-                marginLeft: 8, 
+                marginLeft: 6, 
+                fontSize: 14,
                 fontWeight: "500",
                 color: selectedCategory === category.id ? '#ffffff' : '#475569'
               }}
@@ -252,39 +254,39 @@ export default function HelpFAQScreen() {
           <Text style={{fontSize: 18, fontWeight: "bold", color: "#1e293b", marginBottom: 12}}>📚 Quick Links</Text>
           
           <TouchableOpacity 
-            style={{flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#f1f5f9"}}
+            style={{flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: "#f1f5f9"}}
             onPress={() => router.push('/privacy-policy' as any)}
           >
             <View style={{flexDirection: "row", alignItems: "center"}}>
-              <Ionicons name="shield-checkmark" size={20} color="#16a34a" />
+              <Ionicons name="shield-checkmark" size={28} color="#16a34a" />
               <Text style={{fontSize: 16, color: "#475569", marginLeft: 12}}>Privacy Policy</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            <Ionicons name="chevron-forward" size={24} color="#9CA3AF" />
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={{flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#f1f5f9"}}
+            style={{flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: "#f1f5f9"}}
             onPress={() => {
               // Terms of service page not yet created
               Alert.alert('Coming Soon', 'Terms of Service page will be available soon');
             }}
           >
             <View style={{flexDirection: "row", alignItems: "center"}}>
-              <Ionicons name="document-text" size={20} color="#16a34a" />
+              <Ionicons name="document-text" size={28} color="#16a34a" />
               <Text style={{fontSize: 16, color: "#475569", marginLeft: 12}}>Terms of Service</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            <Ionicons name="chevron-forward" size={24} color="#9CA3AF" />
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={{flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12}}
+            style={{flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 18}}
             onPress={() => router.push('/contact-us' as any)}
           >
             <View style={{flexDirection: "row", alignItems: "center"}}>
-              <Ionicons name="chatbubbles" size={20} color="#16a34a" />
+              <Ionicons name="chatbubbles" size={28} color="#16a34a" />
               <Text style={{fontSize: 16, color: "#475569", marginLeft: 12}}>Contact Us</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            <Ionicons name="chevron-forward" size={24} color="#9CA3AF" />
           </TouchableOpacity>
         </View>
       </ScrollView>
