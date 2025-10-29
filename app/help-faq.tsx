@@ -136,16 +136,16 @@ export default function HelpFAQScreen() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-green-50">
       {/* Header */}
-      <View className="bg-blue-600 pt-12 pb-6 px-4">
+      <View className="bg-green-600 pt-12 pb-6 px-4">
         <View className="flex-row items-center mb-4">
           <TouchableOpacity onPress={() => router.back()} className="mr-4">
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           <Text className="text-2xl font-bold text-white">Help & FAQ</Text>
         </View>
-        <Text className="text-blue-100 text-base">Find answers to common questions</Text>
+        <Text className="text-green-100 text-base">Find answers to common questions</Text>
       </View>
 
       {/* Category Filter */}
@@ -161,7 +161,7 @@ export default function HelpFAQScreen() {
             onPress={() => setSelectedCategory(category.id)}
             className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${
               selectedCategory === category.id 
-                ? 'bg-blue-600' 
+                ? 'bg-green-600' 
                 : 'bg-gray-100'
             }`}
           >
@@ -198,7 +198,7 @@ export default function HelpFAQScreen() {
               <Ionicons 
                 name={expandedIndex === index ? 'chevron-up' : 'chevron-down'} 
                 size={20} 
-                color="#3B82F6" 
+                color="#16a34a" 
               />
             </View>
             
@@ -222,10 +222,10 @@ export default function HelpFAQScreen() {
         )}
 
         {/* Still Need Help */}
-        <View className="bg-blue-50 rounded-lg p-6 mt-4 mb-6 border border-blue-200">
+        <View className="bg-green-50 rounded-lg p-6 mt-4 mb-6 border border-green-200">
           <View className="flex-row items-center mb-3">
-            <Ionicons name="help-circle" size={28} color="#3B82F6" />
-            <Text className="text-lg font-bold text-blue-800 ml-2">
+            <Ionicons name="help-circle" size={28} color="#16a34a" />
+            <Text className="text-lg font-bold text-green-800 ml-2">
               Still Need Help?
             </Text>
           </View>
@@ -233,7 +233,7 @@ export default function HelpFAQScreen() {
             Can't find the answer you're looking for? Our support team is here to help!
           </Text>
           <TouchableOpacity 
-            className="bg-blue-600 rounded-lg py-3 px-4 flex-row items-center justify-center"
+            className="bg-green-600 rounded-lg py-3 px-4 flex-row items-center justify-center"
             onPress={() => router.push('/contact-us' as any)}
           >
             <Ionicons name="mail" size={20} color="white" />
@@ -252,7 +252,7 @@ export default function HelpFAQScreen() {
             onPress={() => router.push('/privacy-policy' as any)}
           >
             <View className="flex-row items-center">
-              <Ionicons name="shield-checkmark" size={20} color="#3B82F6" />
+              <Ionicons name="shield-checkmark" size={20} color="#16a34a" />
               <Text className="text-base text-gray-700 ml-3">Privacy Policy</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
@@ -266,7 +266,7 @@ export default function HelpFAQScreen() {
             }}
           >
             <View className="flex-row items-center">
-              <Ionicons name="document-text" size={20} color="#3B82F6" />
+              <Ionicons name="document-text" size={20} color="#16a34a" />
               <Text className="text-base text-gray-700 ml-3">Terms of Service</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
@@ -277,7 +277,7 @@ export default function HelpFAQScreen() {
             onPress={() => router.push('/contact-us' as any)}
           >
             <View className="flex-row items-center">
-              <Ionicons name="chatbubbles" size={20} color="#3B82F6" />
+              <Ionicons name="chatbubbles" size={20} color="#16a34a" />
               <Text className="text-base text-gray-700 ml-3">Contact Us</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />

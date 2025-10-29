@@ -60,24 +60,24 @@ export default function ContactUsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-green-50">
       {/* Header */}
-      <View className="bg-blue-600 pt-12 pb-6 px-4">
+      <View className="bg-green-600 pt-12 pb-6 px-4">
         <View className="flex-row items-center mb-4">
           <TouchableOpacity onPress={() => router.back()} className="mr-4">
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           <Text className="text-2xl font-bold text-white">Contact Us</Text>
         </View>
-        <Text className="text-blue-100 text-base">We're here to help you!</Text>
+        <Text className="text-green-100 text-base">We're here to help you!</Text>
       </View>
 
       <ScrollView className="flex-1 px-4 py-6">
         {/* Main Contact Card */}
         <View className="bg-white rounded-lg p-6 mb-4 shadow">
           <View className="items-center mb-4">
-            <View className="bg-blue-100 rounded-full p-4 mb-4">
-              <Ionicons name="mail" size={40} color="#3B82F6" />
+            <View className="bg-green-100 rounded-full p-4 mb-4">
+              <Ionicons name="mail" size={40} color="#16a34a" />
             </View>
             <Text className="text-xl font-bold text-gray-800 mb-2">Get in Touch</Text>
             <Text className="text-base text-gray-600 text-center leading-6">
@@ -86,7 +86,7 @@ export default function ContactUsScreen() {
           </View>
 
           <TouchableOpacity
-            className="bg-blue-600 rounded-lg py-4 flex-row items-center justify-center"
+            className="bg-green-600 rounded-lg py-4 flex-row items-center justify-center"
             onPress={() => sendEmail('support')}
           >
             <Ionicons name="send" size={20} color="white" />
@@ -105,8 +105,8 @@ export default function ContactUsScreen() {
             className="flex-row items-start p-4 bg-gray-50 rounded-lg mb-3"
             onPress={() => sendEmail('support')}
           >
-            <View className="bg-blue-100 rounded-full p-3 mr-4">
-              <Ionicons name="help-circle" size={24} color="#3B82F6" />
+            <View className="bg-green-100 rounded-full p-3 mr-4">
+              <Ionicons name="help-circle" size={24} color="#16a34a" />
             </View>
             <View className="flex-1">
               <Text className="text-base font-semibold text-gray-800 mb-1">
@@ -115,7 +115,7 @@ export default function ContactUsScreen() {
               <Text className="text-sm text-gray-600 mb-2 leading-5">
                 Questions, technical issues, or need help?
               </Text>
-              <Text className="text-sm text-blue-600 font-medium">
+              <Text className="text-sm text-green-600 font-medium">
                 {COMPANY_EMAIL}
               </Text>
             </View>
@@ -168,10 +168,10 @@ export default function ContactUsScreen() {
         </View>
 
         {/* Response Time */}
-        <View className="bg-blue-50 rounded-lg p-4 mb-4 border border-blue-200">
+        <View className="bg-green-50 rounded-lg p-4 mb-4 border border-green-200">
           <View className="flex-row items-center mb-2">
-            <Ionicons name="time" size={20} color="#3B82F6" />
-            <Text className="text-base font-semibold text-blue-800 ml-2">
+            <Ionicons name="time" size={20} color="#16a34a" />
+            <Text className="text-base font-semibold text-green-800 ml-2">
               Response Time
             </Text>
           </View>
@@ -195,8 +195,8 @@ export default function ContactUsScreen() {
             className="bg-gray-100 rounded-lg py-3 flex-row items-center justify-center"
             onPress={() => router.push('/help-faq')}
           >
-            <Ionicons name="help-circle-outline" size={20} color="#3B82F6" />
-            <Text className="text-blue-600 font-semibold text-base ml-2">
+            <Ionicons name="help-circle-outline" size={20} color="#16a34a" />
+            <Text className="text-green-600 font-semibold text-base ml-2">
               View FAQ
             </Text>
           </TouchableOpacity>
