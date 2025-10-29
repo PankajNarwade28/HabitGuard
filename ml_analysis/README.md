@@ -1,4 +1,8 @@
 # 🤖 HabitGuard ML Usage Predictor# HabitGuard ML Integration
+# HabitGuard ML Integration
+
+
+// todo student section and student portal
 
 
 
@@ -311,49 +315,5 @@ For issues or questions:
 ## 📊 Model Architecture1. Check the console logs in the React Native app
 
 2. Verify data collection is working
-
-```3. Ensure Python dependencies are installed
-
-Input Layer (10 features)4. Test with sample data first
-    ↓
-Dense (64 units, ReLU) + Dropout (0.3)
-    ↓
-Dense (32 units, ReLU) + Dropout (0.2)
-    ↓
-Dense (16 units, ReLU)
-    ↓
-Output (3 classes, Softmax)
-```
-
-## 🔗 React Native Integration
-
-Create backend API endpoint:
-
-```javascript
-// backend/routes/ml.js
-app.post('/api/ml/predict', async (req, res) => {
-  const { usageData } = req.body;
-  const result = await executePython('ml_analysis/usage_predictor.py', ['--predict']);
-  res.json(result);
-});
-```
-
-## 🐛 Troubleshooting
-
-### TensorFlow Installation
-```bash
-# Windows/Linux
-pip install tensorflow-cpu>=2.15.0
-
-# macOS (M1/M2)
-pip install tensorflow-macos>=2.15.0
-```
-
-### Model Not Found
-```bash
-python usage_predictor.py --train-nn
-```
-
----
-
-**Made with ❤️ for digital wellness**
+3. Ensure Python dependencies are installed
+4. Test with sample data first
