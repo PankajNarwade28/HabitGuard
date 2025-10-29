@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
+const weeklyReportRoutes = require('./routes/weeklyReportRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,6 +13,7 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/reports', weeklyReportRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -76,6 +78,9 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('  POST /api/auth/signup - Register new user');
   console.log('  POST /api/auth/login - User login');
   console.log('  GET  /api/auth/profile - Get user profile (requires auth)');
+  console.log('  POST /api/reports/generate - Generate weekly report (requires auth)');
+  console.log('  GET  /api/reports - Get all reports (requires auth)');
+  console.log('  GET  /api/reports/latest - Get latest report (requires auth)');
   console.log('  GET  /api/health - Health check');
   console.log('  GET  /api/demo - Demo account info');
   console.log(`\n💡 Use http://${localIP}:${PORT}/api in your React Native app`);
