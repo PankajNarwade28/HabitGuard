@@ -1,9 +1,9 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import StudentService, { StudyTimeSuggestion } from '../../services/StudentService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Stack, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import StudentService, { StudyTimeSuggestion } from '../../services/StudentService';
 
 export default function StudyTime() {
   const router = useRouter();
@@ -57,38 +57,42 @@ export default function StudyTime() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#f59e0b" />
-        <Text style={{ marginTop: 16, fontSize: 16, color: '#6b7280' }}>Loading study plan...</Text>
-      </View>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={{ flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#f59e0b" />
+          <Text style={{ marginTop: 16, fontSize: 16, color: '#6b7280' }}>Loading study plan...</Text>
+        </View>
+      </>
     );
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
-      {/* Header */}
-      <View style={{
-        backgroundColor: '#f59e0b',
-        paddingTop: 48,
-        paddingBottom: 24,
-        paddingHorizontal: 20,
-      }}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: 16,
-          }}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={{
-          fontSize: 28,
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScrollView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+        {/* Header with Back Button */}
+        <View style={{
+          backgroundColor: '#f59e0b',
+          paddingTop: 48,
+          paddingBottom: 24,
+          paddingHorizontal: 20,
+        }}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: 16,
+            }}
+          >
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Text style={{ color: '#fff', fontSize: 16, marginLeft: 8 }}>
+              Back
+            </Text>
+          </TouchableOpacity>
+          <Text style={{
+            fontSize: 28,
           fontWeight: 'bold',
           color: '#fff',
           marginBottom: 8,
@@ -295,5 +299,6 @@ export default function StudyTime() {
         )}
       </View>
     </ScrollView>
+    </>
   );
 }

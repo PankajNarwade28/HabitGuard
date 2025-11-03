@@ -1,7 +1,7 @@
-import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function StudentFloatingButton() {
   const router = useRouter();

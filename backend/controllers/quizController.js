@@ -272,7 +272,7 @@ exports.getAvailableQuizzes = async (req, res) => {
 
     // Get student's subjects
     const [profiles] = await db.query(
-      'SELECT id FROM student_profiles WHERE user_id = ?',
+      'SELECT profile_id FROM student_profiles WHERE user_id = ?',
       [userId]
     );
 
@@ -285,7 +285,7 @@ exports.getAvailableQuizzes = async (req, res) => {
 
     const [subjects] = await db.query(
       'SELECT * FROM student_subjects WHERE profile_id = ?',
-      [profiles[0].id]
+      [profiles[0].profile_id]
     );
 
     // Map to available quizzes

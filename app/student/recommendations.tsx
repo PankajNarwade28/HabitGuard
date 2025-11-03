@@ -1,9 +1,9 @@
-import { View, Text, ScrollView, TouchableOpacity, Linking, ActivityIndicator, Alert } from 'react-native';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import StudentService, { CourseRecommendation } from '../../services/StudentService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Stack, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Linking, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import StudentService, { CourseRecommendation } from '../../services/StudentService';
 
 export default function Recommendations() {
   const router = useRouter();
@@ -19,18 +19,28 @@ export default function Recommendations() {
     try {
       setLoading(true);
       const userData = await AsyncStorage.getItem('user_data');
+      console.log('Recommendations - User data:', userData);
+      
       if (userData) {
         const user = JSON.parse(userData);
         const id = user.userId || user.u_id;
+        console.log('Recommendations - User ID:', id);
         setUserId(id);
         
         const result = await StudentService.getRecommendations(id);
+        console.log('Recommendations - API result:', JSON.stringify(result, null, 2));
+        
         if (result.success) {
           setRecommendations(result.recommendations);
+          console.log('Recommendations loaded:', result.recommendations.length);
         } else {
-          Alert.alert('Info', 'Please set up your student profile first');
+          console.log('Recommendations - Error:', (result as any).message);
+          Alert.alert('Info', (result as any).message || 'Please set up your student profile first');
           router.push('/student/education-setup');
         }
+      } else {
+        console.log('Recommendations - No user data in storage');
+        Alert.alert('Error', 'Please login first');
       }
     } catch (error) {
       console.error('Error loading recommendations:', error);
@@ -72,40 +82,44 @@ export default function Recommendations() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#16a34a" />
-        <Text style={{ marginTop: 16, fontSize: 16, color: '#6b7280' }}>Loading recommendations...</Text>
-      </View>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={{ flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#16a34a" />
+          <Text style={{ marginTop: 16, fontSize: 16, color: '#6b7280' }}>Loading recommendations...</Text>
+        </View>
+      </>
     );
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
-      {/* Header */}
-      <View style={{
-        backgroundColor: '#16a34a',
-        paddingTop: 48,
-        paddingBottom: 24,
-        paddingHorizontal: 20,
-      }}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: 16,
-          }}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={{
-          fontSize: 28,
-          fontWeight: 'bold',
-          color: '#fff',
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScrollView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+        {/* Header with Back Button */}
+        <View style={{
+          backgroundColor: '#16a34a',
+          paddingTop: 48,
+          paddingBottom: 24,
+          paddingHorizontal: 20,
+        }}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: 16,
+            }}
+          >
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Text style={{ color: '#fff', fontSize: 16, marginLeft: 8 }}>
+              Back
+            </Text>
+          </TouchableOpacity>
+          <Text style={{
+            fontSize: 28,
+            fontWeight: 'bold',
+            color: '#fff',
           marginBottom: 8,
         }}>
           Course Recommendations
@@ -328,5 +342,6 @@ export default function Recommendations() {
         )}
       </View>
     </ScrollView>
+    </>
   );
 }

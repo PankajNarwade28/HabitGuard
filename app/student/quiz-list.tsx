@@ -1,9 +1,9 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import QuizService, { AvailableQuiz } from '../../services/QuizService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Stack, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import QuizService, { AvailableQuiz } from '../../services/QuizService';
 
 export default function QuizList() {
   const router = useRouter();
@@ -19,18 +19,28 @@ export default function QuizList() {
     try {
       setLoading(true);
       const userData = await AsyncStorage.getItem('user_data');
+      console.log('Quiz List - User data:', userData);
+      
       if (userData) {
         const user = JSON.parse(userData);
         const id = user.userId || user.u_id;
+        console.log('Quiz List - User ID:', id);
         setUserId(id);
         
         const result = await QuizService.getAvailableQuizzes(id);
+        console.log('Quiz List - API result:', JSON.stringify(result, null, 2));
+        
         if (result.success) {
           setQuizzes(result.quizzes);
-          } else {
-          Alert.alert('Info', 'Please set up your student profile first');
+          console.log('Quizzes loaded:', result.quizzes.length);
+        } else {
+          console.log('Quiz List - Error:', (result as any).message);
+          Alert.alert('Info', (result as any).message || 'Please set up your student profile first');
           router.push('/student/education-setup' as any);
         }
+      } else {
+        console.log('Quiz List - No user data in storage');
+        Alert.alert('Error', 'Please login first');
       }
     } catch (error) {
       console.error('Error loading quizzes:', error);
@@ -49,43 +59,47 @@ export default function QuizList() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#8b5cf6" />
-        <Text style={{ marginTop: 16, fontSize: 16, color: '#6b7280' }}>Loading quizzes...</Text>
-      </View>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={{ flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#8b5cf6" />
+          <Text style={{ marginTop: 16, fontSize: 16, color: '#6b7280' }}>Loading quizzes...</Text>
+        </View>
+      </>
     );
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
-      {/* Header */}
-      <View style={{
-        backgroundColor: '#8b5cf6',
-        paddingTop: 48,
-        paddingBottom: 24,
-        paddingHorizontal: 20,
-      }}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: 16,
-          }}
-        >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={{
-          fontSize: 28,
-          fontWeight: 'bold',
-          color: '#fff',
-          marginBottom: 8,
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScrollView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+        {/* Header with Back Button */}
+        <View style={{
+          backgroundColor: '#8b5cf6',
+          paddingTop: 48,
+          paddingBottom: 24,
+          paddingHorizontal: 20,
         }}>
-          Quizzes
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: 16,
+            }}
+          >
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Text style={{ color: '#fff', fontSize: 16, marginLeft: 8 }}>
+              Back
+            </Text>
+          </TouchableOpacity>
+          <Text style={{
+            fontSize: 28,
+            fontWeight: 'bold',
+            color: '#fff',
+            marginBottom: 8,
+          }}>
+            Quizzes
         </Text>
         <Text style={{
           fontSize: 16,
@@ -252,5 +266,6 @@ export default function QuizList() {
         )}
       </View>
     </ScrollView>
+    </>
   );
 }

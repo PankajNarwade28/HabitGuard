@@ -1,5 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import StudentService from '../../services/StudentService';
@@ -9,6 +10,7 @@ export default function EducationSetup() {
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const [courses, setCourses] = useState<any>(null);
+  const [existingProfile, setExistingProfile] = useState<any>(null);
   
   // Form state
   const [courseType, setCourseType] = useState<'undergraduate' | 'postgraduate' | 'diploma'>('undergraduate');
@@ -27,8 +29,12 @@ export default function EducationSetup() {
       const userData = await AsyncStorage.getItem('user_data');
       if (userData) {
         const user = JSON.parse(userData);
-        setUserId(user.userId || user.u_id);
-        console.log('User ID loaded:', user.userId || user.u_id);
+        const id = user.userId || user.u_id;
+        setUserId(id);
+        console.log('User ID loaded:', id);
+        
+        // Check if profile already exists
+        await checkExistingProfile(id);
       } else {
         console.log('No user data found in storage');
       }
@@ -37,11 +43,25 @@ export default function EducationSetup() {
     }
   };
 
+  const checkExistingProfile = async (id: number) => {
+    try {
+      const result = await StudentService.getProfile(id);
+      if (result.success && result.profile) {
+        setExistingProfile(result.profile);
+      }
+    } catch (error) {
+      // Profile doesn't exist, which is fine for creation screen
+      console.log('No existing profile found');
+    }
+  };
+
   const loadCourses = async () => {
     try {
       const result = await StudentService.getCourses();
+      console.log('Courses API result:', JSON.stringify(result, null, 2));
       if (result.success) {
         setCourses(result.courses);
+        console.log('Courses loaded:', Object.keys(result.courses));
       }
     } catch (error) {
       console.error('Error loading courses:', error);
@@ -77,7 +97,28 @@ export default function EducationSetup() {
           },
         ]);
       } else {
-        Alert.alert('Error', result.message || 'Failed to create profile');
+        if (result.message === 'Student profile already exists') {
+          Alert.alert(
+            'Profile Exists', 
+            'You already have a student profile. Would you like to view your recommendations or quizzes?',
+            [
+              {
+                text: 'View Recommendations',
+                onPress: () => router.push('/student/recommendations'),
+              },
+              {
+                text: 'View Quizzes',
+                onPress: () => router.push('/student/quiz-list'),
+              },
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+            ]
+          );
+        } else {
+          Alert.alert('Error', result.message || 'Failed to create profile');
+        }
       }
     } catch (error) {
       console.error('Error creating profile:', error);
@@ -88,8 +129,13 @@ export default function EducationSetup() {
   };
 
   const getDegreeList = () => {
-    if (!courses || !courses[courseType]) return [];
-    return Object.keys(courses[courseType]);
+    if (!courses || !courses[courseType]) {
+      console.log('No courses found for:', courseType, 'Available:', courses ? Object.keys(courses) : 'null');
+      return [];
+    }
+    const degrees = Object.keys(courses[courseType]);
+    console.log('Degrees for', courseType, ':', degrees);
+    return degrees;
   };
 
   const getMaxSemesters = () => {
@@ -98,30 +144,110 @@ export default function EducationSetup() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#fff' }}>
-      {/* Header */}
-      <View style={{
-        backgroundColor: '#16a34a',
-        paddingTop: 48,
-        paddingBottom: 24,
-        paddingHorizontal: 20,
-      }}>
-        <Text style={{
-          fontSize: 28,
-          fontWeight: 'bold',
-          color: '#fff',
-          marginBottom: 8,
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScrollView style={{ flex: 1, backgroundColor: '#fff' }}>
+        {/* Header with Back Button */}
+        <View style={{
+          backgroundColor: '#16a34a',
+          paddingTop: 48,
+          paddingBottom: 24,
+          paddingHorizontal: 20,
         }}>
-          Student Profile Setup
-        </Text>
-        <Text style={{
-          fontSize: 16,
-          color: '#fff',
-          opacity: 0.9,
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: 16,
+            }}
+          >
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Text style={{ color: '#fff', fontSize: 16, marginLeft: 8 }}>
+              Back
+            </Text>
+          </TouchableOpacity>
+          <Text style={{
+            fontSize: 28,
+            fontWeight: 'bold',
+            color: '#fff',
+            marginBottom: 8,
+          }}>
+            Student Profile Setup
+          </Text>
+          <Text style={{
+            fontSize: 16,
+            color: '#fff',
+            opacity: 0.9,
+          }}>
+            Tell us about your education to get personalized recommendations
+          </Text>
+        </View>
+
+      {/* Existing Profile Notice */}
+      {existingProfile && (
+        <View style={{
+          margin: 20,
+          padding: 16,
+          backgroundColor: '#dbeafe',
+          borderLeftWidth: 4,
+          borderLeftColor: '#3b82f6',
+          borderRadius: 8,
         }}>
-          Tell us about your education to get personalized recommendations
-        </Text>
-      </View>
+          <Text style={{
+            fontSize: 16,
+            fontWeight: '600',
+            color: '#1e40af',
+            marginBottom: 8,
+          }}>
+            Profile Already Exists
+          </Text>
+          <Text style={{
+            fontSize: 14,
+            color: '#1e3a8a',
+            marginBottom: 4,
+          }}>
+            Course: {existingProfile.course_type} - {existingProfile.degree_name}
+          </Text>
+          <Text style={{
+            fontSize: 14,
+            color: '#1e3a8a',
+            marginBottom: 12,
+          }}>
+            Semester: {existingProfile.current_semester}
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              onPress={() => router.push('/student/recommendations')}
+              style={{
+                flex: 1,
+                paddingVertical: 10,
+                backgroundColor: '#3b82f6',
+                borderRadius: 6,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>
+                View Recommendations
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push('/student/quiz-list')}
+              style={{
+                flex: 1,
+                paddingVertical: 10,
+                backgroundColor: '#8b5cf6',
+                borderRadius: 6,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>
+                View Quizzes
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       <View style={{ padding: 20 }}>
         {/* Course Type */}
@@ -326,5 +452,6 @@ export default function EducationSetup() {
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </>
   );
 }

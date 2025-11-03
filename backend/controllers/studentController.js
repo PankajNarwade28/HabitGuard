@@ -103,7 +103,7 @@ exports.getProfile = async (req, res) => {
     // Get subjects for this profile
     const [subjects] = await db.query(
       'SELECT * FROM student_subjects WHERE profile_id = ? ORDER BY semester, subject_code',
-      [profile.id]
+      [profile.profile_id]
     );
 
     res.json({
@@ -203,7 +203,7 @@ exports.getSubjects = async (req, res) => {
 
     const [subjects] = await db.query(
       'SELECT * FROM student_subjects WHERE profile_id = ? ORDER BY subject_code',
-      [profile.id]
+      [profile.profile_id]
     );
 
     res.json({
@@ -226,7 +226,7 @@ exports.getRecommendations = async (req, res) => {
 
     // Get student's subjects
     const [profiles] = await db.query(
-      'SELECT id FROM student_profiles WHERE user_id = ?',
+      'SELECT profile_id FROM student_profiles WHERE user_id = ?',
       [userId]
     );
 
@@ -239,7 +239,7 @@ exports.getRecommendations = async (req, res) => {
 
     const [subjects] = await db.query(
       'SELECT * FROM student_subjects WHERE profile_id = ?',
-      [profiles[0].id]
+      [profiles[0].profile_id]
     );
 
     // Map recommendations to subjects
@@ -293,7 +293,7 @@ exports.getStudyTimeSuggestions = async (req, res) => {
 
     const [subjects] = await db.query(
       'SELECT * FROM student_subjects WHERE profile_id = ? ORDER BY credits DESC',
-      [profile.id]
+      [profile.profile_id]
     );
 
     const totalRecommendedHours = subjects.reduce((sum, s) => sum + s.study_hours_recommended, 0);
