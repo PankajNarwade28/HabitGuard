@@ -11,7 +11,6 @@ export default function EducationSetup() {
   const [userId, setUserId] = useState<number | null>(null);
   const [courses, setCourses] = useState<any>(null);
   const [existingProfile, setExistingProfile] = useState<any>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
   
   // Form state
   const [courseType, setCourseType] = useState<'undergraduate' | 'postgraduate' | 'diploma'>('undergraduate');
@@ -24,6 +23,17 @@ export default function EducationSetup() {
     loadUserData();
     loadCourses();
   }, []);
+
+  useEffect(() => {
+    if (existingProfile) {
+      // Pre-fill form with existing profile data
+      setCourseType(existingProfile.course_type);
+      setDegreeName(existingProfile.degree_name);
+      setCurrentSemester(existingProfile.current_semester.toString());
+      setSpecialization(existingProfile.specialization || '');
+      setStudyHours(existingProfile.study_hours_per_day.toString());
+    }
+  }, [existingProfile]);
 
   const loadUserData = async () => {
     try {
@@ -48,16 +58,7 @@ export default function EducationSetup() {
     try {
       const result = await StudentService.getProfile(id);
       if (result.success && result.profile) {
-        const profile = result.profile;
-        setExistingProfile(profile);
-        
-        // Pre-fill form with existing data
-        setCourseType(profile.course_type);
-        setDegreeName(profile.degree_name);
-        setCurrentSemester(profile.current_semester.toString());
-        setSpecialization(profile.specialization || '');
-        setStudyHours(profile.study_hours_per_day.toString());
-        console.log('Loaded existing profile:', profile);
+        setExistingProfile(result.profile);
       }
     } catch (error) {
       // Profile doesn't exist, which is fine for creation screen
@@ -91,20 +92,25 @@ export default function EducationSetup() {
 
     setLoading(true);
     try {
-      // If profile exists, update it; otherwise create new
-      const result = existingProfile 
-        ? await StudentService.updateProfile(userId, {
-            currentSemester: parseInt(currentSemester),
-            specialization: specialization || undefined,
-            studyHoursPerDay: parseInt(studyHours),
-          })
-        : await StudentService.createProfile(userId, {
-            courseType,
-            degreeName,
-            currentSemester: parseInt(currentSemester),
-            specialization: specialization || undefined,
-            studyHoursPerDay: parseInt(studyHours),
-          });
+      let result;
+      
+      if (existingProfile) {
+        // Update existing profile
+        result = await StudentService.updateProfile(userId, {
+          currentSemester: parseInt(currentSemester),
+          specialization: specialization || undefined,
+          studyHoursPerDay: parseInt(studyHours),
+        });
+      } else {
+        // Create new profile
+        result = await StudentService.createProfile(userId, {
+          courseType,
+          degreeName,
+          currentSemester: parseInt(currentSemester),
+          specialization: specialization || undefined,
+          studyHoursPerDay: parseInt(studyHours),
+        });
+      }
 
       if (result.success) {
         Alert.alert(
@@ -113,16 +119,29 @@ export default function EducationSetup() {
           [
             {
               text: 'OK',
-              onPress: () => {
-                setIsEditMode(false);
-                // Reload profile data
-                if (userId) checkExistingProfile(userId);
-              },
+              onPress: () => router.push('/student/profile'),
             },
           ]
         );
       } else {
-        Alert.alert('Error', result.message || `Failed to ${existingProfile ? 'update' : 'create'} profile`);
+        if (result.message === 'Student profile already exists' && !existingProfile) {
+          Alert.alert(
+            'Profile Exists', 
+            'You already have a student profile. Would you like to view it?',
+            [
+              {
+                text: 'View Profile',
+                onPress: () => router.push('/student/profile'),
+              },
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+            ]
+          );
+        } else {
+          Alert.alert('Error', result.message || `Failed to ${existingProfile ? 'update' : 'create'} profile`);
+        }
       }
     } catch (error) {
       console.error('Error saving profile:', error);
@@ -177,190 +196,92 @@ export default function EducationSetup() {
             color: '#fff',
             marginBottom: 8,
           }}>
-            Student Profile Setup
+            {existingProfile ? 'Edit Student Profile' : 'Student Profile Setup'}
           </Text>
           <Text style={{
             fontSize: 16,
             color: '#fff',
             opacity: 0.9,
           }}>
-            Tell us about your education to get personalized recommendations
+            {existingProfile ? 'Update your education details' : 'Tell us about your education to get personalized recommendations'}
           </Text>
         </View>
 
-      {/* Existing Profile Display */}
-      {existingProfile && !isEditMode && (
+      {/* Existing Profile Notice */}
+      {existingProfile && (
         <View style={{
           margin: 20,
-          padding: 20,
-          backgroundColor: '#fff',
-          borderRadius: 12,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          elevation: 3,
+          padding: 16,
+          backgroundColor: '#dbeafe',
+          borderLeftWidth: 4,
+          borderLeftColor: '#3b82f6',
+          borderRadius: 8,
         }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <Ionicons name="information-circle" size={24} color="#3b82f6" />
             <Text style={{
-              fontSize: 20,
-              fontWeight: '700',
-              color: '#1f2937',
+              fontSize: 16,
+              fontWeight: '600',
+              color: '#1e40af',
+              marginLeft: 8,
             }}>
-              Your Student Profile
+              Editing Existing Profile
             </Text>
+          </View>
+          <Text style={{
+            fontSize: 14,
+            color: '#1e3a8a',
+            marginBottom: 4,
+          }}>
+            Course: {existingProfile.course_type} - {existingProfile.degree_name}
+          </Text>
+          <Text style={{
+            fontSize: 14,
+            color: '#1e3a8a',
+            marginBottom: 12,
+          }}>
+            Current Semester: {existingProfile.current_semester}
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
             <TouchableOpacity
-              onPress={() => setIsEditMode(true)}
+              onPress={() => router.push('/student/profile')}
               style={{
-                paddingHorizontal: 16,
-                paddingVertical: 8,
+                flex: 1,
+                paddingVertical: 10,
                 backgroundColor: '#16a34a',
-                borderRadius: 8,
-                flexDirection: 'row',
+                borderRadius: 6,
                 alignItems: 'center',
-                gap: 6,
+                flexDirection: 'row',
+                justifyContent: 'center',
               }}
             >
-              <Ionicons name="pencil" size={16} color="#fff" />
-              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>
-                Edit
+              <Ionicons name="person" size={16} color="#fff" />
+              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14, marginLeft: 6 }}>
+                View Profile
               </Text>
             </TouchableOpacity>
-          </View>
-
-          {/* Profile Details */}
-          <View style={{ gap: 16 }}>
-            <View>
-              <Text style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Course Type</Text>
-              <Text style={{ fontSize: 16, color: '#1f2937', fontWeight: '500', textTransform: 'capitalize' }}>
-                {existingProfile.course_type}
-              </Text>
-            </View>
-
-            <View>
-              <Text style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Degree Program</Text>
-              <Text style={{ fontSize: 16, color: '#1f2937', fontWeight: '500' }}>
-                {existingProfile.degree_name}
-              </Text>
-            </View>
-
-            <View style={{ flexDirection: 'row', gap: 16 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Current Semester</Text>
-                <Text style={{ fontSize: 16, color: '#1f2937', fontWeight: '500' }}>
-                  Semester {existingProfile.current_semester}
-                </Text>
-              </View>
-
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Study Hours/Day</Text>
-                <Text style={{ fontSize: 16, color: '#1f2937', fontWeight: '500' }}>
-                  {existingProfile.study_hours_per_day} hours
-                </Text>
-              </View>
-            </View>
-
-            {existingProfile.specialization && (
-              <View>
-                <Text style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Specialization</Text>
-                <Text style={{ fontSize: 16, color: '#1f2937', fontWeight: '500' }}>
-                  {existingProfile.specialization}
-                </Text>
-              </View>
-            )}
-
-            {existingProfile.subjects && existingProfile.subjects.length > 0 && (
-              <View>
-                <Text style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>
-                  Enrolled Subjects ({existingProfile.subjects.length})
-                </Text>
-                <View style={{ gap: 8 }}>
-                  {existingProfile.subjects.slice(0, 3).map((subject: any, index: number) => (
-                    <View key={index} style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      backgroundColor: '#f3f4f6',
-                      borderRadius: 6,
-                    }}>
-                      <Text style={{ fontSize: 14, color: '#1f2937', fontWeight: '500' }}>
-                        {subject.subject_code} - {subject.subject_name}
-                      </Text>
-                    </View>
-                  ))}
-                  {existingProfile.subjects.length > 3 && (
-                    <Text style={{ fontSize: 12, color: '#6b7280', fontStyle: 'italic' }}>
-                      +{existingProfile.subjects.length - 3} more subjects
-                    </Text>
-                  )}
-                </View>
-              </View>
-            )}
-          </View>
-
-          {/* Quick Actions */}
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 20 }}>
             <TouchableOpacity
               onPress={() => router.push('/student/recommendations')}
               style={{
                 flex: 1,
-                paddingVertical: 12,
+                paddingVertical: 10,
                 backgroundColor: '#3b82f6',
-                borderRadius: 8,
+                borderRadius: 6,
                 alignItems: 'center',
+                flexDirection: 'row',
+                justifyContent: 'center',
               }}
             >
-              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>
-                View Recommendations
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push('/student/quiz-list')}
-              style={{
-                flex: 1,
-                paddingVertical: 12,
-                backgroundColor: '#8b5cf6',
-                borderRadius: 8,
-                alignItems: 'center',
-              }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>
-                View Quizzes
+              <Ionicons name="library" size={16} color="#fff" />
+              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14, marginLeft: 6 }}>
+                Courses
               </Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* Edit/Create Form */}
-      {(!existingProfile || isEditMode) && (
       <View style={{ padding: 20 }}>
-        {isEditMode && (
-          <TouchableOpacity
-            onPress={() => {
-              setIsEditMode(false);
-              // Reset to existing profile data
-              if (existingProfile) {
-                setCourseType(existingProfile.course_type);
-                setDegreeName(existingProfile.degree_name);
-                setCurrentSemester(existingProfile.current_semester.toString());
-                setSpecialization(existingProfile.specialization || '');
-                setStudyHours(existingProfile.study_hours_per_day.toString());
-              }
-            }}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginBottom: 16,
-              gap: 8,
-            }}
-          >
-            <Ionicons name="close-circle" size={24} color="#ef4444" />
-            <Text style={{ color: '#ef4444', fontSize: 16, fontWeight: '600' }}>
-              Cancel Edit
-            </Text>
-          </TouchableOpacity>
-        )}
-
         {/* Course Type */}
         <Text style={{
           fontSize: 16,
@@ -375,13 +296,9 @@ export default function EducationSetup() {
             <TouchableOpacity
               key={type}
               onPress={() => {
-                // Disable course type change if profile exists (can only update semester/specialization)
-                if (!existingProfile) {
-                  setCourseType(type as any);
-                  setDegreeName(''); // Reset degree when type changes
-                }
+                setCourseType(type as any);
+                if (!existingProfile) setDegreeName(''); // Only reset if creating new
               }}
-              disabled={!!existingProfile}
               style={{
                 flex: 1,
                 paddingVertical: 12,
@@ -389,8 +306,7 @@ export default function EducationSetup() {
                 borderRadius: 12,
                 borderWidth: 2,
                 borderColor: courseType === type ? '#16a34a' : '#e5e7eb',
-                backgroundColor: courseType === type ? '#f0fdf4' : existingProfile ? '#f9fafb' : '#fff',
-                opacity: existingProfile ? 0.6 : 1,
+                backgroundColor: courseType === type ? '#f0fdf4' : '#fff',
               }}
             >
               <Text style={{
@@ -412,7 +328,7 @@ export default function EducationSetup() {
           color: '#1f2937',
           marginBottom: 12,
         }}>
-          Degree Program * {existingProfile && '(Cannot be changed)'}
+          Degree Program *
         </Text>
         <ScrollView 
           horizontal 
@@ -422,17 +338,15 @@ export default function EducationSetup() {
           {getDegreeList().map((degree) => (
             <TouchableOpacity
               key={degree}
-              onPress={() => !existingProfile && setDegreeName(degree)}
-              disabled={!!existingProfile}
+              onPress={() => setDegreeName(degree)}
               style={{
                 paddingVertical: 12,
                 paddingHorizontal: 20,
                 borderRadius: 12,
                 borderWidth: 2,
                 borderColor: degreeName === degree ? '#16a34a' : '#e5e7eb',
-                backgroundColor: degreeName === degree ? '#f0fdf4' : existingProfile ? '#f9fafb' : '#fff',
+                backgroundColor: degreeName === degree ? '#f0fdf4' : '#fff',
                 marginRight: 12,
-                opacity: existingProfile ? 0.6 : 1,
               }}
             >
               <Text style={{
@@ -554,22 +468,27 @@ export default function EducationSetup() {
             borderRadius: 12,
             alignItems: 'center',
             marginBottom: 40,
+            flexDirection: 'row',
+            justifyContent: 'center',
           }}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={{
-              color: '#fff',
-              fontSize: 18,
-              fontWeight: '600',
-            }}>
-              {existingProfile ? 'Update Profile' : 'Create Student Profile'}
-            </Text>
+            <>
+              <Ionicons name={existingProfile ? "checkmark-circle" : "add-circle"} size={24} color="#fff" />
+              <Text style={{
+                color: '#fff',
+                fontSize: 18,
+                fontWeight: '600',
+                marginLeft: 8,
+              }}>
+                {existingProfile ? 'Update Profile' : 'Create Student Profile'}
+              </Text>
+            </>
           )}
         </TouchableOpacity>
       </View>
-      )}
     </ScrollView>
     </>
   );
