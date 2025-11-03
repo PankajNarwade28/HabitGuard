@@ -6,6 +6,7 @@ const studentController = require('../controllers/studentController');
 router.post('/profile/:userId', studentController.createProfile);
 router.get('/profile/:userId', studentController.getProfile);
 router.put('/profile/:userId', studentController.updateProfile);
+router.post('/profile/:userId/repopulate-subjects', studentController.repopulateSubjects);
 
 // Courses and subjects routes
 router.get('/courses', studentController.getCourses);

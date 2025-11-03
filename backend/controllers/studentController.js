@@ -53,18 +53,33 @@ exports.createProfile = async (req, res) => {
 
     // Auto-populate subjects based on course and semester
     const courseData = coursesData[courseType]?.[degreeName];
-    if (courseData && courseData.semesters[currentSemester]) {
-      const subjects = courseData.semesters[currentSemester];
+    console.log('📚 Course lookup:', { courseType, degreeName, found: !!courseData });
+    
+    if (courseData && courseData.semesters) {
+      console.log('📖 Available semesters:', Object.keys(courseData.semesters));
+      console.log('🔍 Looking for semester:', currentSemester, 'Type:', typeof currentSemester);
       
-      for (const subject of subjects) {
-        const studyHours = Math.ceil(subject.credits * 1.5); // 1.5 hours per credit
-        await db.query(
-          `INSERT INTO student_subjects 
-          (profile_id, subject_name, subject_code, semester, credits, study_hours_recommended) 
-          VALUES (?, ?, ?, ?, ?, ?)`,
-          [result.insertId, subject.name, subject.code, currentSemester, subject.credits, studyHours]
-        );
+      const semesterKey = String(currentSemester);
+      const subjects = courseData.semesters[semesterKey];
+      console.log('📝 Found subjects:', subjects ? subjects.length : 0);
+      
+      if (subjects && subjects.length > 0) {
+        for (const subject of subjects) {
+          const studyHours = Math.ceil(subject.credits * 1.5); // 1.5 hours per credit
+          await db.query(
+            `INSERT INTO student_subjects 
+            (profile_id, subject_name, subject_code, semester, credits, study_hours_recommended) 
+            VALUES (?, ?, ?, ?, ?, ?)`,
+            [result.insertId, subject.name, subject.code, currentSemester, subject.credits, studyHours]
+          );
+          console.log('✅ Added subject:', subject.code, subject.name);
+        }
+        console.log('✨ Successfully added', subjects.length, 'subjects');
+      } else {
+        console.log('⚠️ No subjects found for semester:', semesterKey);
       }
+    } else {
+      console.log('❌ Course data not found or no semesters');
     }
 
     res.json({
@@ -242,11 +257,20 @@ exports.getRecommendations = async (req, res) => {
       [profiles[0].profile_id]
     );
 
+    console.log('📚 Recommendations - Found subjects:', subjects.length);
+    if (subjects.length === 0) {
+      console.log('⚠️ No subjects found for profile:', profiles[0].profile_id);
+    }
+
     // Map recommendations to subjects
     const recommendations = subjects.map(subject => {
       const recs = recommendationsData.recommendations.find(
         r => r.subjectCode === subject.subject_code
       );
+      
+      if (!recs) {
+        console.log('⚠️ No recommendations found for:', subject.subject_code);
+      }
       
       return {
         subject: {
@@ -259,9 +283,12 @@ exports.getRecommendations = async (req, res) => {
       };
     });
 
+    const filtered = recommendations.filter(r => r.courses.length > 0);
+    console.log('✅ Returning', filtered.length, 'recommendations');
+
     res.json({
       success: true,
-      recommendations: recommendations.filter(r => r.courses.length > 0)
+      recommendations: filtered
     });
   } catch (error) {
     console.error('Error fetching recommendations:', error);
@@ -323,6 +350,87 @@ exports.getStudyTimeSuggestions = async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Failed to fetch study time suggestions' 
+    });
+  }
+};
+
+// Repopulate subjects for existing profile (for fixing profiles created before the fix)
+exports.repopulateSubjects = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Get student profile
+    const [profiles] = await db.query(
+      'SELECT * FROM student_profiles WHERE user_id = ?',
+      [userId]
+    );
+
+    if (profiles.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Student profile not found' 
+      });
+    }
+
+    const profile = profiles[0];
+    const { course_type, degree_name, current_semester } = profile;
+
+    console.log('🔄 Repopulating subjects for profile:', profile.profile_id);
+    console.log('📚 Course:', course_type, degree_name, 'Semester:', current_semester);
+
+    // Delete existing subjects
+    await db.query('DELETE FROM student_subjects WHERE profile_id = ?', [profile.profile_id]);
+    console.log('🗑️ Deleted existing subjects');
+
+    // Auto-populate subjects based on course and semester
+    const courseData = coursesData[course_type]?.[degree_name];
+    console.log('📚 Course lookup:', { courseType: course_type, degreeName: degree_name, found: !!courseData });
+    
+    if (courseData && courseData.semesters) {
+      console.log('📖 Available semesters:', Object.keys(courseData.semesters));
+      console.log('🔍 Looking for semester:', current_semester, 'Type:', typeof current_semester);
+      
+      const semesterKey = String(current_semester);
+      const subjects = courseData.semesters[semesterKey];
+      console.log('📝 Found subjects:', subjects ? subjects.length : 0);
+      
+      if (subjects && subjects.length > 0) {
+        for (const subject of subjects) {
+          const studyHours = Math.ceil(subject.credits * 1.5); // 1.5 hours per credit
+          await db.query(
+            `INSERT INTO student_subjects 
+            (profile_id, subject_name, subject_code, semester, credits, study_hours_recommended) 
+            VALUES (?, ?, ?, ?, ?, ?)`,
+            [profile.profile_id, subject.name, subject.code, current_semester, subject.credits, studyHours]
+          );
+          console.log('✅ Added subject:', subject.code, subject.name);
+        }
+        console.log('✨ Successfully repopulated', subjects.length, 'subjects');
+        
+        res.json({
+          success: true,
+          message: `Successfully repopulated ${subjects.length} subjects`,
+          subjectsAdded: subjects.length
+        });
+      } else {
+        console.log('⚠️ No subjects found for semester:', semesterKey);
+        res.status(404).json({
+          success: false,
+          message: 'No subjects found for this semester'
+        });
+      }
+    } else {
+      console.log('❌ Course data not found or no semesters');
+      res.status(404).json({
+        success: false,
+        message: 'Course data not found'
+      });
+    }
+  } catch (error) {
+    console.error('Error repopulating subjects:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to repopulate subjects' 
     });
   }
 };
