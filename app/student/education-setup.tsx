@@ -24,10 +24,13 @@ export default function EducationSetup() {
 
   const loadUserData = async () => {
     try {
-      const userData = await AsyncStorage.getItem('userData');
+      const userData = await AsyncStorage.getItem('user_data');
       if (userData) {
         const user = JSON.parse(userData);
-        setUserId(user.u_id);
+        setUserId(user.userId || user.u_id);
+        console.log('User ID loaded:', user.userId || user.u_id);
+      } else {
+        console.log('No user data found in storage');
       }
     } catch (error) {
       console.error('Error loading user data:', error);

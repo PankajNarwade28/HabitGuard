@@ -1,6 +1,7 @@
 ﻿import AuthMonitor from '@/components/AuthMonitor';
 import { WatchtimeNotificationModal } from '@/components/WatchtimeNotificationModal';
 import { WatchtimeStatusMonitor } from '@/components/WatchtimeStatusMonitor';
+import StudentFloatingButton from '@/components/StudentFloatingButton';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import React from 'react';
@@ -76,6 +77,7 @@ export default function TabLayout() {
       <AuthMonitor />
       <WatchtimeNotificationModal />
       <WatchtimeStatusMonitor />
+      <StudentFloatingButton />
     </>
   );
 }
