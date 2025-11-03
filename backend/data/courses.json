@@ -1,0 +1,174 @@
+{
+  "undergraduate": {
+    "Computer Science Engineering": {
+      "totalSemesters": 8,
+      "semesters": {
+        "1": [
+          { "code": "MA101", "name": "Engineering Mathematics I", "credits": 4 },
+          { "code": "PH101", "name": "Engineering Physics", "credits": 4 },
+          { "code": "CH101", "name": "Engineering Chemistry", "credits": 3 },
+          { "code": "CS101", "name": "Programming in C", "credits": 4 },
+          { "code": "EE101", "name": "Basic Electrical Engineering", "credits": 3 },
+          { "code": "ME101", "name": "Engineering Graphics", "credits": 2 }
+        ],
+        "2": [
+          { "code": "MA102", "name": "Engineering Mathematics II", "credits": 4 },
+          { "code": "PH102", "name": "Engineering Physics Lab", "credits": 2 },
+          { "code": "CS102", "name": "Data Structures", "credits": 4 },
+          { "code": "CS103", "name": "Digital Electronics", "credits": 3 },
+          { "code": "EE102", "name": "Circuit Theory", "credits": 3 },
+          { "code": "CS104", "name": "Object Oriented Programming", "credits": 4 }
+        ],
+        "3": [
+          { "code": "MA201", "name": "Discrete Mathematics", "credits": 4 },
+          { "code": "CS201", "name": "Computer Organization", "credits": 4 },
+          { "code": "CS202", "name": "Database Management Systems", "credits": 4 },
+          { "code": "CS203", "name": "Operating Systems", "credits": 4 },
+          { "code": "CS204", "name": "Theory of Computation", "credits": 3 }
+        ],
+        "4": [
+          { "code": "CS205", "name": "Computer Networks", "credits": 4 },
+          { "code": "CS206", "name": "Software Engineering", "credits": 3 },
+          { "code": "CS207", "name": "Algorithm Design & Analysis", "credits": 4 },
+          { "code": "CS208", "name": "Web Technologies", "credits": 3 },
+          { "code": "CS209", "name": "Microprocessors", "credits": 3 }
+        ],
+        "5": [
+          { "code": "CS301", "name": "Artificial Intelligence", "credits": 4 },
+          { "code": "CS302", "name": "Machine Learning", "credits": 4 },
+          { "code": "CS303", "name": "Compiler Design", "credits": 3 },
+          { "code": "CS304", "name": "Cloud Computing", "credits": 3 },
+          { "code": "CS305", "name": "Cyber Security", "credits": 3 }
+        ],
+        "6": [
+          { "code": "CS306", "name": "Data Mining", "credits": 3 },
+          { "code": "CS307", "name": "Internet of Things", "credits": 3 },
+          { "code": "CS308", "name": "Mobile Application Development", "credits": 4 },
+          { "code": "CS309", "name": "Blockchain Technology", "credits": 3 },
+          { "code": "CS310", "name": "Deep Learning", "credits": 4 }
+        ],
+        "7": [
+          { "code": "CS401", "name": "Natural Language Processing", "credits": 3 },
+          { "code": "CS402", "name": "Computer Vision", "credits": 3 },
+          { "code": "CS403", "name": "Big Data Analytics", "credits": 4 },
+          { "code": "CS404", "name": "Project Work I", "credits": 4 }
+        ],
+        "8": [
+          { "code": "CS405", "name": "Capstone Project", "credits": 8 },
+          { "code": "CS406", "name": "Industry Internship", "credits": 4 },
+          { "code": "CS407", "name": "Seminar & Presentation", "credits": 2 }
+        ]
+      }
+    },
+    "Information Technology": {
+      "totalSemesters": 8,
+      "semesters": {
+        "1": [
+          { "code": "MA101", "name": "Engineering Mathematics I", "credits": 4 },
+          { "code": "PH101", "name": "Engineering Physics", "credits": 4 },
+          { "code": "IT101", "name": "Introduction to Programming", "credits": 4 },
+          { "code": "IT102", "name": "Digital Logic Design", "credits": 3 },
+          { "code": "EE101", "name": "Basic Electrical Engineering", "credits": 3 }
+        ],
+        "2": [
+          { "code": "MA102", "name": "Engineering Mathematics II", "credits": 4 },
+          { "code": "IT103", "name": "Data Structures & Algorithms", "credits": 4 },
+          { "code": "IT104", "name": "Computer Organization", "credits": 4 },
+          { "code": "IT105", "name": "Database Systems", "credits": 4 },
+          { "code": "IT106", "name": "Web Programming", "credits": 3 }
+        ],
+        "3": [
+          { "code": "IT201", "name": "Operating Systems", "credits": 4 },
+          { "code": "IT202", "name": "Computer Networks", "credits": 4 },
+          { "code": "IT203", "name": "Software Engineering", "credits": 3 },
+          { "code": "IT204", "name": "Python Programming", "credits": 4 },
+          { "code": "IT205", "name": "Discrete Mathematics", "credits": 3 }
+        ],
+        "4": [
+          { "code": "IT206", "name": "Information Security", "credits": 4 },
+          { "code": "IT207", "name": "Cloud Computing", "credits": 3 },
+          { "code": "IT208", "name": "Mobile Computing", "credits": 3 },
+          { "code": "IT209", "name": "Machine Learning Basics", "credits": 4 },
+          { "code": "IT210", "name": "DevOps Practices", "credits": 3 }
+        ]
+      }
+    },
+    "Mechanical Engineering": {
+      "totalSemesters": 8,
+      "semesters": {
+        "1": [
+          { "code": "MA101", "name": "Engineering Mathematics I", "credits": 4 },
+          { "code": "PH101", "name": "Engineering Physics", "credits": 4 },
+          { "code": "ME101", "name": "Engineering Mechanics", "credits": 4 },
+          { "code": "ME102", "name": "Engineering Drawing", "credits": 3 },
+          { "code": "CH101", "name": "Engineering Chemistry", "credits": 3 }
+        ],
+        "2": [
+          { "code": "MA102", "name": "Engineering Mathematics II", "credits": 4 },
+          { "code": "ME103", "name": "Thermodynamics", "credits": 4 },
+          { "code": "ME104", "name": "Material Science", "credits": 3 },
+          { "code": "ME105", "name": "Manufacturing Processes", "credits": 4 },
+          { "code": "CS101", "name": "Programming in C", "credits": 3 }
+        ]
+      }
+    }
+  },
+  "postgraduate": {
+    "Master of Computer Applications": {
+      "totalSemesters": 4,
+      "semesters": {
+        "1": [
+          { "code": "MCA101", "name": "Advanced Data Structures", "credits": 4 },
+          { "code": "MCA102", "name": "Database Management Systems", "credits": 4 },
+          { "code": "MCA103", "name": "Object Oriented Programming with Java", "credits": 4 },
+          { "code": "MCA104", "name": "Web Technologies", "credits": 4 },
+          { "code": "MCA105", "name": "Software Engineering", "credits": 3 }
+        ],
+        "2": [
+          { "code": "MCA201", "name": "Operating Systems", "credits": 4 },
+          { "code": "MCA202", "name": "Computer Networks", "credits": 4 },
+          { "code": "MCA203", "name": "Python Programming", "credits": 4 },
+          { "code": "MCA204", "name": "Machine Learning", "credits": 4 },
+          { "code": "MCA205", "name": "Cloud Computing", "credits": 3 }
+        ],
+        "3": [
+          { "code": "MCA301", "name": "Artificial Intelligence", "credits": 4 },
+          { "code": "MCA302", "name": "Big Data Analytics", "credits": 4 },
+          { "code": "MCA303", "name": "Mobile Application Development", "credits": 4 },
+          { "code": "MCA304", "name": "Cyber Security", "credits": 3 },
+          { "code": "MCA305", "name": "Project Work I", "credits": 4 }
+        ],
+        "4": [
+          { "code": "MCA401", "name": "Dissertation", "credits": 12 },
+          { "code": "MCA402", "name": "Industry Training", "credits": 6 }
+        ]
+      }
+    },
+    "M.Tech Computer Science": {
+      "totalSemesters": 4,
+      "semesters": {
+        "1": [
+          { "code": "MT101", "name": "Advanced Algorithms", "credits": 4 },
+          { "code": "MT102", "name": "Research Methodology", "credits": 3 },
+          { "code": "MT103", "name": "Deep Learning", "credits": 4 },
+          { "code": "MT104", "name": "Advanced Database Systems", "credits": 4 },
+          { "code": "MT105", "name": "Computer Vision", "credits": 4 }
+        ],
+        "2": [
+          { "code": "MT201", "name": "Natural Language Processing", "credits": 4 },
+          { "code": "MT202", "name": "Distributed Systems", "credits": 4 },
+          { "code": "MT203", "name": "Advanced Machine Learning", "credits": 4 },
+          { "code": "MT204", "name": "Blockchain & Cryptography", "credits": 3 }
+        ],
+        "3": [
+          { "code": "MT301", "name": "Thesis Work I", "credits": 8 },
+          { "code": "MT302", "name": "Seminar", "credits": 2 },
+          { "code": "MT303", "name": "Advanced Elective", "credits": 4 }
+        ],
+        "4": [
+          { "code": "MT401", "name": "Thesis Work II", "credits": 16 }
+        ]
+      }
+    }
+  }
+}

@@ -7,17 +7,20 @@
 
 import Constants from 'expo-constants';
 
-// Get API URL from app config, fallback to hardcoded value
+// Get API URL from app config - REQUIRED, no fallback
 const getBaseApiUrl = (): string => {
-  // Try to get from expo config first
+  // Get from expo config
   const configUrl = Constants.expoConfig?.extra?.apiUrl;
   
-  if (configUrl) {
-    return configUrl;
+  if (!configUrl) {
+    console.error('❌ CRITICAL ERROR: API_URL not configured!');
+    console.error('📝 Please update .env file with:');
+    console.error('   API_URL=http://YOUR_IP_ADDRESS:3000/api');
+    console.error('🔄 Then restart Expo with: npx expo start --clear');
+    throw new Error('API_URL not configured in .env file');
   }
   
-  // Fallback to default
-  return 'http://10.187.209.177:3000/api';
+  return configUrl;
 };
 
 export const API_CONFIG = {

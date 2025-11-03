@@ -1,10 +1,6 @@
 import { API_CONFIG, logApiConfig } from '@/config/api.config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// API Configuration - now centralized in config/api.config.ts
-// To change the API URL, update it in app.config.js
-const API_BASE_URL = API_CONFIG.BASE_URL;
-
 // Log API configuration on service initialization
 logApiConfig();
 
@@ -69,10 +65,10 @@ class AuthService {
    */
   async signup(userData: SignupData): Promise<AuthResponse> {
     try {
-      console.log('🔄 Attempting signup to:', `${API_BASE_URL}/auth/signup`);
+      console.log('🔄 Attempting signup to:', `${API_CONFIG.BASE_URL}/auth/signup`);
       console.log('⏱️  Timeout: 10 seconds');
       
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/auth/signup`, {
+      const response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -93,8 +89,8 @@ class AuthService {
       return data;
     } catch (error) {
       console.error('❌ Signup error:', error);
-      console.error('🔍 API URL:', API_BASE_URL);
-      console.error('💡 Make sure backend server is running at:', API_BASE_URL.replace('/api', ''));
+      console.error('🔍 API URL:', API_CONFIG.BASE_URL);
+      console.error('💡 Make sure backend server is running at:', API_CONFIG.BASE_URL.replace('/api', ''));
       throw new Error('Failed to connect to server. Please ensure:\n1. Backend server is running (npm start in backend folder)\n2. You are using the correct API URL\n3. Check network connection');
     }
   }
@@ -104,11 +100,11 @@ class AuthService {
    */
   async login(credentials: LoginData): Promise<AuthResponse> {
     try {
-      console.log('🔄 Attempting login to:', `${API_BASE_URL}/auth/login`);
+      console.log('🔄 Attempting login to:', `${API_CONFIG.BASE_URL}/auth/login`);
       console.log('⏱️  Timeout: 10 seconds');
       console.log('📧 Email:', credentials.email);
       
-      const response = await this.fetchWithTimeout(`${API_BASE_URL}/auth/login`, {
+      const response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -129,16 +125,16 @@ class AuthService {
       return data;
     } catch (error) {
       console.error('❌ Login error:', error);
-      console.error('🔍 API URL:', API_BASE_URL);
-      console.error('💡 Server should be at:', API_BASE_URL.replace('/api', ''));
+      console.error('🔍 API URL:', API_CONFIG.BASE_URL);
+      console.error('💡 Server should be at:', API_CONFIG.BASE_URL.replace('/api', ''));
       
       let errorMessage = 'Failed to connect to server.';
       
       if (error instanceof Error) {
         if (error.message.includes('timeout')) {
-          errorMessage = 'Server not responding. Please check:\n1. Backend server is running\n2. IP address is correct: 10.177.101.177\n3. Both devices on same WiFi';
+          errorMessage = `Server not responding. Please check:\n1. Backend server is running\n2. IP address matches .env file\n3. Both devices on same WiFi`;
         } else if (error.message.includes('Network request failed')) {
-          errorMessage = 'Network error. Please check:\n1. Backend server is running on port 3000\n2. Your IP: 10.177.101.177\n3. Windows Firewall allows port 3000';
+          errorMessage = `Network error. Please check:\n1. Backend server is running on port 3000\n2. IP address in .env file is correct\n3. Windows Firewall allows port 3000`;
         } else {
           errorMessage = error.message;
         }
@@ -159,7 +155,7 @@ class AuthService {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/auth/profile`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

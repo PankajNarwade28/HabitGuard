@@ -167,8 +167,8 @@ async function testAuth() {
     console.log('');
     console.log('🎉 Authentication system is working correctly!');
     console.log('');
-    console.log('📱 Update your React Native app config:');
-    console.log(`   API_URL: "http://10.177.101.177:3000/api"`);
+    console.log('📱 React Native app uses centralized config from .env file');
+    console.log('   Update API_URL in .env to match your backend server IP');
 
   } catch (error) {
     console.error('\n❌ Test failed with error:', error.message);

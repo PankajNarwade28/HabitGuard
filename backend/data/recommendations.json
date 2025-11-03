@@ -1,0 +1,320 @@
+{
+  "recommendations": [
+    {
+      "subjectCode": "CS101",
+      "subjectName": "Programming in C",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Programming in C",
+          "url": "https://nptel.ac.in/courses/106105171",
+          "instructor": "Prof. Anupam Basu",
+          "difficulty": "Beginner",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Udemy",
+          "title": "C Programming For Beginners",
+          "url": "https://www.udemy.com/course/c-programming-for-beginners/",
+          "instructor": "Tim Buchalka",
+          "difficulty": "Beginner",
+          "duration": "23 hours"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS102",
+      "subjectName": "Data Structures",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Data Structures and Algorithms",
+          "url": "https://nptel.ac.in/courses/106102064",
+          "instructor": "Prof. Naveen Garg",
+          "difficulty": "Intermediate",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Coursera",
+          "title": "Data Structures and Algorithms Specialization",
+          "url": "https://www.coursera.org/specializations/data-structures-algorithms",
+          "instructor": "UC San Diego",
+          "difficulty": "Intermediate",
+          "duration": "8 months"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS202",
+      "subjectName": "Database Management Systems",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Database Management System",
+          "url": "https://nptel.ac.in/courses/106105175",
+          "instructor": "Prof. Partha Pratim Das",
+          "difficulty": "Intermediate",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Udemy",
+          "title": "The Complete Database Design & Modeling Course",
+          "url": "https://www.udemy.com/course/database-design-and-modeling/",
+          "instructor": "Engineering School",
+          "difficulty": "Beginner",
+          "duration": "8 hours"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS301",
+      "subjectName": "Artificial Intelligence",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Artificial Intelligence",
+          "url": "https://nptel.ac.in/courses/106105077",
+          "instructor": "Prof. Deepak Khemani",
+          "difficulty": "Advanced",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Coursera",
+          "title": "AI For Everyone",
+          "url": "https://www.coursera.org/learn/ai-for-everyone",
+          "instructor": "Andrew Ng",
+          "difficulty": "Beginner",
+          "duration": "4 weeks"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS302",
+      "subjectName": "Machine Learning",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Introduction to Machine Learning",
+          "url": "https://nptel.ac.in/courses/106106139",
+          "instructor": "Prof. Balaraman Ravindran",
+          "difficulty": "Intermediate",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Coursera",
+          "title": "Machine Learning Specialization",
+          "url": "https://www.coursera.org/specializations/machine-learning-introduction",
+          "instructor": "Andrew Ng",
+          "difficulty": "Intermediate",
+          "duration": "3 months"
+        },
+        {
+          "platform": "Udemy",
+          "title": "Machine Learning A-Z",
+          "url": "https://www.udemy.com/course/machinelearning/",
+          "instructor": "Kirill Eremenko",
+          "difficulty": "Beginner",
+          "duration": "44 hours"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS310",
+      "subjectName": "Deep Learning",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Deep Learning",
+          "url": "https://nptel.ac.in/courses/106106184",
+          "instructor": "Prof. Mitesh M. Khapra",
+          "difficulty": "Advanced",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Coursera",
+          "title": "Deep Learning Specialization",
+          "url": "https://www.coursera.org/specializations/deep-learning",
+          "instructor": "Andrew Ng",
+          "difficulty": "Advanced",
+          "duration": "5 months"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS308",
+      "subjectName": "Mobile Application Development",
+      "courses": [
+        {
+          "platform": "Udemy",
+          "title": "React Native - The Practical Guide",
+          "url": "https://www.udemy.com/course/react-native-the-practical-guide/",
+          "instructor": "Maximilian Schwarzmüller",
+          "difficulty": "Intermediate",
+          "duration": "33 hours"
+        },
+        {
+          "platform": "Coursera",
+          "title": "Android App Development Specialization",
+          "url": "https://www.coursera.org/specializations/android-app-development",
+          "instructor": "Vanderbilt University",
+          "difficulty": "Intermediate",
+          "duration": "6 months"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS208",
+      "subjectName": "Web Technologies",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Web Development Fundamentals",
+          "url": "https://nptel.ac.in/courses/106105084",
+          "instructor": "Prof. Ananda Mondal",
+          "difficulty": "Beginner",
+          "duration": "8 weeks"
+        },
+        {
+          "platform": "Udemy",
+          "title": "The Complete Web Developer Bootcamp",
+          "url": "https://www.udemy.com/course/the-complete-web-development-bootcamp/",
+          "instructor": "Dr. Angela Yu",
+          "difficulty": "Beginner",
+          "duration": "62 hours"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS305",
+      "subjectName": "Cyber Security",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Introduction to Cryptology",
+          "url": "https://nptel.ac.in/courses/106105031",
+          "instructor": "Prof. Sourav Mukhopadhyay",
+          "difficulty": "Intermediate",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Coursera",
+          "title": "Cybersecurity Specialization",
+          "url": "https://www.coursera.org/specializations/cyber-security",
+          "instructor": "University of Maryland",
+          "difficulty": "Intermediate",
+          "duration": "8 months"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS304",
+      "subjectName": "Cloud Computing",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Cloud Computing",
+          "url": "https://nptel.ac.in/courses/106105167",
+          "instructor": "Prof. Soumya Kanti Ghosh",
+          "difficulty": "Intermediate",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Coursera",
+          "title": "Cloud Computing Specialization",
+          "url": "https://www.coursera.org/specializations/cloud-computing",
+          "instructor": "University of Illinois",
+          "difficulty": "Intermediate",
+          "duration": "6 months"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MCA102",
+      "subjectName": "Database Management Systems",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Database Management System",
+          "url": "https://nptel.ac.in/courses/106105175",
+          "instructor": "Prof. Partha Pratim Das",
+          "difficulty": "Intermediate",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Udemy",
+          "title": "SQL - MySQL for Data Analytics and Business Intelligence",
+          "url": "https://www.udemy.com/course/sql-mysql-for-data-analytics-and-business-intelligence/",
+          "instructor": "365 Careers",
+          "difficulty": "Beginner",
+          "duration": "10 hours"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MCA204",
+      "subjectName": "Machine Learning",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Introduction to Machine Learning",
+          "url": "https://nptel.ac.in/courses/106106139",
+          "instructor": "Prof. Balaraman Ravindran",
+          "difficulty": "Intermediate",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Coursera",
+          "title": "Machine Learning Specialization",
+          "url": "https://www.coursera.org/specializations/machine-learning-introduction",
+          "instructor": "Andrew Ng",
+          "difficulty": "Intermediate",
+          "duration": "3 months"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MT103",
+      "subjectName": "Deep Learning",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Deep Learning",
+          "url": "https://nptel.ac.in/courses/106106184",
+          "instructor": "Prof. Mitesh M. Khapra",
+          "difficulty": "Advanced",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Coursera",
+          "title": "Deep Learning Specialization",
+          "url": "https://www.coursera.org/specializations/deep-learning",
+          "instructor": "Andrew Ng",
+          "difficulty": "Advanced",
+          "duration": "5 months"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MT201",
+      "subjectName": "Natural Language Processing",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Natural Language Processing",
+          "url": "https://nptel.ac.in/courses/106106211",
+          "instructor": "Prof. Pushpak Bhattacharyya",
+          "difficulty": "Advanced",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Coursera",
+          "title": "Natural Language Processing Specialization",
+          "url": "https://www.coursera.org/specializations/natural-language-processing",
+          "instructor": "DeepLearning.AI",
+          "difficulty": "Advanced",
+          "duration": "4 months"
+        }
+      ]
+    }
+  ]
+}

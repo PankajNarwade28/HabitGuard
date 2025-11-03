@@ -16,10 +16,6 @@ try {
   console.warn('⚠️ expo-print or expo-sharing not available. PDF features will be disabled. Please rebuild the app with: npx expo run:android');
 }
 
-// API Configuration - now centralized in config/api.config.ts
-// To change the API URL, update it in app.config.js
-const API_BASE_URL = API_CONFIG.BASE_URL;
-
 export interface WeeklyReportData {
   reportId?: number;
   reportTitle: string;
@@ -76,7 +72,7 @@ class WeeklyReportService {
         body.weekEndDate = weekEndDate;
       }
 
-      const response = await fetch(`${API_BASE_URL}/reports/generate`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/reports/generate`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -125,7 +121,7 @@ class WeeklyReportService {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/reports?limit=${limit}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/reports?limit=${limit}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -163,7 +159,7 @@ class WeeklyReportService {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/reports/latest`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/reports/latest`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -216,7 +212,7 @@ class WeeklyReportService {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/reports/${reportId}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/reports/${reportId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -251,7 +247,7 @@ class WeeklyReportService {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/reports/${reportId}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/reports/${reportId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

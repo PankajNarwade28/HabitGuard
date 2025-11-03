@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const weeklyReportRoutes = require('./routes/weeklyReportRoutes');
+const studentRoutes = require('./routes/studentRoutes');
+const quizRoutes = require('./routes/quizRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,6 +16,8 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/reports', weeklyReportRoutes);
+app.use('/api/student', studentRoutes);
+app.use('/api/quiz', quizRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -81,6 +85,20 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('  POST /api/reports/generate - Generate weekly report (requires auth)');
   console.log('  GET  /api/reports - Get all reports (requires auth)');
   console.log('  GET  /api/reports/latest - Get latest report (requires auth)');
+  console.log('  \n🎓 Student routes:');
+  console.log('  POST /api/student/profile/:userId - Create student profile');
+  console.log('  GET  /api/student/profile/:userId - Get student profile');
+  console.log('  PUT  /api/student/profile/:userId - Update student profile');
+  console.log('  GET  /api/student/courses - Get available courses');
+  console.log('  GET  /api/student/subjects/:userId - Get student subjects');
+  console.log('  GET  /api/student/recommendations/:userId - Get course recommendations');
+  console.log('  GET  /api/student/study-time/:userId - Get study time suggestions');
+  console.log('  \n📝 Quiz routes:');
+  console.log('  GET  /api/quiz/available/:userId - Get available quizzes');
+  console.log('  GET  /api/quiz/questions/:subjectCode - Get quiz questions');
+  console.log('  POST /api/quiz/submit/:userId/:subjectCode - Submit quiz answers');
+  console.log('  GET  /api/quiz/history/:userId - Get quiz history');
+  console.log('  \n⚕️ Other routes:');
   console.log('  GET  /api/health - Health check');
   console.log('  GET  /api/demo - Demo account info');
   console.log(`\n💡 Use http://${localIP}:${PORT}/api in your React Native app`);

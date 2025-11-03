@@ -7,8 +7,18 @@
  * To change the API URL, edit the .env file in the root directory.
  */
 
-// Read API URL from .env file or use default
-const API_URL = process.env.API_URL || 'http://10.187.209.177:3000/api';
+// Load environment variables from .env file
+require('dotenv').config();
+
+// Read API URL from .env file - REQUIRED, no fallback
+const API_URL = process.env.API_URL;
+
+if (!API_URL) {
+  console.error('❌ ERROR: API_URL not found in .env file!');
+  console.error('📝 Please create/update .env file with:');
+  console.error('   API_URL=http://YOUR_IP_ADDRESS:3000/api');
+  process.exit(1);
+}
 
 console.log('📡 API URL configured as:', API_URL);
 
