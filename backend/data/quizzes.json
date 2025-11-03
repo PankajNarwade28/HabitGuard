@@ -1,0 +1,808 @@
+{
+  "quizzes": [
+    {
+      "subjectCode": "CS101",
+      "subjectName": "Programming in C",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What is the correct syntax to print 'Hello World' in C?",
+          "options": [
+            "echo('Hello World');",
+            "printf('Hello World');",
+            "print('Hello World');",
+            "cout << 'Hello World';"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "Which of the following is not a valid C data type?",
+          "options": ["int", "float", "string", "char"],
+          "correctAnswer": 2,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 3,
+          "question": "What is the size of int data type in C (on most systems)?",
+          "options": ["1 byte", "2 bytes", "4 bytes", "8 bytes"],
+          "correctAnswer": 2,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 4,
+          "question": "Which operator is used for pointer dereferencing?",
+          "options": ["&", "*", "->", "."],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 5,
+          "question": "What does the 'break' statement do in a loop?",
+          "options": [
+            "Pauses the loop temporarily",
+            "Exits the loop immediately",
+            "Skips to next iteration",
+            "None of the above"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS102",
+      "subjectName": "Data Structures",
+      "questions": [
+        {
+          "id": 1,
+          "question": "Which data structure uses LIFO principle?",
+          "options": ["Queue", "Stack", "Array", "Linked List"],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "What is the time complexity of binary search?",
+          "options": ["O(n)", "O(log n)", "O(n^2)", "O(1)"],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 3,
+          "question": "In a binary tree, what is the maximum number of nodes at level 'l'?",
+          "options": ["2^l", "2^(l-1)", "l^2", "2*l"],
+          "correctAnswer": 0,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 4,
+          "question": "Which traversal technique is used for expression evaluation?",
+          "options": ["Preorder", "Inorder", "Postorder", "Level order"],
+          "correctAnswer": 2,
+          "difficulty": "Hard"
+        },
+        {
+          "id": 5,
+          "question": "What is the worst-case time complexity of Quick Sort?",
+          "options": ["O(n log n)", "O(n^2)", "O(n)", "O(log n)"],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS202",
+      "subjectName": "Database Management Systems",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What does SQL stand for?",
+          "options": [
+            "Structured Query Language",
+            "Simple Query Language",
+            "Standard Query Language",
+            "Sequential Query Language"
+          ],
+          "correctAnswer": 0,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "Which normal form eliminates transitive dependency?",
+          "options": ["1NF", "2NF", "3NF", "BCNF"],
+          "correctAnswer": 2,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 3,
+          "question": "What is a primary key?",
+          "options": [
+            "A key that can have null values",
+            "A key that uniquely identifies each record",
+            "A foreign key reference",
+            "An index"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 4,
+          "question": "Which JOIN returns all records from both tables?",
+          "options": ["INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "FULL OUTER JOIN"],
+          "correctAnswer": 3,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 5,
+          "question": "What does ACID stand for in database transactions?",
+          "options": [
+            "Atomicity, Consistency, Isolation, Durability",
+            "Accuracy, Consistency, Integrity, Data",
+            "Atomic, Complete, Isolated, Durable",
+            "All, Complete, Independent, Data"
+          ],
+          "correctAnswer": 0,
+          "difficulty": "Medium"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS301",
+      "subjectName": "Artificial Intelligence",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What is the primary goal of Artificial Intelligence?",
+          "options": [
+            "To create intelligent machines",
+            "To replace humans",
+            "To automate everything",
+            "To create robots"
+          ],
+          "correctAnswer": 0,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "Which search algorithm is optimal and complete?",
+          "options": ["DFS", "BFS", "A* Search", "Greedy Search"],
+          "correctAnswer": 2,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 3,
+          "question": "What is the Turing Test used for?",
+          "options": [
+            "To test computer speed",
+            "To determine machine intelligence",
+            "To test algorithms",
+            "To benchmark hardware"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 4,
+          "question": "Which of these is an example of supervised learning?",
+          "options": [
+            "K-means clustering",
+            "Linear Regression",
+            "Apriori algorithm",
+            "Principal Component Analysis"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 5,
+          "question": "What is the minimax algorithm used for?",
+          "options": [
+            "Optimization",
+            "Game playing",
+            "Sorting",
+            "Searching"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Hard"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS302",
+      "subjectName": "Machine Learning",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What type of learning uses labeled data?",
+          "options": [
+            "Unsupervised Learning",
+            "Supervised Learning",
+            "Reinforcement Learning",
+            "Deep Learning"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "Which algorithm is best for classification with high dimensions?",
+          "options": [
+            "Linear Regression",
+            "K-Nearest Neighbors",
+            "Support Vector Machines",
+            "Decision Trees"
+          ],
+          "correctAnswer": 2,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 3,
+          "question": "What does 'overfitting' mean?",
+          "options": [
+            "Model performs poorly on training data",
+            "Model performs well on training but poorly on test data",
+            "Model is too simple",
+            "Model has high bias"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 4,
+          "question": "Which metric is used for classification accuracy?",
+          "options": [
+            "Mean Squared Error",
+            "R-squared",
+            "F1 Score",
+            "Root Mean Squared Error"
+          ],
+          "correctAnswer": 2,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 5,
+          "question": "What is gradient descent?",
+          "options": [
+            "A classification algorithm",
+            "An optimization algorithm",
+            "A clustering algorithm",
+            "A regression algorithm"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS310",
+      "subjectName": "Deep Learning",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What is a neural network inspired by?",
+          "options": [
+            "Computer circuits",
+            "Human brain",
+            "DNA structure",
+            "Quantum physics"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "Which activation function is most commonly used in hidden layers?",
+          "options": ["Sigmoid", "ReLU", "Tanh", "Linear"],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 3,
+          "question": "What is backpropagation?",
+          "options": [
+            "Forward pass in neural network",
+            "Algorithm to update weights",
+            "Type of neural network",
+            "Activation function"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 4,
+          "question": "Which neural network is best for image recognition?",
+          "options": ["RNN", "CNN", "GAN", "Autoencoder"],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 5,
+          "question": "What does CNN stand for?",
+          "options": [
+            "Complex Neural Network",
+            "Convolutional Neural Network",
+            "Circular Neural Network",
+            "Connected Neural Network"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS308",
+      "subjectName": "Mobile Application Development",
+      "questions": [
+        {
+          "id": 1,
+          "question": "Which language is primarily used for Android development?",
+          "options": ["Swift", "Kotlin", "Python", "Ruby"],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "What is React Native based on?",
+          "options": ["Angular", "Vue", "React", "jQuery"],
+          "correctAnswer": 2,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 3,
+          "question": "Which component is used for navigation in React Native?",
+          "options": [
+            "Navigator",
+            "React Navigation",
+            "Route Manager",
+            "Screen Router"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 4,
+          "question": "What is the main advantage of cross-platform development?",
+          "options": [
+            "Better performance",
+            "Code reusability",
+            "Native look and feel",
+            "Easier debugging"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 5,
+          "question": "Which storage option is best for sensitive data in mobile apps?",
+          "options": [
+            "AsyncStorage",
+            "SQLite",
+            "Secure Storage/Keychain",
+            "Local Files"
+          ],
+          "correctAnswer": 2,
+          "difficulty": "Medium"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS208",
+      "subjectName": "Web Technologies",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What does HTML stand for?",
+          "options": [
+            "Hyper Text Markup Language",
+            "High Tech Modern Language",
+            "Home Tool Markup Language",
+            "Hyperlinks and Text Markup Language"
+          ],
+          "correctAnswer": 0,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "Which CSS property is used for text color?",
+          "options": ["text-color", "font-color", "color", "text-style"],
+          "correctAnswer": 2,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 3,
+          "question": "What is the correct way to declare a JavaScript variable?",
+          "options": [
+            "v carName;",
+            "variable carName;",
+            "let carName;",
+            "var = carName;"
+          ],
+          "correctAnswer": 2,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 4,
+          "question": "Which HTTP method is used to send data to a server?",
+          "options": ["GET", "POST", "PUT", "DELETE"],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 5,
+          "question": "What is AJAX used for?",
+          "options": [
+            "Styling web pages",
+            "Asynchronous data loading",
+            "Server-side scripting",
+            "Database management"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS305",
+      "subjectName": "Cyber Security",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What does CIA stand for in cybersecurity?",
+          "options": [
+            "Confidentiality, Integrity, Availability",
+            "Central Intelligence Agency",
+            "Computer Internet Access",
+            "Cyber Investigation Authority"
+          ],
+          "correctAnswer": 0,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "Which encryption is faster?",
+          "options": [
+            "Symmetric Encryption",
+            "Asymmetric Encryption",
+            "Both are same",
+            "Neither"
+          ],
+          "correctAnswer": 0,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 3,
+          "question": "What is a firewall?",
+          "options": [
+            "Antivirus software",
+            "Network security system",
+            "Password manager",
+            "Data backup tool"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 4,
+          "question": "What is phishing?",
+          "options": [
+            "Network scanning",
+            "Social engineering attack",
+            "Encryption method",
+            "Firewall technique"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 5,
+          "question": "Which protocol is used for secure web communication?",
+          "options": ["HTTP", "FTP", "HTTPS", "SMTP"],
+          "correctAnswer": 2,
+          "difficulty": "Easy"
+        }
+      ]
+    },
+    {
+      "subjectCode": "CS304",
+      "subjectName": "Cloud Computing",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What are the main types of cloud computing services?",
+          "options": [
+            "IaaS, PaaS, SaaS",
+            "Public, Private, Hybrid",
+            "Amazon, Google, Microsoft",
+            "Storage, Computing, Networking"
+          ],
+          "correctAnswer": 0,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "What does SaaS stand for?",
+          "options": [
+            "Storage as a Service",
+            "Software as a Service",
+            "Security as a Service",
+            "Server as a Service"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 3,
+          "question": "Which AWS service is used for object storage?",
+          "options": ["EC2", "S3", "Lambda", "RDS"],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 4,
+          "question": "What is virtualization?",
+          "options": [
+            "Creating virtual reality",
+            "Running multiple OS on single hardware",
+            "Cloud storage",
+            "Data encryption"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 5,
+          "question": "What is a key benefit of cloud computing?",
+          "options": [
+            "Fixed costs",
+            "Limited scalability",
+            "Pay-as-you-go pricing",
+            "On-premise control"
+          ],
+          "correctAnswer": 2,
+          "difficulty": "Easy"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MCA102",
+      "subjectName": "Database Management Systems",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What is a database schema?",
+          "options": [
+            "Database user interface",
+            "Logical structure of database",
+            "Database software",
+            "Query language"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "Which command is used to remove a table in SQL?",
+          "options": ["DELETE TABLE", "REMOVE TABLE", "DROP TABLE", "DESTROY TABLE"],
+          "correctAnswer": 2,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 3,
+          "question": "What is normalization?",
+          "options": [
+            "Data encryption",
+            "Organizing data to reduce redundancy",
+            "Creating backups",
+            "Query optimization"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 4,
+          "question": "Which clause is used to filter results in SQL?",
+          "options": ["FILTER", "WHERE", "HAVING", "SELECT"],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 5,
+          "question": "What is a foreign key?",
+          "options": [
+            "Primary key in another table",
+            "Reference to primary key in another table",
+            "Unique identifier",
+            "Index key"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MCA204",
+      "subjectName": "Machine Learning",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What is the purpose of training data?",
+          "options": [
+            "To test the model",
+            "To teach the model patterns",
+            "To validate the model",
+            "To deploy the model"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "Which is an example of unsupervised learning?",
+          "options": [
+            "Linear Regression",
+            "K-means Clustering",
+            "Logistic Regression",
+            "Decision Trees"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 3,
+          "question": "What is cross-validation used for?",
+          "options": [
+            "Training the model",
+            "Assessing model performance",
+            "Data cleaning",
+            "Feature extraction"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 4,
+          "question": "What is a confusion matrix?",
+          "options": [
+            "Algorithm for classification",
+            "Table to evaluate classification performance",
+            "Type of neural network",
+            "Data preprocessing technique"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 5,
+          "question": "Which algorithm is used for regression?",
+          "options": [
+            "K-means",
+            "Apriori",
+            "Linear Regression",
+            "K-NN classification"
+          ],
+          "correctAnswer": 2,
+          "difficulty": "Easy"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MT103",
+      "subjectName": "Deep Learning",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What is the vanishing gradient problem?",
+          "options": [
+            "Gradients become too large",
+            "Gradients become too small during backpropagation",
+            "Network becomes too deep",
+            "Loss function fails"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Hard"
+        },
+        {
+          "id": 2,
+          "question": "Which optimizer is commonly used in deep learning?",
+          "options": ["SGD", "Adam", "RMSprop", "All of the above"],
+          "correctAnswer": 3,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 3,
+          "question": "What is dropout used for?",
+          "options": [
+            "Preventing overfitting",
+            "Increasing accuracy",
+            "Speeding up training",
+            "Data augmentation"
+          ],
+          "correctAnswer": 0,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 4,
+          "question": "Which type of layer is used for pooling in CNN?",
+          "options": [
+            "Dense layer",
+            "Convolutional layer",
+            "MaxPooling layer",
+            "Dropout layer"
+          ],
+          "correctAnswer": 2,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 5,
+          "question": "What is transfer learning?",
+          "options": [
+            "Training from scratch",
+            "Using pre-trained model as starting point",
+            "Transferring data between models",
+            "Converting model format"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MT201",
+      "subjectName": "Natural Language Processing",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What is tokenization in NLP?",
+          "options": [
+            "Encrypting text",
+            "Breaking text into tokens/words",
+            "Translating text",
+            "Removing stopwords"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "What are stop words?",
+          "options": [
+            "Important words",
+            "Commonly occurring words with little meaning",
+            "Technical terms",
+            "Punctuation marks"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 3,
+          "question": "Which model is commonly used for word embeddings?",
+          "options": ["CNN", "Word2Vec", "LSTM", "GAN"],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 4,
+          "question": "What is sentiment analysis?",
+          "options": [
+            "Translating text",
+            "Determining emotional tone of text",
+            "Summarizing text",
+            "Generating text"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 5,
+          "question": "Which architecture is best for sequence-to-sequence tasks?",
+          "options": ["CNN", "RNN/LSTM", "GAN", "Autoencoder"],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        }
+      ]
+    }
+  ]
+}

@@ -178,7 +178,13 @@ export default function EducationSetup() {
           paddingHorizontal: 20,
         }}>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => {
+              if (existingProfile) {
+                router.push('/student/profile');
+              } else {
+                router.push('/(tabs)');
+              }
+            }}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
@@ -187,7 +193,7 @@ export default function EducationSetup() {
           >
             <Ionicons name="arrow-back" size={24} color="#fff" />
             <Text style={{ color: '#fff', fontSize: 16, marginLeft: 8 }}>
-              Back
+              {existingProfile ? 'Profile' : 'Home'}
             </Text>
           </TouchableOpacity>
           <Text style={{

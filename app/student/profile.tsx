@@ -184,7 +184,7 @@ export default function StudentProfile() {
           paddingHorizontal: 20,
         }}>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => router.push('/(tabs)')}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
@@ -192,7 +192,7 @@ export default function StudentProfile() {
             }}
           >
             <Ionicons name="arrow-back" size={24} color="#fff" />
-            <Text style={{ color: '#fff', fontSize: 16, marginLeft: 8 }}>Back</Text>
+            <Text style={{ color: '#fff', fontSize: 16, marginLeft: 8 }}>Home</Text>
           </TouchableOpacity>
 
           {/* Profile Header */}
