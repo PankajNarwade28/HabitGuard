@@ -2,18 +2,21 @@ import type { DailyGoal } from '@/services/DailyGoalsService';
 import { dailyGoalsService } from '@/services/DailyGoalsService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import * as Notifications from 'expo-notifications';
 import { useCallback, useEffect, useState } from 'react';
-import { 
-  Alert, 
+import {
+  Alert,
   Animated,
+  AppState,
   Dimensions,
-  Modal, 
-  ScrollView, 
-  StyleSheet, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  View 
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 type GoalType = 'screen_time' | 'app_usage' | 'break_time' | 'productive_time';
@@ -21,6 +24,17 @@ type GoalType = 'screen_time' | 'app_usage' | 'break_time' | 'productive_time';
 const { width } = Dimensions.get('window');
 const CARD_PADDING = 16;
 const CARD_MARGIN = 16;
+
+// Configure notification handler
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 export default function GoalsScreen() {
   const [goals, setGoals] = useState<DailyGoal[]>([]);
@@ -37,6 +51,75 @@ export default function GoalsScreen() {
   const [newGoalTitle, setNewGoalTitle] = useState('');
   const [newGoalTarget, setNewGoalTarget] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [lastUsageUpdate, setLastUsageUpdate] = useState(0);
+  const [installedApps, setInstalledApps] = useState<Array<{ packageName: string; appName: string }>>([]);
+  const [selectedAppPackage, setSelectedAppPackage] = useState('');
+  const [showAppPicker, setShowAppPicker] = useState(false);
+
+  // Request notification permissions on mount
+  useEffect(() => {
+    requestPermissions();
+    setupNotifications();
+  }, []);
+
+  const requestPermissions = async () => {
+    const granted = await dailyGoalsService.requestNotificationPermissions();
+    if (granted) {
+      await dailyGoalsService.setupDailyReminder();
+    }
+  };
+
+  const setupNotifications = () => {
+    // Listen for notification responses
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Notification tapped:', response);
+      // Navigate to goals tab if not already there
+    });
+
+    return () => subscription.remove();
+  };
+
+  // Track app state changes to update usage
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        // App came to foreground, update usage data
+        updateUsageData();
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  // Auto-refresh usage data every 30 seconds when screen is active
+  useEffect(() => {
+    const interval = setInterval(() => {
+      updateUsageData();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const updateUsageData = async () => {
+    try {
+      // Get app usage stats (if available on Android)
+      if (Platform.OS === 'android') {
+        // This would require native module implementation
+        // For now, simulate with stored data
+        const appUsageData: any[] = []; // Would come from native module
+        await dailyGoalsService.updateUsageData(appUsageData);
+      }
+      
+      // Reload goals to show updated progress
+      const now = Date.now();
+      if (now - lastUsageUpdate > 5000) { // Prevent too frequent updates
+        setLastUsageUpdate(now);
+        await loadGoals();
+      }
+    } catch (error) {
+      console.error('Error updating usage data:', error);
+    }
+  };
 
   // Refresh goals when screen comes into focus
   useFocusEffect(
@@ -48,6 +131,42 @@ export default function GoalsScreen() {
   useEffect(() => {
     loadGoals();
   }, []);
+
+  useEffect(() => {
+    loadInstalledApps();
+  }, []);
+
+  const loadInstalledApps = async () => {
+    try {
+      // Import the service
+      const { usageStatsService } = await import('@/services/UsageStatsService');
+      
+      // Get today's usage to extract app list
+      const todayUsage = await usageStatsService.getDailyUsageStats();
+      
+      // Extract unique apps and sort by name
+      const apps = todayUsage.appUsage
+        .filter(app => app.appName && app.packageName)
+        .map(app => ({
+          packageName: app.packageName,
+          appName: app.appName,
+        }))
+        .sort((a, b) => a.appName.localeCompare(b.appName));
+      
+      setInstalledApps(apps);
+      console.log('📱 Loaded apps:', apps.length);
+    } catch (error) {
+      console.error('Error loading installed apps:', error);
+      // Set some common apps as fallback
+      setInstalledApps([
+        { packageName: 'com.instagram.android', appName: 'Instagram' },
+        { packageName: 'com.facebook.katana', appName: 'Facebook' },
+        { packageName: 'com.whatsapp', appName: 'WhatsApp' },
+        { packageName: 'com.youtube', appName: 'YouTube' },
+        { packageName: 'com.twitter.android', appName: 'Twitter' },
+      ]);
+    }
+  };
 
   const loadGoals = async () => {
     try {
@@ -64,8 +183,13 @@ export default function GoalsScreen() {
   };
 
   const handleAddGoal = async () => {
-    if (!newGoalTitle.trim()) {
+    if (!newGoalTitle.trim() && newGoalType !== 'app_usage') {
       Alert.alert('Missing Information', 'Please enter a goal title');
+      return;
+    }
+
+    if (newGoalType === 'app_usage' && !selectedAppPackage) {
+      Alert.alert('Missing Information', 'Please select an app');
       return;
     }
 
@@ -88,22 +212,33 @@ export default function GoalsScreen() {
     };
 
     const config = goalConfig[newGoalType];
+    
+    // Get app name if app_usage type
+    let goalTitle = newGoalTitle;
+    if (newGoalType === 'app_usage') {
+      const selectedApp = installedApps.find(app => app.packageName === selectedAppPackage);
+      goalTitle = selectedApp ? `${selectedApp.appName} Limit` : newGoalTitle;
+    }
 
     await dailyGoalsService.addGoal({
       type: newGoalType,
-      title: newGoalTitle,
+      title: goalTitle,
       targetValue: targetValue,
       currentValue: 0,
       unit: config.unit,
       icon: config.icon,
       color: config.color,
       isActive: true,
+      appPackageName: newGoalType === 'app_usage' ? selectedAppPackage : undefined,
+      notifyOnComplete: true,
+      notifyOnExceed: true,
     });
 
     setIsAddModalVisible(false);
     setNewGoalTitle('');
     setNewGoalTarget('');
     setNewGoalType('screen_time');
+    setSelectedAppPackage('');
     loadGoals();
     
     Alert.alert('Success', 'Goal added successfully! 🎯');
@@ -151,6 +286,12 @@ export default function GoalsScreen() {
 
   const handleToggleGoal = async (goalId: string) => {
     await dailyGoalsService.toggleGoal(goalId);
+    loadGoals();
+  };
+
+  const handleRecordBreak = async () => {
+    await dailyGoalsService.recordBreak();
+    Alert.alert('✅ Break Recorded', 'Great! Taking breaks is important for productivity.');
     loadGoals();
   };
 
@@ -309,6 +450,12 @@ export default function GoalsScreen() {
                         <Text style={styles.goalProgressText}>
                           {goal.currentValue} / {goal.targetValue} {goal.unit}
                         </Text>
+                        {goal.type === 'app_usage' && goal.appPackageName && (
+                          <View style={styles.appBadge}>
+                            <Ionicons name="apps" size={10} color="#F59E0B" />
+                            <Text style={styles.appBadgeText}>App Limit</Text>
+                          </View>
+                        )}
                         {isCompleted && (
                           <View style={styles.completedTag}>
                             <Ionicons name="checkmark-circle" size={14} color="#10B981" />
@@ -396,7 +543,31 @@ export default function GoalsScreen() {
                 <Ionicons name="checkmark-circle" size={18} color="#10B981" />
                 <Text style={styles.tipText}>Pause goals when you need a break - consistency matters</Text>
               </View>
+              <View style={styles.tipItem}>
+                <Ionicons name="notifications" size={18} color="#F59E0B" />
+                <Text style={styles.tipText}>You'll receive notifications when goals are reached or exceeded</Text>
+              </View>
             </View>
+          </View>
+        )}
+
+        {/* Quick Actions */}
+        {goals.some(g => g.type === 'break_time') && (
+          <View style={styles.quickActionsCard}>
+            <Text style={styles.quickActionsTitle}>Quick Actions</Text>
+            <TouchableOpacity
+              onPress={handleRecordBreak}
+              style={styles.quickActionButton}
+            >
+              <View style={styles.quickActionIcon}>
+                <Ionicons name="cafe" size={24} color="#10B981" />
+              </View>
+              <View style={styles.quickActionInfo}>
+                <Text style={styles.quickActionLabel}>Record a Break</Text>
+                <Text style={styles.quickActionDescription}>Track when you take breaks</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
           </View>
         )}
 
@@ -459,15 +630,72 @@ export default function GoalsScreen() {
                 ))}
               </View>
 
-              {/* Goal Title */}
-              <Text style={styles.inputLabel}>Goal Title</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., Limit Social Media"
-                placeholderTextColor="#9CA3AF"
-                value={newGoalTitle}
-                onChangeText={setNewGoalTitle}
-              />
+              {/* Goal Title / App Selection */}
+              {newGoalType === 'app_usage' ? (
+                <>
+                  <Text style={styles.inputLabel}>Select App to Limit</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowAppPicker(!showAppPicker)}
+                    style={[styles.input, styles.appPickerButton]}
+                  >
+                    <Text style={selectedAppPackage ? styles.selectedAppText : styles.placeholderText}>
+                      {selectedAppPackage 
+                        ? installedApps.find(app => app.packageName === selectedAppPackage)?.appName 
+                        : 'Select an app'}
+                    </Text>
+                    <Ionicons 
+                      name={showAppPicker ? "chevron-up" : "chevron-down"} 
+                      size={20} 
+                      color="#6B7280" 
+                    />
+                  </TouchableOpacity>
+                  
+                  {/* App List Dropdown */}
+                  {showAppPicker && (
+                    <ScrollView style={styles.appPickerList} nestedScrollEnabled>
+                      {installedApps.length === 0 ? (
+                        <View style={styles.appPickerEmpty}>
+                          <Text style={styles.appPickerEmptyText}>No apps found. Loading...</Text>
+                        </View>
+                      ) : (
+                        installedApps.map((app) => (
+                          <TouchableOpacity
+                            key={app.packageName}
+                            onPress={() => {
+                              setSelectedAppPackage(app.packageName);
+                              setNewGoalTitle(`${app.appName} Limit`);
+                              setShowAppPicker(false);
+                            }}
+                            style={[
+                              styles.appPickerItem,
+                              selectedAppPackage === app.packageName && styles.appPickerItemSelected,
+                            ]}
+                          >
+                            <View style={styles.appPickerIcon}>
+                              <Ionicons name="apps" size={24} color="#6366f1" />
+                            </View>
+                            <Text style={styles.appPickerItemText}>{app.appName}</Text>
+                            {selectedAppPackage === app.packageName && (
+                              <Ionicons name="checkmark-circle" size={20} color="#6366f1" />
+                            )}
+                          </TouchableOpacity>
+                        ))
+                      )}
+                    </ScrollView>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Text style={styles.inputLabel}>Goal Title</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g., Limit Social Media"
+                    placeholderTextColor="#9CA3AF"
+                    value={newGoalTitle}
+                    onChangeText={setNewGoalTitle}
+                  />
+                </>
+              )}
 
               {/* Target Value */}
               <Text style={styles.inputLabel}>
@@ -783,10 +1011,26 @@ const styles = StyleSheet.create({
   goalProgressInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   goalProgressText: {
     fontSize: 14,
     color: '#6B7280',
+  },
+  appBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  appBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#F59E0B',
+    marginLeft: 3,
   },
   completedTag: {
     flexDirection: 'row',
@@ -974,6 +1218,62 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
   },
+  appPickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectedAppText: {
+    fontSize: 16,
+    color: '#1F2937',
+    fontWeight: '500',
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: '#9CA3AF',
+  },
+  appPickerList: {
+    maxHeight: 300,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  appPickerEmpty: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  appPickerEmptyText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  appPickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  appPickerItemSelected: {
+    backgroundColor: '#EEF2FF',
+  },
+  appPickerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#EEF2FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  appPickerItemText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#1F2937',
+    fontWeight: '500',
+  },
   submitButton: {
     backgroundColor: '#6366f1',
     flexDirection: 'row',
@@ -1003,5 +1303,54 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1F2937',
     marginTop: 16,
+  },
+  quickActionsCard: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginTop: 8,
+    padding: 16,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  quickActionsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  quickActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  quickActionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#D1FAE5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  quickActionInfo: {
+    flex: 1,
+  },
+  quickActionLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 2,
+  },
+  quickActionDescription: {
+    fontSize: 13,
+    color: '#6B7280',
   },
 });

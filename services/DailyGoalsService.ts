@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 
 const GOALS_KEY = 'daily_goals';
+const USAGE_DATA_KEY = 'daily_usage_data';
 
 export interface DailyGoal {
   id: string;
@@ -14,6 +16,9 @@ export interface DailyGoal {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  appPackageName?: string; // For app_usage goals
+  notifyOnComplete?: boolean;
+  notifyOnExceed?: boolean;
 }
 
 export interface GoalsProgress {
@@ -21,6 +26,14 @@ export interface GoalsProgress {
   completedGoals: number;
   percentage: number;
   streakDays: number;
+}
+
+export interface DailyUsageData {
+  totalScreenTime: number; // minutes
+  productiveTime: number; // minutes from study sessions
+  breaksToday: number; // count
+  appUsage: { [packageName: string]: number }; // minutes per app
+  lastUpdated: string;
 }
 
 class DailyGoalsService {
@@ -295,6 +308,254 @@ class DailyGoalsService {
     } catch (error) {
       console.error('Error getting goal by ID:', error);
       return null;
+    }
+  }
+
+  /**
+   * Get today's usage data
+   */
+  async getTodayUsageData(): Promise<DailyUsageData> {
+    try {
+      const usageJson = await AsyncStorage.getItem(USAGE_DATA_KEY);
+      if (!usageJson) {
+        return {
+          totalScreenTime: 0,
+          productiveTime: 0,
+          breaksToday: 0,
+          appUsage: {},
+          lastUpdated: new Date().toISOString(),
+        };
+      }
+
+      const data: DailyUsageData = JSON.parse(usageJson);
+      
+      // Check if data is from today
+      const lastUpdate = new Date(data.lastUpdated);
+      const today = new Date();
+      if (lastUpdate.toDateString() !== today.toDateString()) {
+        // Reset if it's a new day
+        return {
+          totalScreenTime: 0,
+          productiveTime: 0,
+          breaksToday: 0,
+          appUsage: {},
+          lastUpdated: new Date().toISOString(),
+        };
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error getting usage data:', error);
+      return {
+        totalScreenTime: 0,
+        productiveTime: 0,
+        breaksToday: 0,
+        appUsage: {},
+        lastUpdated: new Date().toISOString(),
+      };
+    }
+  }
+
+  /**
+   * Update usage data from app usage statistics
+   */
+  async updateUsageData(appUsageData: any[]): Promise<void> {
+    try {
+      const currentData = await this.getTodayUsageData();
+      
+      // Calculate total screen time
+      let totalScreenTime = 0;
+      const appUsage: { [key: string]: number } = {};
+
+      appUsageData.forEach((app) => {
+        const usageMinutes = Math.round(app.usageTime / (1000 * 60));
+        totalScreenTime += usageMinutes;
+        appUsage[app.packageName] = usageMinutes;
+      });
+
+      // Get productive time from study sessions
+      const studySessionsJson = await AsyncStorage.getItem('active_study_session');
+      let productiveTime = currentData.productiveTime;
+      
+      if (studySessionsJson) {
+        const session = JSON.parse(studySessionsJson);
+        if (session.totalDuration) {
+          productiveTime = Math.round(session.totalDuration / 60); // Convert to minutes
+        }
+      }
+
+      const updatedData: DailyUsageData = {
+        totalScreenTime,
+        productiveTime,
+        breaksToday: currentData.breaksToday,
+        appUsage,
+        lastUpdated: new Date().toISOString(),
+      };
+
+      await AsyncStorage.setItem(USAGE_DATA_KEY, JSON.stringify(updatedData));
+      
+      // Update goals with new data
+      await this.syncGoalsWithUsage(updatedData);
+    } catch (error) {
+      console.error('Error updating usage data:', error);
+    }
+  }
+
+  /**
+   * Sync goals current values with actual usage data
+   */
+  async syncGoalsWithUsage(usageData: DailyUsageData): Promise<void> {
+    try {
+      const goals = await this.getGoals();
+      let notificationsToSend: Array<{ goal: DailyGoal; type: 'complete' | 'exceed' }> = [];
+
+      const updatedGoals = goals.map((goal) => {
+        let newCurrentValue = goal.currentValue;
+        const oldCurrentValue = goal.currentValue;
+
+        switch (goal.type) {
+          case 'screen_time':
+            newCurrentValue = usageData.totalScreenTime;
+            break;
+          
+          case 'productive_time':
+            newCurrentValue = usageData.productiveTime;
+            break;
+          
+          case 'break_time':
+            newCurrentValue = usageData.breaksToday;
+            break;
+          
+          case 'app_usage':
+            if (goal.appPackageName) {
+              newCurrentValue = usageData.appUsage[goal.appPackageName] || 0;
+            }
+            break;
+        }
+
+        // Check for notifications
+        if (goal.isActive && newCurrentValue !== oldCurrentValue) {
+          // Goal just completed
+          if (oldCurrentValue < goal.targetValue && newCurrentValue >= goal.targetValue) {
+            if (goal.notifyOnComplete !== false) {
+              notificationsToSend.push({ goal, type: 'complete' });
+            }
+          }
+          
+          // Goal exceeded by 20%
+          if (newCurrentValue > goal.targetValue * 1.2 && oldCurrentValue <= goal.targetValue * 1.2) {
+            if (goal.notifyOnExceed !== false) {
+              notificationsToSend.push({ goal, type: 'exceed' });
+            }
+          }
+        }
+
+        return {
+          ...goal,
+          currentValue: newCurrentValue,
+          updatedAt: new Date().toISOString(),
+        };
+      });
+
+      await this.saveGoals(updatedGoals);
+
+      // Send notifications
+      for (const notif of notificationsToSend) {
+        await this.sendGoalNotification(notif.goal, notif.type);
+      }
+    } catch (error) {
+      console.error('Error syncing goals with usage:', error);
+    }
+  }
+
+  /**
+   * Record a break taken
+   */
+  async recordBreak(): Promise<void> {
+    try {
+      const usageData = await this.getTodayUsageData();
+      usageData.breaksToday += 1;
+      usageData.lastUpdated = new Date().toISOString();
+      
+      await AsyncStorage.setItem(USAGE_DATA_KEY, JSON.stringify(usageData));
+      await this.syncGoalsWithUsage(usageData);
+    } catch (error) {
+      console.error('Error recording break:', error);
+    }
+  }
+
+  /**
+   * Send goal notification
+   */
+  async sendGoalNotification(goal: DailyGoal, type: 'complete' | 'exceed'): Promise<void> {
+    try {
+      let title = '';
+      let body = '';
+
+      if (type === 'complete') {
+        title = '🎯 Goal Achieved!';
+        body = `Great job! You've reached your "${goal.title}" goal of ${goal.targetValue} ${goal.unit}`;
+      } else if (type === 'exceed') {
+        title = '⚠️ Goal Limit Exceeded';
+        body = `You've exceeded your "${goal.title}" goal. Current: ${goal.currentValue} ${goal.unit}`;
+      }
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          sound: true,
+          priority: Notifications.AndroidNotificationPriority.HIGH,
+        },
+        trigger: null, // Send immediately
+      });
+    } catch (error) {
+      console.error('Error sending notification:', error);
+    }
+  }
+
+  /**
+   * Setup daily reminder notification
+   */
+  async setupDailyReminder(): Promise<void> {
+    try {
+      // Cancel existing reminders
+      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+      for (const notif of scheduled) {
+        if (notif.content.title?.includes('Daily Goals')) {
+          await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+        }
+      }
+
+      // Schedule daily reminder at 9 PM
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '🎯 Daily Goals Check',
+          body: 'How are your goals today? Check your progress!',
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: 21,
+          minute: 0,
+          repeats: true,
+        } as any,
+      });
+    } catch (error) {
+      console.error('Error setting up daily reminder:', error);
+    }
+  }
+
+  /**
+   * Request notification permissions
+   */
+  async requestNotificationPermissions(): Promise<boolean> {
+    try {
+      const { status } = await Notifications.requestPermissionsAsync();
+      return status === 'granted';
+    } catch (error) {
+      console.error('Error requesting notification permissions:', error);
+      return false;
     }
   }
 }
