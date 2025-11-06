@@ -96,6 +96,13 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('  GET  /api/student/subjects/:userId - Get student subjects');
   console.log('  GET  /api/student/recommendations/:userId - Get course recommendations');
   console.log('  GET  /api/student/study-time/:userId - Get study time suggestions');
+  console.log('  POST /api/student/study-sessions/:userId - Create study session');
+  console.log('  GET  /api/student/study-sessions/:userId/active - Get active session');
+  console.log('  POST /api/student/study-sessions/:sessionId/start - Start session');
+  console.log('  POST /api/student/study-sessions/:sessionId/pause - Pause session');
+  console.log('  POST /api/student/study-sessions/:sessionId/resume - Resume session');
+  console.log('  POST /api/student/study-sessions/:sessionId/stop - Stop session');
+  console.log('  GET  /api/student/study-statistics/:userId - Get study statistics');
   console.log('  \n📝 Quiz routes:');
   console.log('  GET  /api/quiz/available/:userId - Get available quizzes');
   console.log('  GET  /api/quiz/questions/:subjectCode - Get quiz questions');

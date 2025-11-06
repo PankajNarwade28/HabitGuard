@@ -220,13 +220,13 @@ exports.getAvailableQuizzes = async (req, res) => {
       [profiles[0].profile_id]
     );
 
-    // Map to available quizzes
+    // Map to available quizzes - ALL QUIZZES UNLOCKED
     const availableQuizzes = subjects.map(subject => ({
       subjectCode: subject.subject_code,
       subjectName: subject.subject_name,
       semester: subject.semester,
-      hasQuiz: !!quizQuestions[subject.subject_code],
-      questionCount: quizQuestions[subject.subject_code]?.length || 0
+      hasQuiz: true, // All quizzes unlocked
+      questionCount: quizQuestions[subject.subject_code]?.length || 5 // Default to 5 questions
     }));
 
     res.json({

@@ -349,7 +349,81 @@ export default function StudentProfile() {
             </TouchableOpacity>
           </View>
 
-          {/* Study Plan Section */}
+          {/* Study Plan Section - New with Timer */}
+          <View style={{ marginBottom: 20 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#1f2937', marginBottom: 12 }}>
+              Study Sessions
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity
+                onPress={() => router.push('/student/study-plan' as any)}
+                style={{
+                  flex: 1,
+                  backgroundColor: '#fff',
+                  borderRadius: 16,
+                  padding: 16,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 3,
+                }}
+              >
+                <View style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: '#fef3c7',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginBottom: 12,
+                }}>
+                  <Ionicons name="play-circle" size={28} color="#f59e0b" />
+                </View>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: '#1f2937', marginBottom: 4 }}>
+                  Start Session
+                </Text>
+                <Text style={{ fontSize: 13, color: '#6b7280' }}>
+                  Timer & tracking
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => router.push('/student/study-statistics' as any)}
+                style={{
+                  flex: 1,
+                  backgroundColor: '#fff',
+                  borderRadius: 16,
+                  padding: 16,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 3,
+                }}
+              >
+                <View style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: '#ede9fe',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginBottom: 12,
+                }}>
+                  <Ionicons name="stats-chart" size={28} color="#8b5cf6" />
+                </View>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: '#1f2937', marginBottom: 4 }}>
+                  Statistics
+                </Text>
+                <Text style={{ fontSize: 13, color: '#6b7280' }}>
+                  View progress
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Study Time Suggestions (Old) */}
           <TouchableOpacity
             onPress={() => router.push('/student/study-time')}
             style={{
@@ -382,7 +456,7 @@ export default function StudentProfile() {
                 Study Plan
               </Text>
               <Text style={{ fontSize: 14, color: '#6b7280' }}>
-                View personalized study time suggestions
+                View time recommendations
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={24} color="#f59e0b" />
