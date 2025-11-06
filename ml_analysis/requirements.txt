@@ -22,3 +22,10 @@ plotly>=5.0.0
 
 # Additional Utilities
 python-dateutil>=2.8.0
+
+
+# upcomming tasks 
+student section 
+student course recommnedation
+study plan 
+quuizes
