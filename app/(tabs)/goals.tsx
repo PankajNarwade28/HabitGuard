@@ -36,6 +36,41 @@ Notifications.setNotificationHandler({
   }),
 });
 
+// Configure notification categories
+Notifications.setNotificationCategoryAsync('goal_notification', [
+  {
+    identifier: 'view',
+    buttonTitle: 'View Goals',
+    options: {
+      opensAppToForeground: true,
+    },
+  },
+  {
+    identifier: 'dismiss',
+    buttonTitle: 'Dismiss',
+    options: {
+      opensAppToForeground: false,
+    },
+  },
+]);
+
+Notifications.setNotificationCategoryAsync('daily_reminder', [
+  {
+    identifier: 'check',
+    buttonTitle: 'Check Progress',
+    options: {
+      opensAppToForeground: true,
+    },
+  },
+  {
+    identifier: 'later',
+    buttonTitle: 'Remind Later',
+    options: {
+      opensAppToForeground: false,
+    },
+  },
+]);
+
 export default function GoalsScreen() {
   const [goals, setGoals] = useState<DailyGoal[]>([]);
   const [goalsProgress, setGoalsProgress] = useState({ 
@@ -60,7 +95,33 @@ export default function GoalsScreen() {
   useEffect(() => {
     requestPermissions();
     setupNotifications();
+    setupNotificationChannels();
   }, []);
+
+  const setupNotificationChannels = async () => {
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('goals', {
+        name: 'Goal Notifications',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#6366f1',
+        sound: 'default',
+        enableVibrate: true,
+        enableLights: true,
+        showBadge: true,
+      });
+
+      await Notifications.setNotificationChannelAsync('reminders', {
+        name: 'Daily Reminders',
+        importance: Notifications.AndroidImportance.DEFAULT,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#6366f1',
+        sound: 'default',
+        enableVibrate: true,
+        showBadge: false,
+      });
+    }
+  };
 
   const requestPermissions = async () => {
     const granted = await dailyGoalsService.requestNotificationPermissions();
@@ -102,13 +163,26 @@ export default function GoalsScreen() {
 
   const updateUsageData = async () => {
     try {
-      // Get app usage stats (if available on Android)
-      if (Platform.OS === 'android') {
-        // This would require native module implementation
-        // For now, simulate with stored data
-        const appUsageData: any[] = []; // Would come from native module
-        await dailyGoalsService.updateUsageData(appUsageData);
-      }
+      // Get real app usage stats from UsageStatsService
+      const { usageStatsService } = await import('@/services/UsageStatsService');
+      
+      // Get today's usage data
+      const todayUsage = await usageStatsService.getDailyUsageStats();
+      
+      console.log('📊 Updating goals with usage data:', {
+        totalScreenTime: Math.round(todayUsage.totalScreenTime / (1000 * 60)),
+        appCount: todayUsage.appUsage.length,
+      });
+
+      // Transform data for goals service
+      const appUsageData = todayUsage.appUsage.map(app => ({
+        packageName: app.packageName,
+        appName: app.appName,
+        usageTime: app.totalTimeInForeground, // in milliseconds
+      }));
+
+      // Update goals with real usage data
+      await dailyGoalsService.updateUsageData(appUsageData);
       
       // Reload goals to show updated progress
       const now = Date.now();
@@ -125,11 +199,13 @@ export default function GoalsScreen() {
   useFocusEffect(
     useCallback(() => {
       loadGoals();
+      updateUsageData(); // Update usage data when screen comes into focus
     }, [])
   );
 
   useEffect(() => {
     loadGoals();
+    updateUsageData(); // Update usage data on initial load
   }, []);
 
   useEffect(() => {
@@ -295,6 +371,13 @@ export default function GoalsScreen() {
     loadGoals();
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await updateUsageData();
+    await loadGoals();
+    setRefreshing(false);
+  };
+
   const openEditModal = (goal: DailyGoal) => {
     setSelectedGoal(goal);
     setNewGoalTarget(goal.targetValue.toString());
@@ -340,12 +423,26 @@ export default function GoalsScreen() {
           <Text style={styles.headerTitle}>Daily Goals</Text>
           <Text style={styles.headerSubtitle}>Build better digital habits</Text>
         </View>
-        <TouchableOpacity
-          onPress={() => setIsAddModalVisible(true)}
-          style={styles.headerAddButton}
-        >
-          <Ionicons name="add-circle" size={32} color="#ffffff" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={handleRefresh}
+            style={styles.headerRefreshButton}
+            disabled={refreshing}
+          >
+            <Ionicons 
+              name="refresh" 
+              size={24} 
+              color="#ffffff" 
+              style={refreshing ? { opacity: 0.5 } : {}}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setIsAddModalVisible(true)}
+            style={styles.headerAddButton}
+          >
+            <Ionicons name="add-circle" size={32} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView 
@@ -813,6 +910,14 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     color: '#E0E7FF',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerRefreshButton: {
+    padding: 4,
   },
   headerAddButton: {
     padding: 4,

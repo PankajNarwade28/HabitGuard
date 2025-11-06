@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
 
 const GOALS_KEY = 'daily_goals';
 const USAGE_DATA_KEY = 'daily_usage_data';
@@ -409,6 +410,13 @@ class DailyGoalsService {
       const goals = await this.getGoals();
       let notificationsToSend: Array<{ goal: DailyGoal; type: 'complete' | 'exceed' }> = [];
 
+      console.log('🎯 Syncing goals with usage data:', {
+        totalScreenTime: usageData.totalScreenTime,
+        productiveTime: usageData.productiveTime,
+        breaksToday: usageData.breaksToday,
+        appUsageCount: Object.keys(usageData.appUsage).length,
+      });
+
       const updatedGoals = goals.map((goal) => {
         let newCurrentValue = goal.currentValue;
         const oldCurrentValue = goal.currentValue;
@@ -416,19 +424,24 @@ class DailyGoalsService {
         switch (goal.type) {
           case 'screen_time':
             newCurrentValue = usageData.totalScreenTime;
+            console.log(`📱 Screen time goal: ${newCurrentValue} mins`);
             break;
           
           case 'productive_time':
             newCurrentValue = usageData.productiveTime;
+            console.log(`💼 Productive time goal: ${newCurrentValue} mins`);
             break;
           
           case 'break_time':
             newCurrentValue = usageData.breaksToday;
+            console.log(`☕ Break time goal: ${newCurrentValue} breaks`);
             break;
           
           case 'app_usage':
             if (goal.appPackageName) {
               newCurrentValue = usageData.appUsage[goal.appPackageName] || 0;
+              console.log(`📲 App usage goal for ${goal.appPackageName}: ${newCurrentValue} mins (found: ${!!usageData.appUsage[goal.appPackageName]})`);
+              console.log('📋 Available apps:', Object.keys(usageData.appUsage).slice(0, 5));
             }
             break;
         }
@@ -491,21 +504,44 @@ class DailyGoalsService {
     try {
       let title = '';
       let body = '';
+      let data: any = {};
 
       if (type === 'complete') {
         title = '🎯 Goal Achieved!';
-        body = `Great job! You've reached your "${goal.title}" goal of ${goal.targetValue} ${goal.unit}`;
+        body = `Congratulations! You've completed your "${goal.title}" goal.\n✅ Target: ${goal.targetValue} ${goal.unit}\n📊 Progress: ${goal.currentValue}/${goal.targetValue}`;
+        data = {
+          type: 'goal_complete',
+          goalId: goal.id,
+          goalTitle: goal.title,
+          icon: '🎯',
+          color: '#10B981',
+        };
       } else if (type === 'exceed') {
         title = '⚠️ Goal Limit Exceeded';
-        body = `You've exceeded your "${goal.title}" goal. Current: ${goal.currentValue} ${goal.unit}`;
+        body = `You've exceeded your "${goal.title}" limit.\n🎯 Target: ${goal.targetValue} ${goal.unit}\n📈 Current: ${goal.currentValue} ${goal.unit}\n\nTime to take a break!`;
+        data = {
+          type: 'goal_exceed',
+          goalId: goal.id,
+          goalTitle: goal.title,
+          icon: '⚠️',
+          color: '#EF4444',
+        };
       }
 
       await Notifications.scheduleNotificationAsync({
         content: {
           title,
           body,
+          data,
           sound: true,
           priority: Notifications.AndroidNotificationPriority.HIGH,
+          vibrate: [0, 250, 250, 250],
+          badge: 1,
+          categoryIdentifier: 'goal_notification',
+          ...(Platform.OS === 'android' && { 
+            channelId: 'goals',
+            color: data.color,
+          }),
         },
         trigger: null, // Send immediately
       });
@@ -530,9 +566,20 @@ class DailyGoalsService {
       // Schedule daily reminder at 9 PM
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: '🎯 Daily Goals Check',
-          body: 'How are your goals today? Check your progress!',
+          title: '🎯 Daily Goals Check-In',
+          body: 'How are your goals today? 📊\n\nTap to review your progress and celebrate your achievements!',
+          data: {
+            type: 'daily_reminder',
+            screen: 'goals',
+            icon: '🎯',
+          },
           sound: true,
+          vibrate: [0, 250, 250, 250],
+          priority: Notifications.AndroidNotificationPriority.DEFAULT,
+          categoryIdentifier: 'daily_reminder',
+          ...(Platform.OS === 'android' && { 
+            channelId: 'reminders',
+          }),
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
