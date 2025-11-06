@@ -1,3 +1,6 @@
+// Load environment variables from root .env file
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+
 const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');

@@ -1,18 +1,21 @@
 /**
  * MySQL Database Configuration
  * 
- * Fill in your phpMyAdmin database credentials here
+ * Now reads from the unified .env file in the project root
  */
 
+// Load environment variables from root .env file
+require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+
 module.exports = {
-  host: 'localhost',  // Your MySQL host (usually localhost)
-  user: 'root',  // Your MySQL username
-  password: '',  // Your MySQL password
-  database: 'habitguard',  // Database name
-  port: 3306,  // MySQL port (default: 3306)
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'habitguard',
+  port: parseInt(process.env.DB_PORT || '3306'),
   
   // Connection pool settings
-  connectionLimit: 10,
+  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10'),
   waitForConnections: true,
   queueLimit: 0
 };

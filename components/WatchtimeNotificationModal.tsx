@@ -1,9 +1,9 @@
+import NotificationCard from '@/components/NotificationCard';
 import { NotificationService } from '@/services/NotificationService';
 import { usageStatsService } from '@/services/UsageStatsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
-import { Alert, Modal, Pressable, Text, View } from 'react-native';
+import { Alert, Modal, View } from 'react-native';
 
 const LAST_IN_APP_NOTIFICATION_KEY = '@habitguard_last_in_app_watchtime';
 const DAILY_GOAL_KEY = '@habitguard_daily_goal_minutes';
@@ -168,68 +168,20 @@ export function WatchtimeNotificationModal() {
       onRequestClose={handleDismiss}
     >
       <View className="flex-1 justify-end bg-black/50">
-        <LinearGradient
-          colors={status.gradientColors}
-          className="rounded-t-3xl p-6 pb-8"
-        >
-          {/* Emoji and Title */}
-          <View className="items-center mb-4">
-            <Text className="text-6xl mb-2">{status.emoji}</Text>
-            <Text className="text-white text-2xl font-bold text-center">
-              {status.title}
-            </Text>
-          </View>
-
-          {/* Progress Bar */}
-          <View className="bg-white/20 h-3 rounded-full mb-4 overflow-hidden">
-            <View
-              className="bg-white h-full rounded-full"
-              style={{
-                width: `${Math.min(status.percentageOfGoal, 100)}%`,
-              }}
-            />
-          </View>
-
-          {/* Percentage */}
-          <Text className="text-white/90 text-center text-lg font-semibold mb-4">
-            {status.percentageOfGoal.toFixed(0)}% of Daily Goal
-          </Text>
-
-          {/* Message */}
-          <Text className="text-white/90 text-base leading-6 text-center mb-6">
-            {status.message}
-          </Text>
-
-          {/* Action Buttons */}
-          <View className="space-y-3">
-            <Pressable
-              onPress={handleViewDetails}
-              className="bg-white rounded-2xl p-4 active:opacity-80"
-            >
-              <Text className="text-center font-semibold text-base" style={{ color: status.color }}>
-                📊 View Detailed Analytics
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={handleSendPushNotification}
-              className="bg-white/20 rounded-2xl p-4 active:opacity-80"
-            >
-              <Text className="text-white text-center font-semibold text-base">
-                🔔 Send as Push Notification
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={handleDismiss}
-              className="bg-transparent rounded-2xl p-4 active:opacity-80"
-            >
-              <Text className="text-white text-center font-medium text-base">
-                Dismiss
-              </Text>
-            </Pressable>
-          </View>
-        </LinearGradient>
+        <NotificationCard
+          emoji={status.emoji}
+          title={status.title}
+          message={status.message}
+          color={status.color}
+          gradientColors={status.gradientColors}
+          percentage={status.percentageOfGoal}
+          primaryLabel="📊 View Detailed Analytics"
+          onPrimary={handleViewDetails}
+          secondaryLabel="� Send as Push Notification"
+          onSecondary={handleSendPushNotification}
+          dismissLabel="Dismiss"
+          onDismiss={handleDismiss}
+        />
       </View>
     </Modal>
   );
