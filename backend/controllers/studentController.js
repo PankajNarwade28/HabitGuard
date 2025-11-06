@@ -115,9 +115,15 @@ exports.getProfile = async (req, res) => {
 
     const profile = profiles[0];
 
-    // Get subjects for this profile
+    // Get subjects for this profile (DISTINCT to avoid duplicates)
     const [subjects] = await db.query(
-      'SELECT * FROM student_subjects WHERE profile_id = ? ORDER BY semester, subject_code',
+      `SELECT DISTINCT 
+        subject_id, profile_id, subject_name, subject_code, 
+        semester, credits, study_hours_recommended, created_at 
+      FROM student_subjects 
+      WHERE profile_id = ? 
+      GROUP BY subject_code, profile_id
+      ORDER BY semester, subject_code`,
       [profile.profile_id]
     );
 
@@ -216,8 +222,15 @@ exports.getSubjects = async (req, res) => {
 
     const profile = profiles[0];
 
+    // Get subjects with deduplication
     const [subjects] = await db.query(
-      'SELECT * FROM student_subjects WHERE profile_id = ? ORDER BY subject_code',
+      `SELECT DISTINCT 
+        subject_id, profile_id, subject_name, subject_code, 
+        semester, credits, study_hours_recommended, created_at 
+      FROM student_subjects 
+      WHERE profile_id = ? 
+      GROUP BY subject_code, profile_id
+      ORDER BY subject_code`,
       [profile.profile_id]
     );
 
@@ -253,7 +266,7 @@ exports.getRecommendations = async (req, res) => {
     }
 
     const [subjects] = await db.query(
-      'SELECT * FROM student_subjects WHERE profile_id = ?',
+      'SELECT DISTINCT subject_code, subject_name, credits, study_hours_recommended FROM student_subjects WHERE profile_id = ?',
       [profiles[0].profile_id]
     );
 
@@ -262,7 +275,7 @@ exports.getRecommendations = async (req, res) => {
       console.log('⚠️ No subjects found for profile:', profiles[0].profile_id);
     }
 
-    // Map recommendations to subjects
+    // Map recommendations to subjects (already deduplicated by DISTINCT query)
     const recommendations = subjects.map(subject => {
       const recs = recommendationsData.recommendations.find(
         r => r.subjectCode === subject.subject_code
@@ -318,8 +331,15 @@ exports.getStudyTimeSuggestions = async (req, res) => {
 
     const profile = profiles[0];
 
+    // Get subjects with deduplication
     const [subjects] = await db.query(
-      'SELECT * FROM student_subjects WHERE profile_id = ? ORDER BY credits DESC',
+      `SELECT DISTINCT 
+        subject_id, profile_id, subject_name, subject_code, 
+        semester, credits, study_hours_recommended, created_at 
+      FROM student_subjects 
+      WHERE profile_id = ? 
+      GROUP BY subject_code, profile_id
+      ORDER BY credits DESC`,
       [profile.profile_id]
     );
 
@@ -397,8 +417,10 @@ exports.repopulateSubjects = async (req, res) => {
       if (subjects && subjects.length > 0) {
         for (const subject of subjects) {
           const studyHours = Math.ceil(subject.credits * 1.5); // 1.5 hours per credit
+          
+          // Use INSERT IGNORE to prevent duplicates if delete failed
           await db.query(
-            `INSERT INTO student_subjects 
+            `INSERT IGNORE INTO student_subjects 
             (profile_id, subject_name, subject_code, semester, credits, study_hours_recommended) 
             VALUES (?, ?, ?, ?, ?, ?)`,
             [profile.profile_id, subject.name, subject.code, current_semester, subject.credits, studyHours]

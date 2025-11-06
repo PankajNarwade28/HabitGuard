@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { API_CONFIG } from '../../config/api.config';
 import QuizService from '../../services/QuizService';
 import StudentService, { StudentProfile as StudentProfileType } from '../../services/StudentService';
 
@@ -12,6 +13,7 @@ export default function StudentProfile() {
   const [refreshing, setRefreshing] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const [profile, setProfile] = useState<StudentProfileType | null>(null);
+  const [isRepopulating, setIsRepopulating] = useState(false); // Prevent duplicate calls
   const [stats, setStats] = useState({
     totalSubjects: 0,
     totalCredits: 0,
@@ -59,6 +61,14 @@ export default function StudentProfile() {
 
         // Calculate stats
         const subjects = profileResult.profile.subjects || [];
+        
+        // Automatically repopulate subjects if none found
+        if (subjects.length === 0) {
+          console.log('No subjects found, automatically loading subjects...');
+          await autoRepopulateSubjects(id);
+          return; // fetchProfileData will be called again after repopulation
+        }
+        
         const totalCredits = subjects.reduce((sum: number, subj: any) => sum + (subj.credits || 0), 0);
 
         // Fetch recommendations count
@@ -73,14 +83,9 @@ export default function StudentProfile() {
           quizzesCompleted,
         });
       } else {
-        // No profile found, but still show quiz stats
-        setStats({
-          totalSubjects: 0,
-          totalCredits: 0,
-          totalRecommendations: 0,
-          quizzesAvailable,
-          quizzesCompleted,
-        });
+        // No profile found, automatically create and populate
+        console.log('No profile found, automatically loading subjects...');
+        await autoRepopulateSubjects(id);
       }
     } catch (error) {
       console.error('Error fetching profile data:', error);
@@ -93,6 +98,60 @@ export default function StudentProfile() {
       await fetchProfileData(userId);
     }
     setRefreshing(false);
+  };
+
+  const autoRepopulateSubjects = async (id: number) => {
+    // Prevent duplicate calls
+    if (isRepopulating) {
+      console.log('⏭️ Already repopulating subjects, skipping...');
+      return;
+    }
+
+    try {
+      setIsRepopulating(true);
+      console.log('🔄 Automatically loading subjects for user:', id);
+      console.log('📡 API URL:', `${API_CONFIG.BASE_URL}/student/profile/${id}/repopulate-subjects`);
+      
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/student/profile/${id}/repopulate-subjects`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log(`✅ Auto-loaded ${result.subjectsAdded} subjects successfully`);
+        await fetchProfileData(id);
+      } else {
+        console.error('❌ Failed to auto-load subjects:', result.message);
+        // Show stats anyway, even without subjects
+        setStats(prev => ({
+          ...prev,
+          totalSubjects: 0,
+        }));
+      }
+    } catch (error) {
+      console.error('❌ Error auto-loading subjects:', error);
+      console.error('💡 Please check:');
+      console.error('   1. Backend server is running');
+      console.error('   2. API_URL in .env matches your IP address');
+      console.error('   3. Your device is on the same network');
+      
+      // Show stats anyway, even with error
+      setStats(prev => ({
+        ...prev,
+        totalSubjects: 0,
+      }));
+    } finally {
+      setIsRepopulating(false);
+    }
   };
 
   const repopulateSubjects = async () => {
@@ -109,7 +168,7 @@ export default function StudentProfile() {
             try {
               setLoading(true);
               const response = await fetch(
-                `http://192.168.0.105:3000/api/student/profile/${userId}/repopulate-subjects`,
+                `${API_CONFIG.BASE_URL}/student/profile/${userId}/repopulate-subjects`,
                 {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -484,20 +543,13 @@ export default function StudentProfile() {
               <Text style={{ fontSize: 18, fontWeight: '700', color: '#1f2937' }}>
                 Your Subjects
               </Text>
-              {stats.totalSubjects === 0 && (
-                <TouchableOpacity onPress={repopulateSubjects}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#16a34a' }}>
-                    Load Subjects
-                  </Text>
-                </TouchableOpacity>
-              )}
             </View>
 
             {stats.totalSubjects === 0 ? (
               <View style={{ alignItems: 'center', paddingVertical: 24 }}>
-                <Ionicons name="book-outline" size={48} color="#d1d5db" />
+                <ActivityIndicator size="large" color="#16a34a" />
                 <Text style={{ fontSize: 14, color: '#6b7280', marginTop: 12, textAlign: 'center' }}>
-                  No subjects found. Click "Load Subjects" to populate.
+                  Loading subjects...
                 </Text>
               </View>
             ) : (
