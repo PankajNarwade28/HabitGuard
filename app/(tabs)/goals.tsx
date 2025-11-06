@@ -247,6 +247,10 @@ export default function GoalsScreen() {
   const loadGoals = async () => {
     try {
       setRefreshing(true);
+      
+      // Check and reset if it's a new day
+      await dailyGoalsService.checkAndResetIfNewDay();
+      
       const loadedGoals = await dailyGoalsService.getGoals();
       setGoals(loadedGoals);
       const progress = await dailyGoalsService.getGoalsProgress();
@@ -547,6 +551,11 @@ export default function GoalsScreen() {
                         <Text style={styles.goalProgressText}>
                           {goal.currentValue} / {goal.targetValue} {goal.unit}
                         </Text>
+                        {goal.baselineTimestamp && (
+                          <Text style={styles.sinceCreatedText}>
+                            (since created)
+                          </Text>
+                        )}
                         {goal.type === 'app_usage' && goal.appPackageName && (
                           <View style={styles.appBadge}>
                             <Ionicons name="apps" size={10} color="#F59E0B" />
@@ -1122,6 +1131,12 @@ const styles = StyleSheet.create({
   goalProgressText: {
     fontSize: 14,
     color: '#6B7280',
+  },
+  sinceCreatedText: {
+    fontSize: 10,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+    marginLeft: 4,
   },
   appBadge: {
     flexDirection: 'row',

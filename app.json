@@ -21,11 +21,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "NOTIFICATIONS",
-        "VIBRATE"
-      ]
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",

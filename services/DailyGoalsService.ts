@@ -20,6 +20,8 @@ export interface DailyGoal {
   appPackageName?: string; // For app_usage goals
   notifyOnComplete?: boolean;
   notifyOnExceed?: boolean;
+  baselineValue?: number; // Usage at goal creation time (to track only new usage)
+  baselineTimestamp?: string; // When the baseline was set
 }
 
 export interface GoalsProgress {
@@ -120,6 +122,24 @@ class DailyGoalsService {
   }
 
   /**
+   * Check if it's a new day and reset goals if needed
+   */
+  async checkAndResetIfNewDay(): Promise<void> {
+    try {
+      const lastResetDate = await AsyncStorage.getItem('goals_last_reset_date');
+      const today = new Date().toDateString();
+      
+      if (lastResetDate !== today) {
+        console.log('🌅 New day detected, resetting goals...');
+        await this.resetDailyGoals();
+        await AsyncStorage.setItem('goals_last_reset_date', today);
+      }
+    } catch (error) {
+      console.error('Error checking for new day:', error);
+    }
+  }
+
+  /**
    * Save goals to storage
    */
   async saveGoals(goals: DailyGoal[]): Promise<void> {
@@ -138,12 +158,37 @@ class DailyGoalsService {
     try {
       const goals = await this.getGoals();
       
+      // Get current usage to set as baseline
+      const usageData = await this.getTodayUsageData();
+      let baselineValue = 0;
+      
+      switch (goal.type) {
+        case 'screen_time':
+          baselineValue = usageData.totalScreenTime;
+          break;
+        case 'productive_time':
+          baselineValue = usageData.productiveTime;
+          break;
+        case 'break_time':
+          baselineValue = usageData.breaksToday;
+          break;
+        case 'app_usage':
+          if (goal.appPackageName) {
+            baselineValue = usageData.appUsage[goal.appPackageName] || 0;
+          }
+          break;
+      }
+      
       const newGoal: DailyGoal = {
         ...goal,
         id: `goal_${Date.now()}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        baselineValue,
+        baselineTimestamp: new Date().toISOString(),
       };
+
+      console.log(`✨ Creating new goal "${newGoal.title}" with baseline: ${baselineValue} ${newGoal.unit}`);
 
       goals.push(newGoal);
       await this.saveGoals(goals);
@@ -262,7 +307,12 @@ class DailyGoalsService {
    */
   async resetDailyGoals(): Promise<void> {
     try {
-      const goals = await this.getGoals();
+      const goalsJson = await AsyncStorage.getItem(GOALS_KEY);
+      if (!goalsJson) {
+        return; // No goals to reset
+      }
+      
+      const goals: DailyGoal[] = JSON.parse(goalsJson);
       
       // Check if all goals were completed before reset
       const allCompleted = goals
@@ -285,14 +335,27 @@ class DailyGoalsService {
         );
       }
 
-      // Reset current values
+      // Reset current values and baselines for new day
       const resetGoals = goals.map(g => ({
         ...g,
         currentValue: 0,
+        baselineValue: 0, // Reset baseline for new day
+        baselineTimestamp: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }));
 
       await this.saveGoals(resetGoals);
+      
+      // Also reset usage data
+      await AsyncStorage.setItem(USAGE_DATA_KEY, JSON.stringify({
+        totalScreenTime: 0,
+        productiveTime: 0,
+        breaksToday: 0,
+        appUsage: {},
+        lastUpdated: new Date().toISOString(),
+      }));
+      
+      console.log('🌙 Daily goals reset for new day');
     } catch (error) {
       console.error('Error resetting daily goals:', error);
       throw error;
@@ -420,27 +483,33 @@ class DailyGoalsService {
       const updatedGoals = goals.map((goal) => {
         let newCurrentValue = goal.currentValue;
         const oldCurrentValue = goal.currentValue;
+        let rawUsageValue = 0;
 
         switch (goal.type) {
           case 'screen_time':
-            newCurrentValue = usageData.totalScreenTime;
-            console.log(`📱 Screen time goal: ${newCurrentValue} mins`);
+            rawUsageValue = usageData.totalScreenTime;
+            // Calculate only usage since goal was created
+            newCurrentValue = Math.max(0, rawUsageValue - (goal.baselineValue || 0));
+            console.log(`📱 Screen time goal: ${rawUsageValue} total, ${goal.baselineValue || 0} baseline, ${newCurrentValue} since goal created`);
             break;
           
           case 'productive_time':
-            newCurrentValue = usageData.productiveTime;
-            console.log(`💼 Productive time goal: ${newCurrentValue} mins`);
+            rawUsageValue = usageData.productiveTime;
+            newCurrentValue = Math.max(0, rawUsageValue - (goal.baselineValue || 0));
+            console.log(`💼 Productive time goal: ${rawUsageValue} total, ${goal.baselineValue || 0} baseline, ${newCurrentValue} since goal created`);
             break;
           
           case 'break_time':
-            newCurrentValue = usageData.breaksToday;
-            console.log(`☕ Break time goal: ${newCurrentValue} breaks`);
+            rawUsageValue = usageData.breaksToday;
+            newCurrentValue = Math.max(0, rawUsageValue - (goal.baselineValue || 0));
+            console.log(`☕ Break time goal: ${rawUsageValue} total, ${goal.baselineValue || 0} baseline, ${newCurrentValue} since goal created`);
             break;
           
           case 'app_usage':
             if (goal.appPackageName) {
-              newCurrentValue = usageData.appUsage[goal.appPackageName] || 0;
-              console.log(`📲 App usage goal for ${goal.appPackageName}: ${newCurrentValue} mins (found: ${!!usageData.appUsage[goal.appPackageName]})`);
+              rawUsageValue = usageData.appUsage[goal.appPackageName] || 0;
+              newCurrentValue = Math.max(0, rawUsageValue - (goal.baselineValue || 0));
+              console.log(`📲 App usage goal for ${goal.appPackageName}: ${rawUsageValue} total, ${goal.baselineValue || 0} baseline, ${newCurrentValue} since goal created`);
               console.log('📋 Available apps:', Object.keys(usageData.appUsage).slice(0, 5));
             }
             break;
