@@ -33,7 +33,7 @@ exports.getQuizQuestions = async (req, res) => {
     console.log(`📝 Getting questions for subject: ${subjectCode}`);
     console.log(`📚 Available subjects:`, Object.keys(quizQuestions));
 
-    // Get questions from JSON data
+    // Get questions from cached object
     let questions = quizQuestions[subjectCode];
 
     if (!questions || questions.length === 0) {
@@ -63,10 +63,10 @@ exports.getQuizQuestions = async (req, res) => {
     }
 
     // Shuffle and limit questions
-    questions = questions.sort(() => 0.5 - Math.random()).slice(0, parseInt(count));
+    const shuffledQuestions = questions.sort(() => 0.5 - Math.random()).slice(0, parseInt(count));
 
     // Remove correct_answer and explanation from response (sent after submission)
-    const quizQuestionsResponse = questions.map((q, index) => ({
+    const responseQuestions = shuffledQuestions.map((q, index) => ({
       id: index + 1,
       question: q.question,
       options: {
@@ -78,13 +78,13 @@ exports.getQuizQuestions = async (req, res) => {
       difficulty: q.difficulty
     }));
 
-    console.log(`✅ Sending ${quizQuestionsResponse.length} questions for ${subjectCode}`);
+    console.log(`✅ Sending ${responseQuestions.length} questions for ${subjectCode}`);
 
     res.json({
       success: true,
       subjectCode,
-      totalQuestions: quizQuestionsResponse.length,
-      questions: quizQuestionsResponse
+      totalQuestions: responseQuestions.length,
+      questions: responseQuestions
     });
   } catch (error) {
     console.error('Error fetching quiz questions:', error);
@@ -142,11 +142,14 @@ exports.submitQuiz = async (req, res) => {
 
     // Save quiz attempt to database
     try {
+      // Get subject name from quizzes data
+      const subjectName = quizzesData.quizzes.find(q => q.subjectCode === subjectCode)?.subjectName || subjectCode;
+      
       await db.query(
         `INSERT INTO quiz_attempts 
-        (user_id, subject_code, total_questions, correct_answers, score_percentage, time_taken_seconds, passed) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [userId, subjectCode, questions.length, correctAnswers, scorePercentage, timeSpent || 0, passed]
+        (user_id, subject_name, total_questions, correct_answers, score_percentage, time_taken_seconds) 
+        VALUES (?, ?, ?, ?, ?, ?)`,
+        [userId, subjectName, questions.length, correctAnswers, scorePercentage, timeSpent || 0]
       );
     } catch (dbError) {
       console.error('Error saving quiz attempt:', dbError);
@@ -200,9 +203,10 @@ exports.getQuizHistory = async (req, res) => {
       stats.averageScore = Math.round(
         (attempts.reduce((sum, a) => sum + a.score_percentage, 0) / attempts.length) * 10
       ) / 10;
-      stats.passedCount = attempts.filter(a => a.passed).length;
+      // Calculate passed count (60% or higher)
+      stats.passedCount = attempts.filter(a => a.score_percentage >= 60).length;
       stats.failedCount = attempts.length - stats.passedCount;
-      stats.totalTimeSpent = attempts.reduce((sum, a) => sum + a.time_taken_seconds, 0);
+      stats.totalTimeSpent = attempts.reduce((sum, a) => sum + (a.time_taken_seconds || 0), 0);
     }
 
     res.json({
@@ -225,13 +229,18 @@ exports.getAvailableQuizzes = async (req, res) => {
     const { userId } = req.params;
 
     // Return all quizzes from JSON file - no profile required
-    const availableQuizzes = quizzesData.quizzes.map((quiz, index) => ({
-      subjectCode: quiz.subjectCode,
-      subjectName: quiz.subjectName,
-      semester: Math.ceil((index + 1) / 2), // Distribute across semesters
-      hasQuiz: true, // All quizzes unlocked
-      questionCount: quiz.questions?.length || 5
-    }));
+    // Only return quizzes that actually have questions
+    const availableQuizzes = quizzesData.quizzes
+      .filter(quiz => quiz.questions && quiz.questions.length > 0)
+      .map((quiz, index) => ({
+        subjectCode: quiz.subjectCode,
+        subjectName: quiz.subjectName,
+        semester: Math.ceil((index + 1) / 2), // Distribute across semesters
+        hasQuiz: true, // All quizzes unlocked
+        questionCount: quiz.questions.length
+      }));
+
+    console.log(`✅ Returning ${availableQuizzes.length} quizzes`);
 
     res.json({
       success: true,

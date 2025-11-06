@@ -803,6 +803,312 @@
           "difficulty": "Medium"
         }
       ]
+    },
+    {
+      "subjectCode": "MCA301",
+      "subjectName": "Advanced Data Structures",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What is the time complexity of AVL tree insertion?",
+          "options": ["O(n)", "O(log n)", "O(n log n)", "O(1)"],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 2,
+          "question": "Which data structure is used in BFS?",
+          "options": ["Stack", "Queue", "Tree", "Graph"],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 3,
+          "question": "What is a red-black tree?",
+          "options": [
+            "A binary tree",
+            "A self-balancing BST",
+            "A graph",
+            "A heap"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 4,
+          "question": "Which heap type has minimum element at root?",
+          "options": ["Max heap", "Min heap", "Binary heap", "Fibonacci heap"],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 5,
+          "question": "What is the worst case time complexity of quicksort?",
+          "options": ["O(n)", "O(n^2)", "O(n log n)", "O(log n)"],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MCA303",
+      "subjectName": "Software Engineering",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What does SDLC stand for?",
+          "options": [
+            "Software Design Life Cycle",
+            "Software Development Life Cycle",
+            "System Design Life Cycle",
+            "System Development Life Cycle"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "Which testing is done first?",
+          "options": ["Integration", "Unit", "System", "Acceptance"],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 3,
+          "question": "What is waterfall model?",
+          "options": [
+            "Iterative model",
+            "Sequential model",
+            "Agile model",
+            "Spiral model"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 4,
+          "question": "What does UML stand for?",
+          "options": [
+            "Universal Modeling Language",
+            "Unified Modeling Language",
+            "Unique Modeling Language",
+            "User Modeling Language"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 5,
+          "question": "Which diagram shows system behavior?",
+          "options": ["Class diagram", "Use case diagram", "ER diagram", "Flowchart"],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MCA304",
+      "subjectName": "Computer Networks",
+      "questions": [
+        {
+          "id": 1,
+          "question": "Which layer is responsible for routing?",
+          "options": ["Physical", "Data Link", "Network", "Transport"],
+          "correctAnswer": 2,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "What is the default port for HTTP?",
+          "options": ["21", "22", "80", "443"],
+          "correctAnswer": 2,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 3,
+          "question": "Which protocol is connectionless?",
+          "options": ["TCP", "UDP", "FTP", "SMTP"],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 4,
+          "question": "What does DNS stand for?",
+          "options": [
+            "Domain Name System",
+            "Data Network System",
+            "Digital Name Service",
+            "Domain Network Service"
+          ],
+          "correctAnswer": 0,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 5,
+          "question": "Which device works at data link layer?",
+          "options": ["Router", "Switch", "Hub", "Gateway"],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MCA305",
+      "subjectName": "Operating Systems",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What is a process?",
+          "options": [
+            "A program",
+            "A program in execution",
+            "A thread",
+            "A file"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "Which scheduling algorithm can cause starvation?",
+          "options": ["FCFS", "Round Robin", "Priority", "SJF"],
+          "correctAnswer": 2,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 3,
+          "question": "What is deadlock?",
+          "options": [
+            "Process termination",
+            "Circular wait for resources",
+            "Memory leak",
+            "CPU idle state"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 4,
+          "question": "Which is a page replacement algorithm?",
+          "options": ["FIFO", "FCFS", "SJF", "Priority"],
+          "correctAnswer": 0,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 5,
+          "question": "What is virtual memory?",
+          "options": [
+            "RAM",
+            "Cache",
+            "Disk space used as RAM",
+            "ROM"
+          ],
+          "correctAnswer": 2,
+          "difficulty": "Easy"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MCA401",
+      "subjectName": "Cloud Computing",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What does IaaS stand for?",
+          "options": [
+            "Internet as a Service",
+            "Infrastructure as a Service",
+            "Information as a Service",
+            "Integration as a Service"
+          ],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "Which is a cloud deployment model?",
+          "options": ["Public", "Private", "Hybrid", "All of the above"],
+          "correctAnswer": 3,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 3,
+          "question": "Which company provides AWS?",
+          "options": ["Google", "Amazon", "Microsoft", "IBM"],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 4,
+          "question": "What is virtualization?",
+          "options": [
+            "Running multiple OS on single hardware",
+            "Cloud storage",
+            "Network protocol",
+            "Database system"
+          ],
+          "correctAnswer": 0,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 5,
+          "question": "Which is a PaaS example?",
+          "options": ["AWS EC2", "Google App Engine", "Dropbox", "Gmail"],
+          "correctAnswer": 1,
+          "difficulty": "Medium"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MCA402",
+      "subjectName": "Machine Learning",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What type of learning is supervised learning?",
+          "options": [
+            "Learning with labeled data",
+            "Learning without labels",
+            "Reinforcement learning",
+            "Unsupervised learning"
+          ],
+          "correctAnswer": 0,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 2,
+          "question": "Which algorithm is used for classification?",
+          "options": ["Linear Regression", "Logistic Regression", "K-means", "PCA"],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 3,
+          "question": "What is overfitting?",
+          "options": [
+            "Model performs well on training data but poorly on test data",
+            "Model performs poorly on all data",
+            "Model is too simple",
+            "Model has high bias"
+          ],
+          "correctAnswer": 0,
+          "difficulty": "Medium"
+        },
+        {
+          "id": 4,
+          "question": "Which is an unsupervised learning algorithm?",
+          "options": ["Decision Tree", "K-means", "SVM", "Naive Bayes"],
+          "correctAnswer": 1,
+          "difficulty": "Easy"
+        },
+        {
+          "id": 5,
+          "question": "What does neural network consist of?",
+          "options": ["Nodes", "Layers", "Weights", "All of the above"],
+          "correctAnswer": 3,
+          "difficulty": "Easy"
+        }
+      ]
     }
   ]
 }
