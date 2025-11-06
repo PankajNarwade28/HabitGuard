@@ -1,0 +1,177 @@
+# STUDENT SECTION FIX GUIDE
+
+## Issues Found
+
+1. ❌ **MySQL Database NOT Running** - Critical issue!
+2. ⚠️ **IP Address Changed** - Updated from 192.168.0.102 → 192.168.0.103
+3. ✅ **Backend Server** - Running but can't connect to database
+
+## IMMEDIATE FIX REQUIRED
+
+### Step 1: Start MySQL Database
+
+**Option A - Using XAMPP Control Panel:**
+1. Open **XAMPP Control Panel**
+2. Click **Start** next to **MySQL**
+3. Wait for status to show "Running" (green highlight)
+
+**Option B - Using Command Line:**
+```powershell
+# If XAMPP is installed in default location
+cd C:\xampp
+.\mysql\bin\mysqld.exe --defaults-file=.\mysql\bin\my.ini
+```
+
+### Step 2: Verify MySQL is Running
+```powershell
+Get-Process -Name "mysqld"
+```
+You should see mysqld process running.
+
+### Step 3: Restart Backend Server
+
+**Kill current backend:**
+```powershell
+Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess | Stop-Process -Force
+```
+
+**Start backend fresh:**
+```powershell
+cd C:\Projects\HabitGuard\backend
+npm start
+```
+
+Look for this message: `✅ Successfully connected to MySQL database`
+
+### Step 4: Restart Expo (Pick up new IP)
+
+**Kill Expo:**
+```powershell
+Get-Process -Name "node" | Stop-Process -Force
+```
+
+**Start Expo with clear cache:**
+```powershell
+cd C:\Projects\HabitGuard
+npx expo start --clear
+```
+
+### Step 5: Test on Device
+1. Press **'r'** in Expo terminal to reload app
+2. Login to the app
+3. Navigate to **Student Profile**
+4. It should now work! ✅
+
+## Why Student Section Wasn't Working
+
+### Root Cause:
+- **No Database Connection** = No student profiles can be fetched
+- Student profiles are stored in MySQL `student_profiles` table
+- Without MySQL running, API returns 404 "Student profile not found"
+
+### The Flow:
+```
+App → API Request → Backend Server → MySQL Database
+                                           ↓
+                                      [BLOCKED]
+                                    MySQL not running
+```
+
+## Configuration Updated
+
+### .env File (Updated IP)
+```env
+API_URL=http://192.168.0.103:3000/api  # Changed from .102 to .103
+```
+
+### Database Settings (from .env)
+```env
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=habitguard
+DB_PORT=3306
+```
+
+## Verification Steps
+
+### 1. Check MySQL
+```powershell
+Get-Process -Name "mysqld"
+```
+Should show: `mysqld` process running
+
+### 2. Check Backend
+```powershell
+Invoke-RestMethod -Uri "http://192.168.0.103:3000/api/health"
+```
+Should return: `{"success":true,"message":"HabitGuard API is running"}`
+
+### 3. Check Database Connection
+Look in backend terminal for:
+- ✅ `Successfully connected to MySQL database`
+- ❌ `Error connecting to MySQL database` (means MySQL still not running)
+
+### 4. Test Student Endpoint
+```powershell
+Invoke-RestMethod -Uri "http://192.168.0.103:3000/api/student/courses"
+```
+Should return course data (this doesn't need database, just JSON files)
+
+## Common Issues
+
+### "Error connecting to MySQL database"
+**Fix:** Start XAMPP and click Start on MySQL module
+
+### "Database 'habitguard' not found"
+**Fix:** 
+1. Open phpMyAdmin (http://localhost/phpmyadmin)
+2. Create new database named: `habitguard`
+3. Import SQL schema if you have one
+
+### "Student profile not found" 
+**Fix (if MySQL is running):**
+1. Open phpMyAdmin
+2. Check if `student_profiles` table exists
+3. Check if there's a profile for your user_id:
+```sql
+SELECT * FROM student_profiles WHERE user_id = YOUR_USER_ID;
+```
+4. If no profile exists, create one via Education Setup in the app
+
+### "Network request failed"
+**Fix:**
+1. Check IP address matches in .env: `192.168.0.103`
+2. Restart Expo: `npx expo start --clear`
+3. Reload app: Press 'r' in Expo terminal
+
+## Quick Start (All Steps)
+
+```powershell
+# 1. Start MySQL via XAMPP Control Panel (GUI)
+
+# 2. Start Backend
+cd C:\Projects\HabitGuard\backend
+npm start
+
+# 3. Start Expo (in new terminal)
+cd C:\Projects\HabitGuard
+npx expo start --clear
+
+# 4. On device: Press 'r' to reload
+```
+
+## Expected Results
+
+After following all steps:
+- ✅ MySQL running
+- ✅ Backend connected to database
+- ✅ Expo running with correct IP
+- ✅ Student Profile loads
+- ✅ Courses load
+- ✅ Quizzes load
+- ✅ Study plan loads
+
+---
+
+**CRITICAL**: MySQL MUST be running for student section to work!
