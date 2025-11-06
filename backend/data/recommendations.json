@@ -315,6 +315,156 @@
           "duration": "4 months"
         }
       ]
+    },
+    {
+      "subjectCode": "MCA301",
+      "subjectName": "Advanced Web Technologies",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Cloud Computing and Distributed Systems",
+          "url": "https://nptel.ac.in/courses/106105167",
+          "instructor": "Prof. Soumya Kanti Ghosh",
+          "difficulty": "Advanced",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Udemy",
+          "title": "MERN Stack - React, Node, Express & MongoDB",
+          "url": "https://www.udemy.com/course/mern-stack-course/",
+          "instructor": "Maximilian Schwarzmüller",
+          "difficulty": "Advanced",
+          "duration": "35 hours"
+        },
+        {
+          "platform": "Coursera",
+          "title": "Full-Stack Web Development Specialization",
+          "url": "https://www.coursera.org/specializations/full-stack-react",
+          "instructor": "Hong Kong University",
+          "difficulty": "Advanced",
+          "duration": "6 months"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MCA302",
+      "subjectName": "Software Engineering",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Software Engineering",
+          "url": "https://nptel.ac.in/courses/106105182",
+          "instructor": "Prof. Rajib Mall",
+          "difficulty": "Intermediate",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Coursera",
+          "title": "Software Design and Architecture Specialization",
+          "url": "https://www.coursera.org/specializations/software-design-architecture",
+          "instructor": "University of Alberta",
+          "difficulty": "Intermediate",
+          "duration": "5 months"
+        },
+        {
+          "platform": "Udemy",
+          "title": "Software Architecture & Design of Modern Systems",
+          "url": "https://www.udemy.com/course/software-architecture-design-of-modern-systems/",
+          "instructor": "Michael Pogrebinsky",
+          "difficulty": "Advanced",
+          "duration": "15 hours"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MCA303",
+      "subjectName": "Big Data Analytics",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Big Data Computing",
+          "url": "https://nptel.ac.in/courses/106105190",
+          "instructor": "Prof. Rajkumar Buyya",
+          "difficulty": "Advanced",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Coursera",
+          "title": "Big Data Specialization",
+          "url": "https://www.coursera.org/specializations/big-data",
+          "instructor": "UC San Diego",
+          "difficulty": "Intermediate",
+          "duration": "8 months"
+        },
+        {
+          "platform": "Udemy",
+          "title": "Apache Spark with Python - Big Data with PySpark",
+          "url": "https://www.udemy.com/course/spark-and-python-for-big-data-with-pyspark/",
+          "instructor": "Jose Portilla",
+          "difficulty": "Intermediate",
+          "duration": "11 hours"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MCA304",
+      "subjectName": "Internet of Things",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Introduction to Internet of Things",
+          "url": "https://nptel.ac.in/courses/106105166",
+          "instructor": "Prof. Sudip Misra",
+          "difficulty": "Intermediate",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Coursera",
+          "title": "An Introduction to Programming the Internet of Things",
+          "url": "https://www.coursera.org/specializations/iot",
+          "instructor": "UC Irvine",
+          "difficulty": "Beginner",
+          "duration": "6 months"
+        },
+        {
+          "platform": "Udemy",
+          "title": "Internet of Things (IoT) - Complete Guide",
+          "url": "https://www.udemy.com/course/internet-of-things-complete/",
+          "instructor": "Educative Inc",
+          "difficulty": "Intermediate",
+          "duration": "8 hours"
+        }
+      ]
+    },
+    {
+      "subjectCode": "MCA305",
+      "subjectName": "Blockchain Technology",
+      "courses": [
+        {
+          "platform": "NPTEL",
+          "title": "Blockchain Architecture Design and Use Cases",
+          "url": "https://nptel.ac.in/courses/106105200",
+          "instructor": "Prof. Sandip Chakraborty",
+          "difficulty": "Advanced",
+          "duration": "12 weeks"
+        },
+        {
+          "platform": "Coursera",
+          "title": "Blockchain Specialization",
+          "url": "https://www.coursera.org/specializations/blockchain",
+          "instructor": "University at Buffalo",
+          "difficulty": "Intermediate",
+          "duration": "4 months"
+        },
+        {
+          "platform": "Udemy",
+          "title": "Ethereum and Solidity: The Complete Developer's Guide",
+          "url": "https://www.udemy.com/course/ethereum-and-solidity-the-complete-developers-guide/",
+          "instructor": "Stephen Grider",
+          "difficulty": "Advanced",
+          "duration": "24 hours"
+        }
+      ]
     }
   ]
 }
