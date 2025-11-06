@@ -180,7 +180,7 @@ export default function QuizHistory() {
                     <Text style={{ fontSize: 12, color: '#6b7280', marginLeft: 8 }}>Average Score</Text>
                   </View>
                   <Text style={{ fontSize: 28, fontWeight: '700', color: '#16a34a' }}>
-                    {stats.averageScore.toFixed(1)}%
+                    {Number(stats.averageScore || 0).toFixed(1)}%
                   </Text>
                 </View>
 
@@ -340,7 +340,7 @@ export default function QuizHistory() {
                       color: '#1f2937',
                       marginBottom: 4,
                     }}>
-                      {attempt.subject_code}
+                      {(attempt as any).subject_code || (attempt as any).subject_name || 'Unknown Subject'}
                     </Text>
                     <Text style={{ fontSize: 12, color: '#6b7280' }}>
                       {formatDate(attempt.attempted_at)}
@@ -349,19 +349,19 @@ export default function QuizHistory() {
 
                   {/* Score Badge */}
                   <View style={{ 
-                    backgroundColor: attempt.passed ? '#f0fdf4' : '#fef2f2',
+                    backgroundColor: (attempt.score_percentage >= 60) ? '#f0fdf4' : '#fef2f2',
                     paddingHorizontal: 16,
                     paddingVertical: 8,
                     borderRadius: 12,
                     borderWidth: 2,
-                    borderColor: attempt.passed ? '#16a34a' : '#ef4444',
+                    borderColor: (attempt.score_percentage >= 60) ? '#16a34a' : '#ef4444',
                   }}>
                     <Text style={{ 
                       fontSize: 20, 
                       fontWeight: '700', 
-                      color: attempt.passed ? '#16a34a' : '#ef4444',
+                      color: (attempt.score_percentage >= 60) ? '#16a34a' : '#ef4444',
                     }}>
-                      {attempt.score_percentage.toFixed(1)}%
+                      {Number(attempt.score_percentage || 0).toFixed(1)}%
                     </Text>
                   </View>
                 </View>
@@ -395,24 +395,24 @@ export default function QuizHistory() {
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Ionicons name="time-outline" size={18} color="#6b7280" />
                     <Text style={{ fontSize: 13, color: '#6b7280', marginLeft: 6 }}>
-                      {formatTime(attempt.time_taken_seconds)}
+                      {formatTime(attempt.time_taken_seconds || 0)}
                     </Text>
                   </View>
 
                   {/* Status */}
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Ionicons 
-                      name={attempt.passed ? "trophy" : "close-circle-outline"} 
+                      name={(attempt.score_percentage >= 60) ? "trophy" : "close-circle-outline"} 
                       size={18} 
-                      color={attempt.passed ? "#16a34a" : "#ef4444"} 
+                      color={(attempt.score_percentage >= 60) ? "#16a34a" : "#ef4444"} 
                     />
                     <Text style={{ 
                       fontSize: 13, 
-                      color: attempt.passed ? "#16a34a" : "#ef4444",
+                      color: (attempt.score_percentage >= 60) ? "#16a34a" : "#ef4444",
                       marginLeft: 6,
                       fontWeight: '600',
                     }}>
-                      {attempt.passed ? 'Passed' : 'Failed'}
+                      {(attempt.score_percentage >= 60) ? 'Passed' : 'Failed'}
                     </Text>
                   </View>
                 </View>
@@ -428,8 +428,8 @@ export default function QuizHistory() {
                     <View
                       style={{
                         height: '100%',
-                        width: `${attempt.score_percentage}%`,
-                        backgroundColor: getScoreColor(attempt.score_percentage),
+                        width: `${Number(attempt.score_percentage || 0)}%`,
+                        backgroundColor: getScoreColor(Number(attempt.score_percentage || 0)),
                         borderRadius: 3,
                       }}
                     />

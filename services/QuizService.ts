@@ -36,14 +36,16 @@ export interface QuizScore {
 }
 
 export interface QuizAttempt {
-  id: number;
+  id?: number;
+  attempt_id?: number;
   user_id: number;
-  subject_code: string;
+  subject_code?: string;
+  subject_name?: string;
   total_questions: number;
   correct_answers: number;
   score_percentage: number;
   time_taken_seconds: number;
-  passed: boolean;
+  passed?: boolean;
   attempted_at: string;
 }
 

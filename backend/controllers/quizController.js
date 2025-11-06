@@ -142,14 +142,14 @@ exports.submitQuiz = async (req, res) => {
 
     // Save quiz attempt to database
     try {
-      // Get subject name from quizzes data
+      // Get subject name from quizzes data for display
       const subjectName = quizzesData.quizzes.find(q => q.subjectCode === subjectCode)?.subjectName || subjectCode;
       
       await db.query(
         `INSERT INTO quiz_attempts 
-        (user_id, subject_name, total_questions, correct_answers, score_percentage, time_taken_seconds) 
-        VALUES (?, ?, ?, ?, ?, ?)`,
-        [userId, subjectName, questions.length, correctAnswers, scorePercentage, timeSpent || 0]
+        (user_id, subject_code, subject_name, total_questions, correct_answers, score_percentage, time_taken_seconds) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [userId, subjectCode, subjectName, questions.length, correctAnswers, scorePercentage, timeSpent || 0]
       );
     } catch (dbError) {
       console.error('Error saving quiz attempt:', dbError);
