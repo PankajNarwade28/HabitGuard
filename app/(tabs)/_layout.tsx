@@ -1,4 +1,5 @@
 ﻿import AuthMonitor from '@/components/AuthMonitor';
+import ProjectInfoBanner from '@/components/ProjectInfoBanner';
 import StudentFloatingButton from '@/components/StudentFloatingButton';
 import { WatchtimeNotificationModal } from '@/components/WatchtimeNotificationModal';
 import { WatchtimeStatusMonitor } from '@/components/WatchtimeStatusMonitor';
@@ -74,6 +75,7 @@ export default function TabLayout() {
         }}
       />
       </Tabs>
+      <ProjectInfoBanner />
       <AuthMonitor />
       <WatchtimeNotificationModal />
       <WatchtimeStatusMonitor />

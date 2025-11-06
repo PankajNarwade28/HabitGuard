@@ -1,4 +1,5 @@
-﻿import { useUser } from '@/contexts/UserContext';
+﻿import ProjectInfoBanner, { showProjectBanner } from '@/components/ProjectInfoBanner';
+import { useUser } from '@/contexts/UserContext';
 import { weeklyReportService } from '@/services/WeeklyReportService';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
@@ -9,6 +10,7 @@ export default function SettingsScreen() {
   const { user, logout, refreshUserData } = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showAboutBanner, setShowAboutBanner] = useState(false);
 
   useEffect(() => {
     // Refresh user data when screen is focused
@@ -191,6 +193,20 @@ export default function SettingsScreen() {
       <View style={styles.settingsCard}>
         <Text style={styles.cardTitle}>App Settings</Text>
         
+        <TouchableOpacity 
+          style={styles.settingItem} 
+          onPress={async () => {
+            await showProjectBanner();
+            setShowAboutBanner(true);
+          }}
+        >
+          <View style={styles.settingLeft}>
+            <Ionicons name="information-circle" size={20} color="#667eea" />
+            <Text style={styles.settingText}>About This App</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#64748b" />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.settingItem} onPress={handleNotifications}>
           <View style={styles.settingLeft}>
             <Ionicons name="notifications" size={20} color="#6366f1" />
@@ -277,6 +293,12 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-forward" size={20} color="#64748b" />
         </TouchableOpacity>
       </View>
+
+      {/* Project Info Banner */}
+      <ProjectInfoBanner 
+        visible={showAboutBanner} 
+        onClose={() => setShowAboutBanner(false)} 
+      />
     </ScrollView>
   );
 }
