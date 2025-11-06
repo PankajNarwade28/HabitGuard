@@ -179,8 +179,7 @@ export default function QuizList() {
           quizzes.map((quiz, index) => (
             <TouchableOpacity
               key={index}
-              onPress={() => quiz.hasQuiz && startQuiz(quiz.subjectCode, quiz.subjectName)}
-              disabled={!quiz.hasQuiz}
+              onPress={() => startQuiz(quiz.subjectCode, quiz.subjectName)}
               style={{
                 backgroundColor: '#fff',
                 borderRadius: 16,
@@ -191,7 +190,6 @@ export default function QuizList() {
                 shadowOpacity: 0.1,
                 shadowRadius: 4,
                 elevation: 3,
-                opacity: quiz.hasQuiz ? 1 : 0.6,
               }}
               activeOpacity={0.7}
             >
@@ -200,15 +198,15 @@ export default function QuizList() {
                   width: 56,
                   height: 56,
                   borderRadius: 28,
-                  backgroundColor: quiz.hasQuiz ? '#f5f3ff' : '#f3f4f6',
+                  backgroundColor: '#f5f3ff',
                   justifyContent: 'center',
                   alignItems: 'center',
                   marginRight: 16,
                 }}>
                   <Ionicons
-                    name={quiz.hasQuiz ? 'school' : 'lock-closed'}
+                    name="school"
                     size={28}
-                    color={quiz.hasQuiz ? '#8b5cf6' : '#9ca3af'}
+                    color="#8b5cf6"
                   />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -227,39 +225,27 @@ export default function QuizList() {
                   }}>
                     {quiz.subjectCode} • Semester {quiz.semester}
                   </Text>
-                  {quiz.hasQuiz ? (
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}>
                     <View style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
+                      backgroundColor: '#f0fdf4',
+                      paddingHorizontal: 10,
+                      paddingVertical: 4,
+                      borderRadius: 6,
                     }}>
-                      <View style={{
-                        backgroundColor: '#f0fdf4',
-                        paddingHorizontal: 10,
-                        paddingVertical: 4,
-                        borderRadius: 6,
+                      <Text style={{
+                        fontSize: 12,
+                        fontWeight: '600',
+                        color: '#16a34a',
                       }}>
-                        <Text style={{
-                          fontSize: 12,
-                          fontWeight: '600',
-                          color: '#16a34a',
-                        }}>
-                          {quiz.questionCount} Questions
-                        </Text>
-                      </View>
+                        {quiz.questionCount || 5} Questions
+                      </Text>
                     </View>
-                  ) : (
-                    <Text style={{
-                      fontSize: 12,
-                      color: '#9ca3af',
-                      fontStyle: 'italic',
-                    }}>
-                      Quiz not available yet
-                    </Text>
-                  )}
+                  </View>
                 </View>
-                {quiz.hasQuiz && (
-                  <Ionicons name="chevron-forward" size={24} color="#8b5cf6" />
-                )}
+                <Ionicons name="chevron-forward" size={24} color="#8b5cf6" />
               </View>
             </TouchableOpacity>
           ))

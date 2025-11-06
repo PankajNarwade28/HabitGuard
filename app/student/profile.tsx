@@ -43,6 +43,15 @@ export default function StudentProfile() {
 
   const fetchProfileData = async (id: number) => {
     try {
+      // Fetch quizzes first (available even without profile)
+      const quizzesResult = await QuizService.getAvailableQuizzes(id);
+      const quizzes = quizzesResult.success ? quizzesResult.quizzes : [];
+      const quizzesAvailable = quizzes.length; // All quizzes are available now
+
+      // Fetch quiz history for completed count
+      const historyResult = await QuizService.getQuizHistory(id);
+      const quizzesCompleted = historyResult.success ? historyResult.attempts.length : 0;
+
       // Fetch profile with subjects
       const profileResult = await StudentService.getProfile(id);
       if (profileResult.success && profileResult.profile) {
@@ -56,15 +65,6 @@ export default function StudentProfile() {
         const recsResult = await StudentService.getRecommendations(id);
         const recsCount = recsResult.success ? recsResult.recommendations.length : 0;
 
-        // Fetch quizzes
-        const quizzesResult = await QuizService.getAvailableQuizzes(id);
-        const quizzes = quizzesResult.success ? quizzesResult.quizzes : [];
-        const quizzesAvailable = quizzes.filter((q: any) => q.hasQuiz).length;
-
-        // Fetch quiz history for completed count
-        const historyResult = await QuizService.getQuizHistory(id);
-        const quizzesCompleted = historyResult.success ? historyResult.attempts.length : 0;
-
         setStats({
           totalSubjects: subjects.length,
           totalCredits,
@@ -73,8 +73,14 @@ export default function StudentProfile() {
           quizzesCompleted,
         });
       } else {
-        // No profile found, redirect to setup
-        router.push('/student/education-setup');
+        // No profile found, but still show quiz stats
+        setStats({
+          totalSubjects: 0,
+          totalCredits: 0,
+          totalRecommendations: 0,
+          quizzesAvailable,
+          quizzesCompleted,
+        });
       }
     } catch (error) {
       console.error('Error fetching profile data:', error);

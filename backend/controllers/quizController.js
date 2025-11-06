@@ -30,23 +30,43 @@ exports.getQuizQuestions = async (req, res) => {
     const { subjectCode } = req.params;
     const { count = 5 } = req.query;
 
+    console.log(`📝 Getting questions for subject: ${subjectCode}`);
+    console.log(`📚 Available subjects:`, Object.keys(quizQuestions));
+
     // Get questions from JSON data
     let questions = quizQuestions[subjectCode];
 
     if (!questions || questions.length === 0) {
-      // If no questions for specific subject, provide general questions
-      return res.json({
-        success: true,
-        message: 'No specific quiz available for this subject yet',
-        questions: []
-      });
+      // Try to find in original data
+      const quizData = quizzesData.quizzes.find(q => q.subjectCode === subjectCode);
+      if (quizData && quizData.questions) {
+        console.log(`✅ Found ${quizData.questions.length} questions in JSON for ${subjectCode}`);
+        // Convert to the expected format
+        questions = quizData.questions.map(q => ({
+          question: q.question,
+          option_a: q.options[0],
+          option_b: q.options[1],
+          option_c: q.options[2],
+          option_d: q.options[3],
+          correct_answer: ['A', 'B', 'C', 'D'][q.correctAnswer],
+          difficulty: q.difficulty,
+          explanation: `The correct answer is ${q.options[q.correctAnswer]}`
+        }));
+      } else {
+        console.log(`❌ No questions found for ${subjectCode}`);
+        return res.json({
+          success: true,
+          message: 'No specific quiz available for this subject yet',
+          questions: []
+        });
+      }
     }
 
     // Shuffle and limit questions
     questions = questions.sort(() => 0.5 - Math.random()).slice(0, parseInt(count));
 
     // Remove correct_answer and explanation from response (sent after submission)
-    const quizQuestions = questions.map((q, index) => ({
+    const quizQuestionsResponse = questions.map((q, index) => ({
       id: index + 1,
       question: q.question,
       options: {
@@ -58,11 +78,13 @@ exports.getQuizQuestions = async (req, res) => {
       difficulty: q.difficulty
     }));
 
+    console.log(`✅ Sending ${quizQuestionsResponse.length} questions for ${subjectCode}`);
+
     res.json({
       success: true,
       subjectCode,
-      totalQuestions: quizQuestions.length,
-      questions: quizQuestions
+      totalQuestions: quizQuestionsResponse.length,
+      questions: quizQuestionsResponse
     });
   } catch (error) {
     console.error('Error fetching quiz questions:', error);
@@ -202,31 +224,13 @@ exports.getAvailableQuizzes = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Get student's subjects
-    const [profiles] = await db.query(
-      'SELECT profile_id FROM student_profiles WHERE user_id = ?',
-      [userId]
-    );
-
-    if (profiles.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Student profile not found' 
-      });
-    }
-
-    const [subjects] = await db.query(
-      'SELECT * FROM student_subjects WHERE profile_id = ?',
-      [profiles[0].profile_id]
-    );
-
-    // Map to available quizzes - ALL QUIZZES UNLOCKED
-    const availableQuizzes = subjects.map(subject => ({
-      subjectCode: subject.subject_code,
-      subjectName: subject.subject_name,
-      semester: subject.semester,
+    // Return all quizzes from JSON file - no profile required
+    const availableQuizzes = quizzesData.quizzes.map((quiz, index) => ({
+      subjectCode: quiz.subjectCode,
+      subjectName: quiz.subjectName,
+      semester: Math.ceil((index + 1) / 2), // Distribute across semesters
       hasQuiz: true, // All quizzes unlocked
-      questionCount: quizQuestions[subject.subject_code]?.length || 5 // Default to 5 questions
+      questionCount: quiz.questions?.length || 5
     }));
 
     res.json({
