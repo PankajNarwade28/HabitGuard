@@ -126,6 +126,7 @@ export default function RootLayout() {
   }
 
   // Priority 3: If both permissions granted and authenticated, show main app
+  //sample 
   return (
     <UserProvider>
       <ThemeProvider value={DarkTheme}>
