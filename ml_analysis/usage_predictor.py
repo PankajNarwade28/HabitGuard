@@ -12,6 +12,16 @@ Features:
 - Personalized recommendations
 - Usage pattern analysis
 
+NOTE: Pylance import warnings are EXPECTED and SAFE to ignore!
+--------------------------------------------------------------
+This file uses optional dependencies (TensorFlow, reportlab) that are handled
+gracefully with try-except blocks. The system works perfectly without them by
+using fallback algorithms. Install them only if you need advanced features:
+
+    pip install tensorflow reportlab
+
+The app will work fine without these libraries! ✅
+
 Usage:
     python usage_predictor.py [csv_file_path]
 """
@@ -28,8 +38,8 @@ warnings.filterwarnings('ignore')
 
 # Try to import ML libraries
 try:
-    import tensorflow as tf
-    from tensorflow.keras import layers, models
+    import tensorflow as tf  # type: ignore
+    from tensorflow.keras import layers, models  # type: ignore
     TF_AVAILABLE = True
 except ImportError:
     print("⚠️  TensorFlow not installed. Install with: pip install tensorflow")
@@ -48,11 +58,11 @@ except ImportError:
 
 # Try to import PDF generation libraries
 try:
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib import colors
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
-    from reportlab.lib.units import inch
+    from reportlab.lib.pagesizes import letter  # type: ignore
+    from reportlab.lib import colors  # type: ignore
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle  # type: ignore
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak  # type: ignore
+    from reportlab.lib.units import inch  # type: ignore
     PDF_AVAILABLE = True
 except ImportError:
     print("⚠️  reportlab not installed. Install with: pip install reportlab")
@@ -469,6 +479,43 @@ class HabitGuardMLAnalyzer:
         except Exception as e:
             return {"error": f"Analysis failed: {e}"}
     
+    def _calculate_risk_level(self, avg_hours: float, consistency: float) -> str:
+        """Calculate overall risk level for mental health impact"""
+        # Risk scoring based on research:
+        # - >6h daily associated with depression/anxiety
+        # - High inconsistency indicates compulsive behavior
+        # - Combined factors increase risk
+        
+        risk_score = 0
+        
+        # Hours contribution (0-5 points)
+        if avg_hours < 3:
+            risk_score += 0
+        elif avg_hours < 5:
+            risk_score += 1
+        elif avg_hours < 7:
+            risk_score += 3
+        else:
+            risk_score += 5
+        
+        # Consistency contribution (0-3 points)
+        if consistency > 0.6:
+            risk_score += 3
+        elif consistency > 0.4:
+            risk_score += 2
+        elif consistency > 0.2:
+            risk_score += 1
+        
+        # Risk classification
+        if risk_score <= 1:
+            return "low"
+        elif risk_score <= 3:
+            return "moderate"
+        elif risk_score <= 5:
+            return "high"
+        else:
+            return "critical"
+    
     def _calculate_trends(self) -> Dict:
         """Calculate usage trends over time"""
         try:
@@ -514,21 +561,65 @@ class HabitGuardMLAnalyzer:
         except Exception as e:
             return {"trend": "error", "message": str(e)}
     
-    def _classify_behavior(self) -> str:
-        """Classify user behavior pattern"""
+    def _classify_behavior(self) -> Dict:
+        """Classify user behavior pattern with detailed insights"""
         if self.df is None or len(self.df) == 0:
-            return "unknown"
+            return {"category": "unknown", "severity": "low", "action": "insufficient_data"}
             
         avg_hours = self.df['screenTimeHours'].mean()
+        std_hours = self.df['screenTimeHours'].std()
+        max_hours = self.df['screenTimeHours'].max()
+        
+        # Calculate consistency score (lower is better)
+        consistency = (std_hours / avg_hours) if avg_hours > 0 else 1
+        
+        # Classify based on average with more nuanced categories
+        category = ""
+        severity = ""
+        action = ""
+        message = ""
         
         if avg_hours < 2:
-            return "light_user"
+            category = "light_user"
+            severity = "low"
+            action = "maintain"
+            message = "Excellent digital wellness! Keep up the healthy habits."
         elif avg_hours < 4:
-            return "moderate_user"
+            category = "moderate_user"
+            severity = "low"
+            action = "monitor"
+            message = "Good balance. Stay mindful of your usage patterns."
         elif avg_hours < 6:
-            return "heavy_user"
+            category = "heavy_user"
+            severity = "medium"
+            action = "reduce"
+            message = "Consider setting app time limits and taking regular breaks."
+        elif avg_hours < 8:
+            category = "very_heavy_user"
+            severity = "high"
+            action = "immediate_action"
+            message = "High screen time detected. Set strict limits and establish phone-free zones."
         else:
-            return "excessive_user"
+            category = "excessive_user"
+            severity = "critical"
+            action = "urgent_intervention"
+            message = "Critical screen time levels. Seek support and implement digital detox strategies."
+        
+        # Adjust severity based on consistency
+        if consistency > 0.5 and severity in ["medium", "high"]:
+            severity = "critical"
+            message += " Highly inconsistent usage patterns detected - this may indicate compulsive behavior."
+        
+        return {
+            "category": category,
+            "severity": severity,
+            "action": action,
+            "message": message,
+            "avg_hours": float(avg_hours),
+            "max_hours": float(max_hours),
+            "consistency_score": float(consistency),
+            "risk_level": self._calculate_risk_level(avg_hours, consistency)
+        }
     
     def _generate_predictions(self) -> Dict:
         """Generate ML-based predictions"""
@@ -689,12 +780,12 @@ class HabitGuardMLAnalyzer:
             return "❌ Error: reportlab not installed. Install with: pip install reportlab"
         
         try:
-            from reportlab.lib.pagesizes import letter, A4
-            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Image as RLImage
-            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-            from reportlab.lib.units import inch
-            from reportlab.lib import colors
-            from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+            from reportlab.lib.pagesizes import letter, A4  # type: ignore
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Image as RLImage  # type: ignore
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle  # type: ignore
+            from reportlab.lib.units import inch  # type: ignore
+            from reportlab.lib import colors  # type: ignore
+            from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT  # type: ignore
             
             # Generate filename if not provided
             if output_file is None:
