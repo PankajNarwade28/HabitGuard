@@ -183,8 +183,8 @@ export default function SettingsScreen() {
               <Text style={styles.profileDetail}>📱 {user.mobile_no}</Text>
             )}
           </View>
-          <TouchableOpacity onPress={() => Alert.alert('Coming Soon', 'Profile editing will be available soon!')}>
-            <Ionicons name="pencil" size={20} color="#64748b" />
+          <TouchableOpacity onPress={() => router.push('/edit-profile' as any)}>
+            <Ionicons name="pencil" size={20} color="#16a34a" />
           </TouchableOpacity>
         </View>
       </View>
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    paddingTop: 60,
+    paddingTop: 20,
     backgroundColor: '#16a34a',
   },
   title: {

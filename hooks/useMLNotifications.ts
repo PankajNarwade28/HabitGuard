@@ -1,4 +1,3 @@
-import { NotificationService } from '@/services/NotificationService';
 import { mlAnalysisService, MLInsight } from '@/services/MLAnalysisService';
 import { usageStatsService } from '@/services/UsageStatsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';

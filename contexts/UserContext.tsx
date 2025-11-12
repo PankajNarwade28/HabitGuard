@@ -21,6 +21,7 @@ interface UserContextType {
   logout: () => Promise<void>;
   refreshUserData: () => Promise<void>;
   updateUserData: (data: Partial<UserData>) => void;
+  updateUserProfile: (data: Partial<UserData>) => Promise<boolean>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -136,6 +137,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateUserProfile = async (data: Partial<UserData>): Promise<boolean> => {
+    try {
+      const response = await authService.updateProfile(data);
+      
+      if (response.success && response.data) {
+        setUser(response.data);
+        // Update local storage
+        await authService.updateUserData(response.data);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return false;
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -147,6 +165,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         logout,
         refreshUserData,
         updateUserData,
+        updateUserProfile,
       }}
     >
       {children}

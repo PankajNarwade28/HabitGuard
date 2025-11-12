@@ -172,6 +172,45 @@ class AuthService {
   }
 
   /**
+   * Update user profile
+   */
+  async updateProfile(profileData: Partial<SignupData>): Promise<AuthResponse> {
+    try {
+      const token = await this.getToken();
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      console.log('🔄 Updating profile:', profileData);
+
+      const response = await this.fetchWithTimeout(`${API_CONFIG.BASE_URL}/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+      });
+
+      console.log('📡 Update profile response status:', response.status);
+
+      const data = await response.json();
+      console.log('📦 Update profile response:', data.success ? 'Success' : 'Failed');
+
+      if (data.success && data.data) {
+        // Update stored user data
+        await this.updateUserData(data.data);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('❌ Update profile error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Logout user
    */
   async logout(): Promise<void> {
