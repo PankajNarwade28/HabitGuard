@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabitGuard - ER Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .diagram-container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        .diagram {
+            position: relative;
+            height: 900px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .entity {
+            position: absolute;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            min-width: 220px;
+        }
+
+        .entity-header {
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            text-align: center;
+        }
+
+        .entity-attributes {
+            background: white;
+            border-radius: 5px;
+            padding: 12px;
+        }
+
+        .attribute {
+            padding: 6px 0;
+            font-size: 13px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+
+        .attribute:last-child {
+            border-bottom: none;
+        }
+
+        .attribute.primary-key {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .attribute.primary-key::before {
+            content: '🔑 ';
+        }
+
+        .attribute.foreign-key {
+            color: #3498db;
+            font-style: italic;
+        }
+
+        .attribute.foreign-key::before {
+            content: '🔗 ';
+        }
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .legend {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .header {
+                color: #333;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .diagram-container {
+                padding: 20px;
+            }
+            
+            .diagram {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🗄️ HabitGuard Database Schema</h1>
+        <p>Entity-Relationship Diagram</p>
+    </div>
+
+    <div class="diagram-container">
+        <div class="diagram" id="diagram">
+            <!-- Entities will be added by JavaScript -->
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e74c3c;"></div>
+                <span>Primary Key</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #3498db;"></div>
+                <span>Foreign Key</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f39c12;"></div>
+                <span>Relationship</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const entities = [
+            {
+                name: 'Users',
+                x: 50,
+                y: 30,
+                attributes: [
+                    { name: 'id', type: 'primary-key' },
+                    { name: 'name', type: '' },
+                    { name: 'email', type: '' },
+                    { name: 'password', type: '' },
+                    { name: 'age', type: '' },
+                    { name: 'education', type: '' },
+                    { name: 'mobile_no', type: '' },
+                    { name: 'created_at', type: '' }
+                ]
+            },
+            {
+                name: 'UsageStats',
+                x: 420,
+                y: 30,
+                attributes: [
+                    { name: 'id', type: 'primary-key' },
+                    { name: 'user_id', type: 'foreign-key' },
+                    { name: 'date', type: '' },
+                    { name: 'totalScreenTime', type: '' },
+                    { name: 'appCount', type: '' },
+                    { name: 'dayOfWeek', type: '' },
+                    { name: 'isWeekend', type: '' },
+                    { name: 'created_at', type: '' }
+                ]
+            },
+            {
+                name: 'AppUsage',
+                x: 790,
+                y: 30,
+                attributes: [
+                    { name: 'id', type: 'primary-key' },
+                    { name: 'user_id', type: 'foreign-key' },
+                    { name: 'app_package', type: '' },
+                    { name: 'app_name', type: '' },
+                    { name: 'category', type: '' },
+                    { name: 'usage_time', type: '' },
+                    { name: 'date', type: '' }
+                ]
+            },
+            {
+                name: 'Goals',
+                x: 50,
+                y: 320,
+                attributes: [
+                    { name: 'id', type: 'primary-key' },
+                    { name: 'user_id', type: 'foreign-key' },
+                    { name: 'goal_type', type: '' },
+                    { name: 'target_value', type: '' },
+                    { name: 'current_progress', type: '' },
+                    { name: 'start_date', type: '' },
+                    { name: 'end_date', type: '' },
+                    { name: 'status', type: '' }
+                ]
+            },
+            {
+                name: 'WeeklyReports',
+                x: 420,
+                y: 320,
+                attributes: [
+                    { name: 'id', type: 'primary-key' },
+                    { name: 'user_id', type: 'foreign-key' },
+                    { name: 'week_start', type: '' },
+                    { name: 'week_end', type: '' },
+                    { name: 'total_screen_time', type: '' },
+                    { name: 'avg_daily_usage', type: '' },
+                    { name: 'top_apps', type: '' },
+                    { name: 'insights', type: '' }
+                ]
+            },
+            {
+                name: 'MLAnalysis',
+                x: 790,
+                y: 320,
+                attributes: [
+                    { name: 'id', type: 'primary-key' },
+                    { name: 'user_id', type: 'foreign-key' },
+                    { name: 'analysis_date', type: '' },
+                    { name: 'behavior_category', type: '' },
+                    { name: 'severity', type: '' },
+                    { name: 'risk_level', type: '' },
+                    { name: 'predictions', type: '' },
+                    { name: 'recommendations', type: '' }
+                ]
+            },
+            {
+                name: 'StudentProfiles',
+                x: 235,
+                y: 610,
+                attributes: [
+                    { name: 'id', type: 'primary-key' },
+                    { name: 'user_id', type: 'foreign-key' },
+                    { name: 'course', type: '' },
+                    { name: 'year', type: '' },
+                    { name: 'subjects', type: '' },
+                    { name: 'study_goals', type: '' },
+                    { name: 'productivity_score', type: '' }
+                ]
+            },
+            {
+                name: 'StudySessions',
+                x: 605,
+                y: 610,
+                attributes: [
+                    { name: 'id', type: 'primary-key' },
+                    { name: 'user_id', type: 'foreign-key' },
+                    { name: 'subject', type: '' },
+                    { name: 'start_time', type: '' },
+                    { name: 'end_time', type: '' },
+                    { name: 'duration', type: '' },
+                    { name: 'status', type: '' }
+                ]
+            }
+        ];
+
+        const relationships = [
+            { from: 'Users', to: 'UsageStats', label: '1:N' },
+            { from: 'Users', to: 'AppUsage', label: '1:N' },
+            { from: 'Users', to: 'Goals', label: '1:N' },
+            { from: 'Users', to: 'WeeklyReports', label: '1:N' },
+            { from: 'Users', to: 'MLAnalysis', label: '1:N' },
+            { from: 'Users', to: 'StudentProfiles', label: '1:1' },
+            { from: 'Users', to: 'StudySessions', label: '1:N' }
+        ];
+
+        function createEntities() {
+            const diagram = document.getElementById('diagram');
+            
+            // Create SVG for relationships
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.style.position = 'absolute';
+            svg.style.top = '0';
+            svg.style.left = '0';
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+            svg.style.pointerEvents = 'none';
+            diagram.appendChild(svg);
+            
+            // Create entities
+            entities.forEach(entity => {
+                const entityDiv = document.createElement('div');
+                entityDiv.className = 'entity';
+                entityDiv.style.left = entity.x + 'px';
+                entityDiv.style.top = entity.y + 'px';
+                entityDiv.style.zIndex = '10';
+                entityDiv.dataset.name = entity.name;
+
+                const header = document.createElement('div');
+                header.className = 'entity-header';
+                header.textContent = entity.name;
+
+                const attributesDiv = document.createElement('div');
+                attributesDiv.className = 'entity-attributes';
+
+                entity.attributes.forEach(attr => {
+                    const attrDiv = document.createElement('div');
+                    attrDiv.className = `attribute ${attr.type}`;
+                    attrDiv.textContent = attr.name;
+                    attributesDiv.appendChild(attrDiv);
+                });
+
+                entityDiv.appendChild(header);
+                entityDiv.appendChild(attributesDiv);
+                diagram.appendChild(entityDiv);
+            });
+
+            // Draw relationships
+            setTimeout(drawRelationships, 100);
+        }
+
+        function drawRelationships() {
+            const diagram = document.getElementById('diagram');
+            const svg = diagram.querySelector('svg');
+            svg.innerHTML = '';
+
+            relationships.forEach(rel => {
+                const fromEntity = document.querySelector(`[data-name="${rel.from}"]`);
+                const toEntity = document.querySelector(`[data-name="${rel.to}"]`);
+
+                if (!fromEntity || !toEntity) return;
+
+                const fromRect = fromEntity.getBoundingClientRect();
+                const toRect = toEntity.getBoundingClientRect();
+                const diagramRect = diagram.getBoundingClientRect();
+
+                const fromX = fromRect.left - diagramRect.left + fromRect.width / 2;
+                const fromY = fromRect.top - diagramRect.top + fromRect.height / 2;
+                const toX = toRect.left - diagramRect.left + toRect.width / 2;
+                const toY = toRect.top - diagramRect.top + toRect.height / 2;
+
+                // Draw line
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', fromX);
+                line.setAttribute('y1', fromY);
+                line.setAttribute('x2', toX);
+                line.setAttribute('y2', toY);
+                line.setAttribute('stroke', '#34495e');
+                line.setAttribute('stroke-width', '2');
+                svg.appendChild(line);
+
+                // Draw arrow
+                const angle = Math.atan2(toY - fromY, toX - fromX);
+                const arrowLength = 10;
+                const arrowAngle = Math.PI / 6;
+                
+                const arrow1X = toX - arrowLength * Math.cos(angle - arrowAngle);
+                const arrow1Y = toY - arrowLength * Math.sin(angle - arrowAngle);
+                const arrow2X = toX - arrowLength * Math.cos(angle + arrowAngle);
+                const arrow2Y = toY - arrowLength * Math.sin(angle + arrowAngle);
+                
+                const arrowPath = `M ${toX} ${toY} L ${arrow1X} ${arrow1Y} M ${toX} ${toY} L ${arrow2X} ${arrow2Y}`;
+                const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                arrow.setAttribute('d', arrowPath);
+                arrow.setAttribute('stroke', '#34495e');
+                arrow.setAttribute('stroke-width', '2');
+                svg.appendChild(arrow);
+
+                // Add label
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', (fromX + toX) / 2);
+                label.setAttribute('y', (fromY + toY) / 2 - 5);
+                label.setAttribute('text-anchor', 'middle');
+                label.setAttribute('fill', '#fff');
+                label.setAttribute('font-weight', 'bold');
+                label.setAttribute('font-size', '12');
+                label.textContent = rel.label;
+                
+                const labelBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                const bbox = label.getBBox();
+                labelBg.setAttribute('x', bbox.x - 4);
+                labelBg.setAttribute('y', bbox.y - 2);
+                labelBg.setAttribute('width', bbox.width + 8);
+                labelBg.setAttribute('height', bbox.height + 4);
+                labelBg.setAttribute('fill', '#f39c12');
+                labelBg.setAttribute('rx', '4');
+                
+                svg.appendChild(labelBg);
+                svg.appendChild(label);
+            });
+        }
+
+        // Initialize
+        createEntities();
+    </script>
+</body>
+</html>
