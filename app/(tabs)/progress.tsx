@@ -313,14 +313,29 @@ export default function ProgressScreen() {
           </View>
         ) : (
           <>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { 
-                width: `${Math.min((todayUsage / dailyGoal) * 100, 100)}%` 
-              }]} />
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { 
+                  width: `${Math.min((todayUsage / dailyGoal) * 100, 100)}%`,
+                  backgroundColor: (todayUsage / dailyGoal) >= 1 ? '#ef4444' : (todayUsage / dailyGoal) >= 0.8 ? '#f59e0b' : '#10b981'
+                }]} />
+              </View>
+              <Text style={styles.progressPercentage}>
+                {Math.round((todayUsage / dailyGoal) * 100)}%
+              </Text>
             </View>
-            <Text style={styles.goalText}>
-              {formatTime(todayUsage)} / {dailyGoal}h goal
-            </Text>
+            <View style={styles.goalTextContainer}>
+              <Text style={styles.goalText}>
+                {formatTime(todayUsage)} / {dailyGoal}h goal
+              </Text>
+              <Text style={styles.goalStatus}>
+                {(todayUsage / dailyGoal) >= 1 
+                  ? '🔴 Goal exceeded' 
+                  : (todayUsage / dailyGoal) >= 0.8 
+                  ? '🟡 Almost there' 
+                  : '🟢 On track'}
+              </Text>
+            </View>
           </>
         )}
       </View>
@@ -589,22 +604,48 @@ const styles = StyleSheet.create({
     color: '#581c87',
     marginBottom: 12,
   },
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
   progressBar: {
-    height: 12,
+    flex: 1,
+    height: 24,
     backgroundColor: '#e2e8f0',
-    borderRadius: 6,
-    marginBottom: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
   },
   progressFill: {
-    height: 12,
-    width: '75%',
+    height: '100%',
     backgroundColor: '#10b981',
-    borderRadius: 6,
+    borderRadius: 11,
+    minWidth: '2%',
+  },
+  progressPercentage: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1e293b',
+    minWidth: 60,
+    textAlign: 'right',
+  },
+  goalTextContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   goalText: {
     fontSize: 14,
+    color: '#475569',
+    fontWeight: '600',
+  },
+  goalStatus: {
+    fontSize: 13,
+    fontWeight: '600',
     color: '#64748b',
-    fontWeight: '500',
   },
   weeklyCard: {
     backgroundColor: '#ffffff',
