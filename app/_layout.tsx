@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 import '../global.css';
 
 import OnboardingScreen from '@/components/OnboardingScreen';
+import ProjectInfoBanner from '@/components/ProjectInfoBanner';
 import { UserProvider } from '@/contexts/UserContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { authService } from '@/services/AuthService';
@@ -137,6 +138,7 @@ export default function RootLayout() {
           <Stack.Screen name="contact-us" options={{ headerShown: false }} />
           <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
         </Stack>
+        <ProjectInfoBanner />
         <StatusBar style="auto" />
       </ThemeProvider>
     </UserProvider>

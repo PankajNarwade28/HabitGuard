@@ -3,12 +3,12 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import {
-    Dimensions,
-    Modal,
-    StatusBar,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Modal,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 const BANNER_SHOWN_KEY = 'project_banner_shown';
@@ -89,7 +89,7 @@ export default function ProjectInfoBanner({
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View style={{ flex: 1 }}>
               <Text style={{ 
-                fontSize: isSmallDevice ? 20 : 24, 
+                fontSize: isSmallDevice ? 24 : 28, 
                 fontWeight: 'bold', 
                 color: '#fff',
                 marginBottom: 4,
@@ -97,7 +97,7 @@ export default function ProjectInfoBanner({
                 {projectData.projectName.split('-')[0].trim()}
               </Text>
               <Text style={{ 
-                fontSize: isSmallDevice ? 11 : 12, 
+                fontSize: isSmallDevice ? 13 : 14, 
                 color: 'rgba(255,255,255,0.9)',
               }}>
                 {formatDateTime()}
@@ -138,9 +138,9 @@ export default function ProjectInfoBanner({
               elevation: 3,
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                <Ionicons name="school" size={16} color="#667eea" />
+                <Ionicons name="school" size={18} color="#667eea" />
                 <Text style={{ 
-                  fontSize: 12, 
+                  fontSize: 14, 
                   fontWeight: '600', 
                   color: '#667eea',
                   marginLeft: 6,
@@ -149,14 +149,14 @@ export default function ProjectInfoBanner({
                 </Text>
               </View>
               <Text style={{ 
-                fontSize: isSmallDevice ? 10 : 11, 
+                fontSize: isSmallDevice ? 12 : 13, 
                 color: '#666',
-                lineHeight: 16,
+                lineHeight: 18,
               }}>
                 {projectData.department}
               </Text>
               <Text style={{ 
-                fontSize: isSmallDevice ? 9 : 10, 
+                fontSize: isSmallDevice ? 11 : 12, 
                 color: '#999',
                 marginTop: 2,
               }}>
@@ -177,9 +177,9 @@ export default function ProjectInfoBanner({
               elevation: 3,
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                <Ionicons name="person" size={16} color="#667eea" />
+                <Ionicons name="person" size={18} color="#667eea" />
                 <Text style={{ 
-                  fontSize: 12, 
+                  fontSize: 14, 
                   fontWeight: '600', 
                   color: '#667eea',
                   marginLeft: 6,
@@ -188,16 +188,16 @@ export default function ProjectInfoBanner({
                 </Text>
               </View>
               <Text style={{ 
-                fontSize: isSmallDevice ? 10 : 11, 
+                fontSize: isSmallDevice ? 12 : 13, 
                 color: '#333',
                 fontWeight: '600',
               }}>
                 {projectData.guide.name}
               </Text>
               <Text style={{ 
-                fontSize: isSmallDevice ? 9 : 10, 
+                fontSize: isSmallDevice ? 11 : 12, 
                 color: '#666',
-                lineHeight: 14,
+                lineHeight: 16,
               }}>
                 {projectData.guide.designation}
               </Text>
@@ -217,9 +217,9 @@ export default function ProjectInfoBanner({
             elevation: 3,
           }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-              <Ionicons name="people" size={16} color="#667eea" />
+              <Ionicons name="people" size={18} color="#667eea" />
               <Text style={{ 
-                fontSize: 13, 
+                fontSize: 15, 
                 fontWeight: '600', 
                 color: '#667eea',
                 marginLeft: 6,
@@ -228,31 +228,30 @@ export default function ProjectInfoBanner({
               </Text>
             </View>
             <View style={{ 
-              flexDirection: 'row', 
-              flexWrap: 'wrap',
+              flexDirection: 'column',
               gap: 8,
             }}>
               {projectData.teamMembers.map((member: any, index: number) => (
                 <View 
                   key={index} 
                   style={{ 
-                    width: width > 400 ? '48%' : '100%',
+                    width: '100%',
                     backgroundColor: '#f8f9fa',
                     borderRadius: 8,
-                    padding: 10,
+                    padding: 12,
                     borderLeftWidth: 3,
                     borderLeftColor: '#667eea',
                   }}
                 >
                   <Text style={{ 
-                    fontSize: isSmallDevice ? 11 : 12, 
+                    fontSize: isSmallDevice ? 13 : 14, 
                     fontWeight: '600', 
                     color: '#333',
                   }}>
                     {member.name}
                   </Text>
                   <Text style={{ 
-                    fontSize: isSmallDevice ? 9 : 10, 
+                    fontSize: isSmallDevice ? 11 : 12, 
                     color: '#667eea',
                     marginTop: 2,
                   }}>
@@ -282,9 +281,9 @@ export default function ProjectInfoBanner({
               elevation: 3,
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Ionicons name="bulb" size={14} color="#667eea" />
+                <Ionicons name="bulb" size={16} color="#667eea" />
                 <Text style={{ 
-                  fontSize: 12, 
+                  fontSize: 14, 
                   fontWeight: '600', 
                   color: '#667eea',
                   marginLeft: 6,
@@ -298,18 +297,18 @@ export default function ProjectInfoBanner({
                   style={{ 
                     flexDirection: 'row', 
                     alignItems: 'center',
-                    marginBottom: 4,
+                    marginBottom: 6,
                   }}
                 >
                   <View style={{ 
-                    width: 4, 
-                    height: 4, 
-                    borderRadius: 2, 
+                    width: 5, 
+                    height: 5, 
+                    borderRadius: 2.5, 
                     backgroundColor: '#667eea',
-                    marginRight: 6,
+                    marginRight: 8,
                   }} />
                   <Text style={{ 
-                    fontSize: isSmallDevice ? 9 : 10, 
+                    fontSize: isSmallDevice ? 11 : 12, 
                     color: '#666',
                     flex: 1,
                   }}>
@@ -332,9 +331,9 @@ export default function ProjectInfoBanner({
               elevation: 3,
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Ionicons name="code-slash" size={14} color="#667eea" />
+                <Ionicons name="code-slash" size={16} color="#667eea" />
                 <Text style={{ 
-                  fontSize: 12, 
+                  fontSize: 14, 
                   fontWeight: '600', 
                   color: '#667eea',
                   marginLeft: 6,
@@ -342,19 +341,19 @@ export default function ProjectInfoBanner({
                   Technology
                 </Text>
               </View>
-              <View style={{ marginBottom: 6 }}>
-                <Text style={{ fontSize: 10, fontWeight: '600', color: '#333', marginBottom: 2 }}>
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: '#333', marginBottom: 3 }}>
                   Frontend
                 </Text>
-                <Text style={{ fontSize: isSmallDevice ? 9 : 10, color: '#666' }}>
+                <Text style={{ fontSize: isSmallDevice ? 11 : 12, color: '#666' }}>
                   {projectData.techStack.frontend.join(', ')}
                 </Text>
               </View>
               <View>
-                <Text style={{ fontSize: 10, fontWeight: '600', color: '#333', marginBottom: 2 }}>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: '#333', marginBottom: 3 }}>
                   Backend
                 </Text>
-                <Text style={{ fontSize: isSmallDevice ? 9 : 10, color: '#666' }}>
+                <Text style={{ fontSize: isSmallDevice ? 11 : 12, color: '#666' }}>
                   {projectData.techStack.backend.join(', ')}
                 </Text>
               </View>
@@ -376,7 +375,7 @@ export default function ProjectInfoBanner({
             alignItems: 'center',
           }}>
             <Text style={{ 
-              fontSize: 11, 
+              fontSize: 13, 
               color: '#999',
             }}>
               Version {projectData.version}
@@ -385,14 +384,14 @@ export default function ProjectInfoBanner({
               onPress={handleClose}
               style={{ 
                 backgroundColor: '#667eea',
-                paddingHorizontal: 24,
-                paddingVertical: 10,
+                paddingHorizontal: 28,
+                paddingVertical: 12,
                 borderRadius: 8,
               }}
             >
               <Text style={{ 
                 color: '#fff', 
-                fontSize: 13, 
+                fontSize: 15, 
                 fontWeight: '600',
               }}>
                 Get Started
