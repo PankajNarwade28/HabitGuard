@@ -1,6 +1,6 @@
 # 🌿 HabitGuard – Digital Wellbeing AppHere’s an improved, **professional and polished README.md** for your GitHub project — rewritten with better structure, formatting, clarity, and presentation (while keeping your full details intact 👇):
 
-
+hello world
 
 *A modern React Native app to help you monitor screen time, improve sleep, and achieve digital balance.*---
 
